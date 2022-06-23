@@ -1,0 +1,92 @@
+ ----------------------------------------------------
+    OOO  PPPP  EEEEE N   N M   M PPPP
+   O   O P   P E     NN  N MM MM P   P
+   O   O PPPP  EEEEE N N N M M M PPPP   -- VERSION
+   O   O P     E     N  NN M   M P
+    OOO  P     EEEEE N   N M   M P
+ ----------------------------------------------------
+ running   64 mpi-ranks, with    1 threads/rank
+ distrk:  each k-point on   16 cores,    4 groups
+ distr:  one band on    4 cores,    4 groups
+ using from now: INCAR
+ vasp.6.0.8 29Jun18 (build Jun 13 2019 12:54:44) complex
+
+ POSCAR found type information on POSCAR  Hf Pt Sb
+ POSCAR found :  3 types and       3 ions
+ scaLAPACK will be used
+
+ -----------------------------------------------------------------------------
+|                                                                             |
+|  ADVICE TO THIS USER RUNNING 'VASP/VAMP'   (HEAR YOUR MASTER'S VOICE ...):  |
+|                                                                             |
+|      You enforced a specific xc-type in the INCAR file,                     |
+|      a different type was found on the POTCAR file                          |
+|          I HOPE YOU KNOW, WHAT YOU ARE  DOING                               |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ LDA part: xc-table for Pade appr. of Perdew
+ POSCAR, INCAR and KPOINTS ok, starting setup
+ FFT: planning ...
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+ ELPA: falling back to scaLAPACK
+ ELPA: falling back to scaLAPACK
+ ELPA: falling back to scaLAPACK
+ ELPA: falling back to scaLAPACK
+DAV:   1     0.116306441403E+03    0.11631E+03   -0.12092E+04  2728   0.136E+03
+DAV:   2    -0.207935264883E+02   -0.13710E+03   -0.13574E+03  3328   0.295E+02
+DAV:   3    -0.249606428060E+02   -0.41671E+01   -0.40935E+01  3640   0.465E+01
+DAV:   4    -0.250217660240E+02   -0.61123E-01   -0.60610E-01  3320   0.598E+00
+DAV:   5    -0.250231343251E+02   -0.13683E-02   -0.13681E-02  3680   0.850E-01    0.402E+01
+DAV:   6    -0.242005705501E+02    0.82256E+00   -0.18357E+00  3512   0.923E+00    0.247E+01
+DAV:   7    -0.240592977630E+02    0.14127E+00   -0.10502E+00  3816   0.577E+00    0.362E+00
+DAV:   8    -0.240374709774E+02    0.21827E-01   -0.39572E-01  3472   0.329E+00    0.959E-01
+DAV:   9    -0.240267692696E+02    0.10702E-01   -0.62437E-02  2920   0.185E+00    0.294E-01
+DAV:  10    -0.240267024053E+02    0.66864E-04   -0.84023E-03  3672   0.454E-01    0.267E-01
+DAV:  11    -0.240265750372E+02    0.12737E-03   -0.65558E-04  3304   0.155E-01    0.603E-02
+DAV:  12    -0.240265731854E+02    0.18517E-05   -0.78245E-05  3640   0.544E-02
+   1 F= -.24026573E+02 E0= -.24026416E+02  d E =-.240266E+02
+ curvature:   0.00 expect dE= 0.000E+00 dE for cont linesearch  0.000E+00
+ trial: gam= 0.00000 g(F)=  0.000E+00 g(S)=  0.335E-01 ort = 0.000E+00 (trialstep = 0.100E+01)
+ search vector abs. value=  0.335E-01
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.241119992773E+02   -0.85424E-01   -0.12267E+00  2688   0.983E+00    0.254E+00
+DAV:   2    -0.240653709915E+02    0.46628E-01   -0.46393E-01  2688   0.510E+00    0.792E-01
+DAV:   3    -0.240533730423E+02    0.11998E-01   -0.58970E-02  2920   0.183E+00    0.345E-01
+DAV:   4    -0.240515295475E+02    0.18435E-02   -0.10264E-02  3576   0.648E-01    0.296E-01
+DAV:   5    -0.240514289244E+02    0.10062E-03   -0.38659E-04  3376   0.138E-01    0.236E-01
+DAV:   6    -0.240514379250E+02   -0.90006E-05   -0.18331E-04  3296   0.645E-02    0.427E-02
+DAV:   7    -0.240514239382E+02    0.13987E-04   -0.86185E-05  3616   0.587E-02    0.167E-02
+DAV:   8    -0.240514254699E+02   -0.15317E-05   -0.43765E-06  1632   0.164E-02
+   2 F= -.24051425E+02 E0= -.24051292E+02  d E =-.248523E-01
+ trial-energy change:   -0.024852  1 .order   -0.024979   -0.033454   -0.016504
+ step:   2.0738(harm=  1.9737)  dis= 0.00000  next Energy=   -24.060129 (dE=-0.336E-01)
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.241285601882E+02   -0.77136E-01   -0.14235E+00  2688   0.106E+01    0.278E+00
+DAV:   2    -0.240742181122E+02    0.54342E-01   -0.51956E-01  2688   0.544E+00    0.829E-01
+DAV:   3    -0.240610821160E+02    0.13136E-01   -0.63036E-02  2920   0.191E+00    0.374E-01
+DAV:   4    -0.240590142127E+02    0.20679E-02   -0.11303E-02  3592   0.686E-01    0.314E-01
+DAV:   5    -0.240588821300E+02    0.13208E-03   -0.47837E-04  3328   0.152E-01    0.249E-01
+DAV:   6    -0.240588992734E+02   -0.17143E-04   -0.19107E-04  3280   0.721E-02    0.583E-02
+DAV:   7    -0.240588755253E+02    0.23748E-04   -0.14813E-04  3688   0.760E-02    0.184E-02
+DAV:   8    -0.240588779329E+02   -0.24076E-05   -0.11201E-05  1688   0.236E-02
+   3 F= -.24058878E+02 E0= -.24058742E+02  d E =-.323047E-01
+ curvature:  -0.98 expect dE=-0.188E-03 dE for cont linesearch -0.188E-03
+ ZBRENT: interpolating
+ opt :   1.9306  next Energy=   -24.059060 (dE=-0.325E-01)
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.240603328769E+02   -0.14574E-02   -0.25667E-02  2704   0.143E+00    0.374E-01
+DAV:   2    -0.240593720514E+02    0.96083E-03   -0.89675E-03  2704   0.731E-01    0.121E-01
+DAV:   3    -0.240591331324E+02    0.23892E-03   -0.12052E-03  2984   0.256E-01    0.541E-02
+DAV:   4    -0.240590920220E+02    0.41110E-04   -0.16435E-04  3576   0.888E-02    0.364E-02
+DAV:   5    -0.240590898556E+02    0.21664E-05   -0.63259E-06  1696   0.176E-02
+   4 F= -.24059090E+02 E0= -.24058956E+02  d E =-.325167E-01
+ curvature:  -0.94 expect dE=-0.352E-05 dE for cont linesearch -0.352E-05
+ trial: gam= 0.00000 g(F)=  0.000E+00 g(S)=  0.373E-05 ort =-0.353E-03 (trialstep = 0.119E+01)
+ search vector abs. value=  0.373E-05
+ reached required accuracy - stopping structural energy minimisation
