@@ -1,3 +1,8 @@
+[build-system]
+requires =["setuptools"]
+build-backend = "setuptools.build_meta"
+
+
 [tool.black]
 target-version= ['py36', 'py37', 'py38']
 line-length=89
@@ -19,6 +24,7 @@ exclude = '''
   | blib2to3
   | tests/data
 )/
+'''
 
 [tool.isort]
 profile='black'

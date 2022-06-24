@@ -15,8 +15,8 @@
     "algo": "Normal",
     "ismear": 0,
     "sigma": 0.1,
-    "gga": "PE",
     "kpar": 4,
+    "gga": "PE",
     "walltime": "02:00:00"
   },
   "rlx": {
@@ -35,8 +35,8 @@
     "algo": "Normal",
     "ismear": 0,
     "sigma": 0.1,
-    "gga": "PE",
     "kpar": 4,
+    "gga": "PE",
     "walltime": "02:00:00"
   },
   "bulkmod": {
@@ -55,8 +55,30 @@
     "algo": "Fast",
     "ismear": -5,
     "sigma": 0,
-    "gga": "PE",
     "kpar": 4,
+    "gga": "PE",
     "walltime": "02:00:00"
+  },
+  "elastic": {
+    "prec": "ACC",
+    "ispin": 1,
+    "magmom": "",
+    "kspacing": 0.10,
+    "nfree": 4,
+    "symprec": "1e-08",
+    "nsw": 60,
+    "ibrion": 6,
+    "isif": 3,
+    "lreal": ".FALSE",
+    "potim": 0.01,
+    "ediffg": "-1e-02",
+    "encut": 700,
+    "ediff": "1e-07",
+    "algo": "Fast",
+    "ismear": 0,
+    "sigma": 0.01,
+    "kpar": 4,
+    "gga": "PE",
+    "walltime": "04:00:00"
   }
 }
