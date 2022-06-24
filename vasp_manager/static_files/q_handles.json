@@ -1,0 +1,17 @@
+{
+    "personal": {
+        "rlx": "vasp-cori.q",
+        "bulkmod": "vasp-bulkmod-cori.q",
+        "elastic": "vasp-cori.q"
+    },
+    "quest": {
+        "rlx": "vasp-quest.q",
+        "bulkmod": "vasp-bulkmod-quest.q",
+        "elastic": "vasp-quest.q"
+    },
+    "cori": {
+        "rlx": "vasp-cori.q",
+        "bulkmod": "vasp-bulkmod-cori.q",
+        "elastic": "vasp-cori.q"
+    }
+}

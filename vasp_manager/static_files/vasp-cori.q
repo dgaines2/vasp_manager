@@ -1,11 +1,12 @@
 #! /bin/bash
 
 #SBATCH -N {n_nodes}
-#SBATCH -n {n_procs}
 #SBATCH -p {queuetype}
-#SBATCH -J e{jobname}
+#SBATCH -J {jobname}
 #SBATCH -A {allocation}
 #SBATCH -t {walltime}
+#SBATCH -L SCRATCH
+#SBATCH -C knl,quad,cache
 
 #OpenMP settings:
 ulimit -s unlimited

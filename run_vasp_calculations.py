@@ -7,7 +7,7 @@ from vasp_manager import manage_calculations
 
 global logger
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 def make_calculations_folder(data_path="structure_df.pickle.gz"):

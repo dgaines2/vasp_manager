@@ -9,6 +9,7 @@ setup(
     author="Dale Gaines II",
     author_email="dalegainesii@gmail.com",
     license="MIT",
+    include_package_data=True,
     install_requires=[
         "numpy",
         "pandas",

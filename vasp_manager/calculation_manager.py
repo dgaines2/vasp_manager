@@ -2,6 +2,7 @@ import glob
 import json
 import logging
 import os
+import pkgutil
 import shutil
 import subprocess
 import sys
@@ -21,9 +22,32 @@ from .elastic_analysis import (
     make_elastic_constants,
 )
 
-global logger
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+computing_config_dict = json.loads(
+    pkgutil.get_data("vasp_manager", "config/computing_config.json").decode("utf-8")
+)
+calc_config_dict = json.loads(
+    pkgutil.get_data("vasp_manager", "config/calc_config.json").decode("utf-8")
+)
+potcar_dict = json.loads(
+    pkgutil.get_data("vasp_manager", "static_files/pot_dict.json").decode("utf-8")
+)
+q_mapper = json.loads(
+    pkgutil.get_data("vasp_manager", "static_files/q_handles.json").decode("utf-8")
+)
+incar_template = pkgutil.get_data("vasp_manager", "static_files/INCAR_template").decode(
+    "utf-8"
+)
+computer = computing_config_dict["computer"]
+
+# print(computing_config_dict)
+# print(calc_config_dict)
+# print(potcar_dict)
+# print(q_mapper)
+# print(incar_template)
 
 
 @contextmanager
@@ -36,41 +60,6 @@ def change_directory(new_dir):
         os.chdir(prev_dir)
 
 
-def get_computing_config_dict(
-    computing_config_dict_path="static_files/computing_config.json",
-):
-    """
-    config dict info about the current computer
-    """
-    with open(computing_config_dict_path, "r") as fr:
-        computing_config_dict = json.load(fr)
-    return computing_config_dict
-
-
-def get_calc_config_dict(
-    calc_config_dict_path="static_files/calc_config.json", mode=None
-):
-    """
-    config dict info for calculations
-    """
-    with open(calc_config_dict_path, "r") as fr:
-        calc_config_dict = json.load(fr)
-    if mode is None:
-        return calc_config_dict
-    else:
-        return calc_config_dict[mode]
-
-
-def get_potcar_dict(potcar_dict_path="static_files/pot_dict.json"):
-    """
-    potcar_dict should contain the name of the psuedopotential you want to
-    use for each element
-    """
-    with open(potcar_dict_path, "r") as fr:
-        potcar_dict = json.load(fr)
-    return potcar_dict
-
-
 def make_potcar(structure, write_path):
     """
     Create and write a POTCAR given a pmg structure
@@ -79,9 +68,6 @@ def make_potcar(structure, write_path):
         structure (pmg.Structure)
         write_path (str): destination path
     """
-    potcar_dict = get_potcar_dict()
-    computing_config_dict = get_computing_config_dict()
-    computer = computing_config_dict["computer"]
     potcar_dir = computing_config_dict[computer]["potcar_dir"]
 
     el_names = [el.name for el in structure.composition]
@@ -101,21 +87,17 @@ def make_incar(incar_path, mode):
     Current kpoints coming from the kspacing tag in the INCAR,
         but future versions should include ability to make kpoints from kppra
     """
-    computing_config_dict = get_computing_config_dict()
-    computer = computing_config_dict["computer"]
     ncore = computing_config_dict[computer]["ncore"]
 
     # bulkmod and bulkmod_rlx have same calc configs
     if "bulkmod" in mode:
         mode = "bulkmod"
-    calc_config_dict = get_calc_config_dict(mode=mode)
+    calc_config = calc_config_dict[mode]
     # if calc_config_dict["magmom"] == "auto":
     #     calc_config_dict["magmom"] = ""
 
-    source_incar_path = f"static_files/INCAR_template"
-    with open(source_incar_path, "r") as fr:
-        incar_tmp = fr.read()
     # Add lines to the vaspq file for only elastic calculations
+    incar_tmp = incar_template
     if "elastic" in mode:
         incar_tmp = incar_tmp.split("\n")
         for i, line in enumerate(incar_tmp):
@@ -127,7 +109,7 @@ def make_incar(incar_path, mode):
             if "NCORE" in line:
                 incar_tmp[i] = "NPAR = 1"
         incar_tmp = "\n".join([line for line in incar_tmp])
-    incar = incar_tmp.format(**calc_config_dict, ncore=ncore)
+    incar = incar_tmp.format(**calc_config, ncore=ncore)
     with open(incar_path, "w+") as fw:
         fw.write(incar)
 
@@ -136,12 +118,8 @@ def make_vaspq(vaspq_path, mode, jobname=None, structure=None, increase_nodes=Fa
     """
     mode should be 'rlx-coarse', 'rlx', 'bulkmod', 'bulkmod_rlx', or 'elastic'
     """
-    computing_config_dict = get_computing_config_dict()
-    computer = computing_config_dict["computer"]
-    computer_config_dict = computing_config_dict[computer]
-
-    calc_config_dict = get_calc_config_dict(mode=mode)
-    walltime = calc_config_dict["walltime"]
+    calc_config = calc_config_dict[mode]
+    walltime = calc_config["walltime"]
 
     parent_dir = os.path.dirname(vaspq_path)
     if structure is None:
@@ -149,21 +127,35 @@ def make_vaspq(vaspq_path, mode, jobname=None, structure=None, increase_nodes=Fa
             poscar_path = os.path.join(parent_dir, "POSCAR")
             structure = pmg.core.Structure.from_file(poscar_path)
         except Exception as e:
-            raise Exception(f"Cannot load POSCAR in {parent_dir}")
+            raise Exception(f"Cannot load POSCAR in {parent_dir}: {e}")
 
+    # start with 1 node per 32 atoms
     n_nodes = (len(structure) // 32) + 1
-    if "rlx" in mode:
+    # create pad string for job naming to differentiate in the queue
+    if mode == "rlx" or mode == "rlx-coarse":
+        if mode == "rlx":
+            pad_string = "r"
+        elif mode == "rlx-coarse":
+            pad_string = "rc"
         mode = "rlx"
+    elif "bulkmod" in mode:
+        pad_string = "b"
+        mode = "bulkmod"
+    elif mode == "elastic":
+        pad_string = "e"
+
     if computer == "quest":
-        source_vaspq_path = f"static_files/vasp-{mode}-quest.q"
         # quest has small nodes
         n_nodes *= 2
         n_procs = n_nodes * 28
     else:
-        source_vaspq_path = f"static_files/vasp-{mode}-cori.q"
         n_procs = n_nodes * 68
+
     if jobname is None:
-        jobname = structure.composition.reduced_formula
+        jobname = pad_string + structure.composition.reduced_formula
+    else:
+        jobname = pad_string + jobname
+
     if increase_nodes:
         n_nodes *= 2
         n_procs *= 2
@@ -171,25 +163,25 @@ def make_vaspq(vaspq_path, mode, jobname=None, structure=None, increase_nodes=Fa
         hours = str(int(hours) * 2)
         walltime = ":".join([hours, minutes, seconds])
 
-    computer_config_dict.update(
-        {"n_nodes": n_nodes, "n_procs": n_procs, "jobname": jobname}
-    )
+    computer_config = computing_config_dict[computer].copy()
+    computer_config.update({"n_nodes": n_nodes, "n_procs": n_procs, "jobname": jobname})
 
-    with open(source_vaspq_path, "r") as fr:
-        vaspq_tmp = fr.read()
-    vaspq = vaspq_tmp.format(**computer_config_dict, walltime=walltime)
+    q_name = q_mapper[computer][mode]
+    vaspq_tmp = pkgutil.get_data("vasp_manager", f"static_files/{q_name}").decode(
+        "utf-8"
+    )
+    vaspq = vaspq_tmp.format(**computer_config, walltime=walltime)
     with open(vaspq_path, "w+") as fw:
         fw.write(vaspq)
 
 
 def submit_job(compound_path, mode, ignore_errors=False):
-    computing_config_dict = get_computing_config_dict()
-    computer = computing_config_dict["computer"]
+    """ Call SLURM sbatch for the calculation and log the jobid """
     if "personal" in computer:
         ignore_errors = True
         error_msg = "Cannot submit job on personal computer"
         error_msg += "\n\tIgnoring job submission..."
-        logger.info(error_msg)
+        logger.debug(error_msg)
         return True
 
     calc_path = os.path.join(compound_path, mode)
@@ -207,13 +199,11 @@ def submit_job(compound_path, mode, ignore_errors=False):
 
 def check_job_complete(jobid, ignore_errors=False):
     """Return True if job done"""
-    computing_config_dict = get_computing_config_dict()
-    computer = computing_config_dict["computer"]
     if computer == "personal":
         ignore_errors = True
         error_msg = "Cannot check job on personal computer"
         error_msg += "\n\tIgnoring job status check..."
-        logger.info(error_msg)
+        logger.debug(error_msg)
         return True
     else:
         user_id = computing_config_dict[computer]["user_id"]
@@ -275,12 +265,12 @@ def setup_coarse_relax(
         submit (bool): if True, submit calculation
         from_scratch (bool): if True, remove previous calculation
         rerun_relax (bool): if True, make an archive and resubmit
-        to_change_incar (bool): if True, call make_incar_subsitutions
     """
-    computing_config_dict = get_computing_config_dict()
     # POSCAR, POTCAR, INCAR, vasp.q
     oqmd_id = compound_path.split("/")[1]
+    logger.info(f"{oqmd_id} Setting up rlx-coarse")
     mode = "rlx-coarse"
+
     crelax_path = os.path.join(compound_path, mode)
     if from_scratch:
         if os.path.exists(crelax_path):
@@ -319,7 +309,6 @@ def setup_relax(
     from_scratch=False,
     rerun_relax=False,
     from_coarse=False,
-    change_incar=False,
 ):
     """
     Set up a fine relaxation
@@ -332,17 +321,17 @@ def setup_relax(
         from_coarse (bool): if True, copy the CONTCAR from the coarse relaxation
             folder
             If False, copy the POSCAR from compound_path
-        to_change_incar (bool): if True, run make_incar_substitutions()
     """
-    computing_config_dict = get_computing_config_dict()
+    oqmd_id = compound_path.split("/")[1]
+    logger.info(f"{oqmd_id} Setting up rlx")
+
     mode = "rlx"
     if from_coarse:
         crelax_done = check_relax(compound_path, mode="rlx-coarse")
         if not crelax_done:
-            logger.info("Coarse relax not finished")
+            logger.info("RLX-COARSE not finished")
             return
 
-    oqmd_id = compound_path.split("/")[1]
     relax_path = os.path.join(compound_path, mode)
     if from_scratch:
         if os.path.exists(relax_path):
@@ -391,10 +380,10 @@ def setup_relax(
 
 def check_relax(
     compound_path,
+    mode="rlx-coarse",
     rerun_relax=False,
     submit=False,
     tail=5,
-    mode="rlx-coarse",
 ):
     """
     Check if calculation has finished and reached required accuracy
@@ -407,9 +396,12 @@ def check_relax(
         submit (bool): if True and rerun_relax, submit calculation
         tail (int): If job fails, print {tail} lines from stdout.txt
         mode (str): "rlx" or "rlx-coarse"
+
     Returns:
         relaxation_successful (bool): if True, relaxation completed successfully
     """
+    if mode not in ["rlx", "rlx-coarse"]:
+        raise Exception(f"Mode '{mode}' is incorrect or not supported")
     relax_path = os.path.join(compound_path, mode)
     stdout_path = os.path.join(relax_path, "stdout.txt")
     jobdone_path = os.path.join(relax_path, "jobdone")
@@ -421,7 +413,7 @@ def check_relax(
             job_id = fr.readline().splitlines()[0]
         job_complete = check_job_complete(job_id)
         if not job_complete:
-            logger.info(f"{mode} not finished")
+            logger.info(f"{mode.upper()} not finished")
             return False
 
         grep_call = f"tail -n{tail} {stdout_path}"
@@ -429,17 +421,17 @@ def check_relax(
             subprocess.check_output(grep_call, shell=True).decode("utf-8").strip()
         )
         if "reached required accuracy" in grep_output:
-            logger.info(f"{mode} reached required accuracy")
+            logger.info(f"{mode.upper()} Calculation: reached required accuracy")
             return True
         else:
             archive_dirs = glob.glob(f"{relax_path}/archive*")
             if "coarse" in mode and len(archive_dirs) >= 3:
-                logger.info("Many archives exist, suggest force based relaxation")
+                logger.warning("Many archives exist, suggest force based relaxation")
                 if rerun_relax:
                     setup_relax(compound_path, submit=submit, rerun_relax=True)
                 return True
 
-            logger.info("FAILED")
+            logger.warning(f"{mode.upper()} FAILED")
             logger.debug(grep_output)
             if rerun_relax:
                 logger.info(f"Rerunning {compound_path}")
@@ -449,25 +441,29 @@ def check_relax(
                     setup_relax(compound_path, submit=submit, rerun_relax=True)
             return False
     else:
-        logger.info(f"{mode} not started")
+        logger.info(f"{mode.upper()} not started")
         return False
 
 
 def check_volume_difference(compound_path, rerun_relax=False, submit=False):
     """
     check relaxation runs for volume difference
+
     if abs(volume difference) is >= 5%, rerun relaxation
+    only check for mode='rlx' as that's the structure for elastic analysis
 
     Args:
         compound_path (str): base path of calculation
         rerun_relax (bool): if True, make an archive and re-setup the rlx folder
         submit (bool): if True and rerun_relax, submit calculation
+
+    Returns:
+        volume_converged (bool): if True, relaxation completed successfully
     """
     relaxation_done = check_relax(
         compound_path, rerun_relax=rerun_relax, submit=submit, mode="rlx"
     )
     if not relaxation_done:
-        logger.info(f"  Relaxation not finished")
         return False
 
     relax_path = os.path.join(compound_path, "rlx")
@@ -476,8 +472,8 @@ def check_volume_difference(compound_path, rerun_relax=False, submit=False):
     try:
         p_structure = pmg.core.Structure.from_file(poscar_path)
         c_structure = pmg.core.Structure.from_file(contcar_path)
-    except Exception:
-        logger.info(f"  Relaxation CONTCAR doesn't exist or is empty")
+    except Exception as e:
+        logger.info(f"  RLX CONTCAR doesn't exist or is empty: {e}")
         return False
 
     sga1 = SpacegroupAnalyzer(p_structure, symprec=1e-3)
@@ -498,6 +494,7 @@ def check_volume_difference(compound_path, rerun_relax=False, submit=False):
         if rerun_relax:
             setup_relax(compound_path, rerun_relax=True, submit=submit)
     else:
+        logger.info(f"  RLX volume converged")
         logger.info(f"  dV = {volume_diff:.4f}")
         volume_converged = True
     return volume_converged
@@ -519,17 +516,19 @@ def setup_simple_bulkmod(
         from_relax (bool): if True, copy the CONTCAR from the relaxation folder
             If False, copy the POSCAR from compound_path
     """
-    computing_config_dict = get_computing_config_dict()
     oqmd_id = compound_path.split("/")[1]
+    logger.info(f"{oqmd_id} Setting up BULKMOD Calculation")
     if from_relax:
         relax_done = check_relax(compound_path, mode="rlx")
         volume_converged = check_volume_difference(compound_path)
-        if not relax_done or not volume_converged:
-            logger.info("Not ready to set up elastic calculation")
-            return
-        logger.info("Relaxations successful")
-        relax_path = os.path.join(compound_path, "rlx")
         mode = "bulkmod_rlx"
+        if not relax_done or not volume_converged:
+            logger.info("Not ready to set up {mode.upper()} calculation")
+            logger.info("relax_done = {relax_done}")
+            logger.info("volume_converged = {volume_converged}")
+            return
+        logger.info("Relaxations Successful")
+        relax_path = os.path.join(compound_path, "rlx")
     else:
         mode = "bulkmod"
     bulkmod_path = os.path.join(compound_path, mode)
@@ -576,8 +575,13 @@ def setup_simple_bulkmod(
         orig_poscar_path = os.path.join(bulkmod_path, "POSCAR")
         strain_poscar_path = os.path.join(strain_path, "POSCAR")
         shutil.copy(orig_poscar_path, strain_poscar_path)
-        sed_call_poscar = f"sed -i '2 c\{strain}' {strain_poscar_path}"
-        subprocess.call(sed_call_poscar, shell=True)
+
+        # change second line to be {strain} rather than 1.0
+        with open(strain_poscar_path, "r") as fr:
+            strain_poscar = fr.read().splitlines()
+        strain_poscar[1] = f"{strain}"
+        with open(strain_poscar_path, "w+") as fw:
+            fw.write("\n".join(strain_poscar))
 
         with change_directory(strain_path):
             for f in ["POTCAR", "INCAR"]:
@@ -612,7 +616,7 @@ def analyze_bulkmod(compound_path, from_relax=False):
             job_id = fr.readline().splitlines()[0]
         job_complete = check_job_complete(job_id)
         if not job_complete:
-            logger.info(f"{mode} not finished")
+            logger.info(f"{mode.upper()} not finished")
             return -1
     else:
         raise Exception(f"No job id exists in {bulkmod_path}")
@@ -639,6 +643,7 @@ def analyze_bulkmod(compound_path, from_relax=False):
     eos_analyzer = BirchMurnaghan(volumes, final_energies)
     eos_analyzer.fit()
     bulk_modulus = np.round(eos_analyzer.b0_GPa, 3)
+    logger.info(f"{mode.upper()} Calculation: Successful")
     logger.info(f"BULK MODULUS: {bulk_modulus}")
     return bulk_modulus
 
@@ -655,13 +660,16 @@ def setup_elastic(compound_path, submit=True, increase_nodes=False):
         increase_nodes (bool): if True, copy the CONTCAR from the relaxation folder
     """
     oqmd_id = compound_path.split("/")[1]
+    logger.info(f"{oqmd_id} Setting up ELASTIC Calculation")
     # POSCAR, POTCAR, KPOINTS, INCAR, vasp.q
-    relax_done = check_relax(compound_path, mode="relax")
-    volume_converged = check_volume_difference(compound_path, mode="relax")
+    relax_done = check_relax(compound_path, mode="rlx")
+    volume_converged = check_volume_difference(compound_path)
     if not relax_done or not volume_converged:
-        logger.info("Not ready to set up elastic calculation")
+        logger.info("Not ready to set up ELASTIC calculation")
+        logger.info("relax_done = {relax_done}")
+        logger.info("volume_converged = {volume_converged}")
         return
-    logger.info("Relaxations successful")
+    logger.info("Relaxations Successful")
 
     relax_path = os.path.join(compound_path, "rlx")
     elastic_path = os.path.join(compound_path, "elastic")
@@ -683,12 +691,12 @@ def setup_elastic(compound_path, submit=True, increase_nodes=False):
     make_potcar(structure, potcar_path)
 
     # KPOINTS
-    # shutil.copy("static_files/KPOINTS", elastic_path)
+    # shutil.copy("../static_files/KPOINTS", elastic_path)
 
     # INCAR
     incar_path = os.path.join(elastic_path, "INCAR")
     make_incar(incar_path, mode="elastic")
-    # shutil.copy("static_files/INCAR-elastic", incar_path)
+    # shutil.copy("../static_files/INCAR-elastic", incar_path)
 
     # vasp.q
     vaspq_path = os.path.join(elastic_path, "vasp.q")
@@ -697,7 +705,7 @@ def setup_elastic(compound_path, submit=True, increase_nodes=False):
     )
 
     if submit:
-        submit_calc(compound_path, mode="elastic")
+        submit_job(compound_path, mode="elastic")
 
 
 def check_elastic_calculation(compound_path, rerun=False, submit=False, tail=5):
@@ -709,6 +717,7 @@ def check_elastic_calculation(compound_path, rerun=False, submit=False, tail=5):
         rerun (bool): if True, rerun failed jobs
         submit (bool): if True, submit failed jobs
         tail (int): If job fails, print {tail} lines from stdout.txt
+
     Returns
         elastic_successful (bool): if True, elastic calculation completed successfully
     """
@@ -722,20 +731,24 @@ def check_elastic_calculation(compound_path, rerun=False, submit=False, tail=5):
             job_id = fr.readline().splitlines()[0]
         job_complete = check_job_complete(job_id)
         if not job_complete:
-            logger.info(f"{mode} not finished")
+            logger.info(f"{mode.upper()} not finished")
             return False
     else:
         raise Exception(f"No job id exists in {elastic_path}")
 
     stdout_path = os.path.join(elastic_path, "stdout.txt")
     if os.path.exists(stdout_path):
-        grep_call = f"tail -n1 {stdout_path}"
+        grep_call = f"grep 'Total' {stdout_path}"
         grep_output = (
-            subprocess.check_output(grep_call, shell=True).decode("utf-8").strip()
+            subprocess.check_output(grep_call, shell=True).decode("utf-8").splitlines()
         )
-        logger.info(grep_output)
-        if "36/ 36" in grep_output:
-            logger.info("Elastic calculation: Success")
+        last_grep_line = grep_output[-1].strip().split()
+        # last grep line looks something like 'Total: 36/ 36'
+        finished_deformations = int(last_grep_line[-2].replace("/", ""))
+        total_deformations = int(last_grep_line[-1])
+        logger.debug(last_grep_line)
+        if finished_deformations == total_deformations:
+            logger.info(f"{mode.upper()} Calculation: Success")
             return True
         else:
             grep_call = f"tail -n{tail} {stdout_path}"
@@ -743,13 +756,13 @@ def check_elastic_calculation(compound_path, rerun=False, submit=False, tail=5):
                 subprocess.check_output(grep_call, shell=True).decode("utf-8").strip()
             )
             logger.info(grep_output)
-            logger.info("Elastic calculation: FAILED")
+            logger.info(f"{mode.upper()} Calculation: FAILED")
             if rerun:
                 setup_elastic(compound_path, submit=submit, increase_nodes=True)
             return False
     else:
         # shouldn't get here unless function was called with submit=False
-        logger.info("Elastic calculation: No stdout.txt available")
+        logger.info("{mode.upper()} Calculation: No stdout.txt available")
         if rerun:
             # increase nodes as its likely the calculation failed
             setup_elastic(compound_path, submit=submit, increase_nodes=True)
@@ -775,12 +788,7 @@ def manage_calculations(compound_path, calculation_types):
         if not os.path.exists(coarse_rlx_path):
             setup_coarse_relax(compound_path, submit=True)
             return
-
-        coarse_rlx_successful = check_relax(
-            compound_path, rerun_relax=True, submit=True, mode="rlx-coarse"
-        )
-        if not coarse_rlx_successful:
-            return
+        check_relax(compound_path, mode="rlx-coarse")
         from_coarse = True
     else:
         from_coarse = False
@@ -790,12 +798,7 @@ def manage_calculations(compound_path, calculation_types):
         if not os.path.exists(rlx_path):
             setup_relax(compound_path, submit=True, from_coarse=from_coarse)
             return
-
-        rlx_successful = check_relax(
-            compound_path, rerun_relax=True, submit=True, mode="rlx"
-        )
-        if not rlx_successful:
-            return
+        check_relax(compound_path, mode="rlx")
         from_relax = True
     else:
         from_relax = False
@@ -809,7 +812,6 @@ def manage_calculations(compound_path, calculation_types):
         if not os.path.exists(bulkmod_path):
             setup_simple_bulkmod(compound_path, submit=True, from_relax=from_relax)
             return
-
         analyze_bulkmod(compound_path, from_relax=from_relax)
 
     if "elastic" in calculation_types:
@@ -818,5 +820,4 @@ def manage_calculations(compound_path, calculation_types):
         if not os.path.exists(elastic_path):
             setup_elastic(compound_path, submit=True)
             return
-
         do_analyze_elastic(compound_path)

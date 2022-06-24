@@ -1,10 +1,15 @@
 import json
+import logging
 import os
 import subprocess
 import warnings
 
 import numpy as np
 import pymatgen as pmg
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -20,8 +25,14 @@ class NumpyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def get_primitive_structure_from_poscar(path):
-    structure = pmg.core.Structure.from_file(path)
+def get_primitive_structure_from_poscar(poscar_path):
+    """
+    Args:
+        poscar_path (str)
+    Returns:
+        structure (pmg.Structure): primitive structure from POSCAR
+    """
+    structure = pmg.core.Structure.from_file(poscar_path)
     sga = pmg.symmetry.analyzer.SpacegroupAnalyzer(structure, symprec=1e-3)
     structure = sga.get_primitive_standard_structure()
     return structure
@@ -31,7 +42,7 @@ def change_elastic_constants_from_vasp(vasp_elastic_tensor):
     """
     VASP ordering of elastic constants is not the same as those expected
     by my equations below
-    We should expect from Voight notation:
+    We should expect from Voigt notation:
     1: 11 or xx
     2: 22 or yy
     3: 33 or zz
@@ -40,6 +51,11 @@ def change_elastic_constants_from_vasp(vasp_elastic_tensor):
     6: 12 or xy
     but VASP differs as it presents 1, 2, 3, 6 (xy), 4 (yz), 5 (xz)
     So perform swapping to match expectations
+
+    Args:
+        vasp_elastic_tensor (6x6 np.array)
+    Returns:
+        elastic_tensor (6x6 np.array): reordered to match Voigt notation
     """
     elastic_tensor = vasp_elastic_tensor.copy()
     for j in range(6):
@@ -58,6 +74,9 @@ def change_elastic_constants_from_vasp(vasp_elastic_tensor):
 
 
 def read_stiffness_tensor(elastic_file, change_from_vasp=True):
+    """
+    Read vasp stiffness tensor from elastic_file (made by
+    """
     with open(elastic_file, "r") as fr:
         raw_elastic_data = fr.readlines()
     # Skip first 3 rows as they are just header
@@ -71,7 +90,17 @@ def read_stiffness_tensor(elastic_file, change_from_vasp=True):
 
 
 def get_stiffness_tensor(c11, c12, c44):
-    # c is stiffness tensor
+    """
+    cij is stiffness tensor
+    Provide alternate way to construct the tensor from c11, c12, and c44
+
+    Args:
+        c11 (float)
+        c12 (float)
+        c44 (float)
+    Returns:
+        cij (6x6 np.array)
+    """
     cij = np.zeros((6, 6))
     cij[0, 0], cij[1, 1], cij[2, 2] = c11 * np.ones(3)
     cij[0, 1], cij[0, 2], cij[1, 0], cij[1, 2], cij[2, 0], cij[2, 1] = c12 * np.ones(6)
@@ -80,11 +109,23 @@ def get_stiffness_tensor(c11, c12, c44):
 
 
 def get_compliance_tensor(cij):
+    """
+    Args:
+        cij (6x6 np.arrray): stiffness tensor
+    Returns:
+        sij (6x6 np.arrray): compliance tensor
+    """
     sij = np.linalg.inv(cij)
     return sij
 
 
 def get_B_Reuss(sij):
+    """
+    Args:
+        sij (6x6 np.arrray): compliance tensor
+    Returns:
+        B_Reuss (float): Reuss bulk modulus
+    """
     B_Reuss = 1 / (
         (sij[0, 0] + sij[1, 1] + sij[2, 2]) + 2 * (sij[0, 1] + sij[1, 2] + sij[2, 0])
     )
@@ -92,6 +133,12 @@ def get_B_Reuss(sij):
 
 
 def get_B_Voigt(cij):
+    """
+    Args:
+        cij (6x6 np.arrray): compliance_tensor
+    Returns:
+        B_Reuss (float): Reuss bulk modulus
+    """
     B_Voigt = (
         (cij[0, 0] + cij[1, 1] + cij[2, 2]) + 2 * (cij[0, 1] + cij[1, 2] + cij[2, 0])
     ) / 9
@@ -99,6 +146,12 @@ def get_B_Voigt(cij):
 
 
 def get_G_Reuss(sij):
+    """
+    Args:
+        sij (6x6 np.arrray): compliance tensor
+    Returns:
+        B_Reuss (float): Reuss bulk modulus
+    """
     G_Reuss = 15 / (
         4 * (sij[0, 0] + sij[1, 1] + sij[2, 2])
         - 4 * (sij[0, 1] + sij[1, 2] + sij[2, 0])
@@ -108,6 +161,12 @@ def get_G_Reuss(sij):
 
 
 def get_G_Voigt(cij):
+    """
+    Args:
+        cij (6x6 np.arrray): stiffness tensor
+    Returns:
+        G_Reuss (float): Reuss shear modulus
+    """
     G_Voigt = (
         (cij[0, 0] + cij[1, 1] + cij[2, 2])
         - (cij[0, 1] + cij[1, 2] + cij[2, 0])
@@ -117,12 +176,23 @@ def get_G_Voigt(cij):
 
 
 def get_VRH_average(mod1, mod2):
+    """
+    Args:
+        mod1 (float):  B or G Voigt
+        mode2 (float): B or G Reuss
+    Returns:
+        VRH_average (float)
+    """
     return (mod1 + mod2) / 2.0
 
 
 def make_elastic_constants(outcar_path):
+    """
+    Utility function to scrape OUTCAR for elastic constants
+    Writes to elastic_constants.txt
+    """
     if not os.path.exists(outcar_path):
-        print("No OUTCAR available")
+        raise Exception("No OUTCAR available")
     # need to get elastic dir
     outcar_parent_dir = os.path.dirname(outcar_path)
     elastic_file = os.path.join(outcar_parent_dir, "elastic_constants.txt")
@@ -130,7 +200,12 @@ def make_elastic_constants(outcar_path):
     subprocess.call(elastic_call, shell=True)
 
 
-def analyze_elastic(elastic_file, to_print=True):
+def analyze_elastic(elastic_file, verbose=True):
+    """
+    Args:
+        elastic_file (str): filepath
+        to_print (bool): if True, print the result
+    """
     try:
         cij = read_stiffness_tensor(elastic_file)
         sij = get_compliance_tensor(cij)
@@ -141,12 +216,13 @@ def analyze_elastic(elastic_file, to_print=True):
         B_VRH = get_VRH_average(B_Reuss, B_Voigt)
         G_VRH = get_VRH_average(G_Reuss, G_Voigt)
     except Exception as e:
-        warnings.warn(f"No moduli available: {e}")
+        logger.warnings(f"No moduli available: {e}")
         return None
 
     c11 = cij[0, 0]
     c12 = cij[0, 1]
     if c11 < 0 or c12 < 0 or c11 <= 1.1 * c12:
+        logger.warning("-" * 10 + " WARNING: Elastically Unstable " + "-" * 10)
         warning = True
     else:
         warning = False
@@ -161,7 +237,7 @@ def analyze_elastic(elastic_file, to_print=True):
     elastic_dict["warning"] = warning
     elastic_dict["elastic_tensor"] = np.round(cij, 3)
 
-    if to_print:
-        print(json.dumps(elastic_dict, cls=NumpyEncoder, indent=2))
+    if verbose:
+        logging.info(json.dumps(elastic_dict, cls=NumpyEncoder, indent=2))
 
     return elastic_dict
