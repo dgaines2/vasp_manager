@@ -7,6 +7,7 @@ modes `"rlx-coarse"`, `"rlx-fine"`, `"bulkmod"`, `"bulkmod_rlx"`, and
 `vasp_manager/config/calc_config.json` with sensible defaults, but these can be
 easily customized by the user.
 
+### Calculation Modes
 `rlx-coarse`: (optional) lower precision energy-based relaxation
 `rlx-fine`: tighter force-based relaxation
 `bulkmod`: standalone (no relaxation required) bulk modulus calculation using
@@ -16,9 +17,8 @@ rlx-fine output structure
 `elastic`: Determination of elastic constants using the deformation method
 built into VASP
 
-The elastic analysis is carried out in the backend using the open-source
-`Pymatgen` software.
 
+### User Info
 In order to use this package, you MUST
 1) Create a calculations folder. Each subfolder of `calculations/` should have
 a unique name and contain a `POSCAR`. A sample method of creating the
@@ -29,7 +29,15 @@ specify your `user_id`, a `potcar directory`, a `queuetype`, and a `vasp
 module`. As of now, only CORI at NERSC and QUEST from Northwestern University
 are supported.
 
+Vasp input creation is automatic, and so is job submission and analysis. Simply
+rerun the main script and any calculations that are ready for the next type of
+calculation will be created and submitted.  The bulk moduli analysis is carried
+out in the backend using the open-source `Pymatgen` software, and elastic
+constant analysis is through custom personal scripts.
+
 The main function is `vasp_manager.calculation_manager.manage_calculations()`
+which takes in a list of calculation modes. See the documentation for more
+details.
 
 *Note:
 I plan to package everything into a class soon. Additionally, At this point,

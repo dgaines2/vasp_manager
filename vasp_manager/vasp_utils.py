@@ -193,6 +193,13 @@ def make_archive(compound_path, mode):
 
 
 def make_bulkmod_strains(bulkmod_path, strains):
+    """
+    Create a set of strain directory for fitting the E-V info
+
+    Args:
+        bulkmod_path (str)
+        strains (iterable of floats)
+    """
     logger.info("Making strain directories")
     for i, strain in enumerate(strains):
         middle = int(len(strains) / 2)
@@ -263,6 +270,9 @@ def analyze_bulkmod(bulkmod_path, from_relax=False):
 
 
 def analyze_elastic(elastic_path):
+    """
+    Get results from elastic calculation
+    """
     elastic_file = os.path.join(elastic_path, "elastic_constants.txt")
     if not os.path.exists(elastic_file):
         outcar_file = os.path.join(elastic_path, "OUTCAR")

@@ -177,6 +177,8 @@ def make_elastic_constants(outcar_path):
 
 def analyze_elastic_file(elastic_file, verbose=True):
     """
+    Grab important quantities from the elastic calculation results
+
     Args:
         elastic_file (str): filepath
         to_print (bool): if True, print the result
