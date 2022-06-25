@@ -37,17 +37,8 @@ def make_calculations_folder(data_path="structure_df.pickle.gz"):
 
 
 if __name__ == "__main__":
-    calculation_types = ["rlx-coarse", "rlx-fine", "elastic"]
-
     if not os.path.exists("calculations"):
         make_calculations_folder()
+    calculation_types = ["rlx-coarse", "rlx-fine", "elastic"]
 
-    compound_paths = [d for d in glob.glob("calculations/*") if os.path.isdir(d)]
-    # Sort the paths by name
-    compound_paths = sorted(compound_paths, key=lambda d: int(d.split("/")[1]))
-
-    for compound_path in compound_paths:
-        compound_name = compound_path.split("/")[1]
-        print(compound_name)
-        manage_calculations(compound_path, calculation_types)
-        print("")
+    manage_calculations(calculation_types)

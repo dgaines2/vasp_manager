@@ -5,37 +5,12 @@ import subprocess
 import warnings
 
 import numpy as np
-import pymatgen as pmg
+
+from .utils import NumpyEncoder
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-
-
-class NumpyEncoder(json.JSONEncoder):
-    """ Special json encoder for numpy types """
-
-    def default(self, obj):
-        if isinstance(obj, np.integer):
-            return int(obj)
-        elif isinstance(obj, np.floating):
-            return float(obj)
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
-
-
-def get_primitive_structure_from_poscar(poscar_path):
-    """
-    Args:
-        poscar_path (str)
-    Returns:
-        structure (pmg.Structure): primitive structure from POSCAR
-    """
-    structure = pmg.core.Structure.from_file(poscar_path)
-    sga = pmg.symmetry.analyzer.SpacegroupAnalyzer(structure, symprec=1e-3)
-    structure = sga.get_primitive_standard_structure()
-    return structure
 
 
 def change_elastic_constants_from_vasp(vasp_elastic_tensor):
@@ -75,7 +50,7 @@ def change_elastic_constants_from_vasp(vasp_elastic_tensor):
 
 def read_stiffness_tensor(elastic_file, change_from_vasp=True):
     """
-    Read vasp stiffness tensor from elastic_file (made by
+    Read vasp stiffness tensor from elastic_file
     """
     with open(elastic_file, "r") as fr:
         raw_elastic_data = fr.readlines()
@@ -200,7 +175,7 @@ def make_elastic_constants(outcar_path):
     subprocess.call(elastic_call, shell=True)
 
 
-def analyze_elastic(elastic_file, verbose=True):
+def analyze_elastic_file(elastic_file, verbose=True):
     """
     Args:
         elastic_file (str): filepath

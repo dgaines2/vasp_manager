@@ -5,181 +5,38 @@ import os
 import pkgutil
 import shutil
 import subprocess
-import sys
-import warnings
-from contextlib import contextmanager
 
 import numpy as np
-import pandas as pd
 import pymatgen as pmg
-from pymatgen.analysis.eos import BirchMurnaghan
 from pymatgen.io.vasp import Poscar
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
-from .elastic_analysis import (
+from .utils import change_directory, get_primitive_structure_from_poscar
+from .vasp_utils import (
+    analyze_bulkmod,
     analyze_elastic,
-    get_primitive_structure_from_poscar,
-    make_elastic_constants,
+    make_archive,
+    make_bulkmod_strains,
+    make_incar,
+    make_potcar,
+    make_vaspq,
 )
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 computing_config_dict = json.loads(
     pkgutil.get_data("vasp_manager", "config/computing_config.json").decode("utf-8")
 )
-calc_config_dict = json.loads(
-    pkgutil.get_data("vasp_manager", "config/calc_config.json").decode("utf-8")
-)
-potcar_dict = json.loads(
-    pkgutil.get_data("vasp_manager", "static_files/pot_dict.json").decode("utf-8")
-)
-q_mapper = json.loads(
-    pkgutil.get_data("vasp_manager", "static_files/q_handles.json").decode("utf-8")
-)
-incar_template = pkgutil.get_data("vasp_manager", "static_files/INCAR_template").decode(
-    "utf-8"
-)
 computer = computing_config_dict["computer"]
-
-# print(computing_config_dict)
-# print(calc_config_dict)
-# print(potcar_dict)
-# print(q_mapper)
-# print(incar_template)
-
-
-@contextmanager
-def change_directory(new_dir):
-    prev_dir = os.getcwd()
-    os.chdir(os.path.expanduser(new_dir))
-    try:
-        yield
-    finally:
-        os.chdir(prev_dir)
-
-
-def make_potcar(structure, write_path):
-    """
-    Create and write a POTCAR given a pmg structure
-
-    Args:
-        structure (pmg.Structure)
-        write_path (str): destination path
-    """
-    potcar_dir = computing_config_dict[computer]["potcar_dir"]
-
-    el_names = [el.name for el in structure.composition]
-    logging.info(el_names)
-    pot_singles = [
-        os.path.join(potcar_dir, potcar_dict[el_name], "POTCAR") for el_name in el_names
-    ]
-    cmd = "cat " + " ".join(pot_singles) + " > " + write_path
-    subprocess.call(cmd, shell=True)
-
-
-def make_incar(incar_path, mode):
-    """
-    mode should be 'rlx-coarse', 'rlx', 'bulkmod', 'bulkmod_rlx', or 'elastic'
-
-    Need to modify this to account for spin/magmom
-    Current kpoints coming from the kspacing tag in the INCAR,
-        but future versions should include ability to make kpoints from kppra
-    """
-    ncore = computing_config_dict[computer]["ncore"]
-
-    # bulkmod and bulkmod_rlx have same calc configs
-    if "bulkmod" in mode:
-        mode = "bulkmod"
-    calc_config = calc_config_dict[mode]
-    # if calc_config_dict["magmom"] == "auto":
-    #     calc_config_dict["magmom"] = ""
-
-    # Add lines to the vaspq file for only elastic calculations
-    incar_tmp = incar_template
-    if "elastic" in mode:
-        incar_tmp = incar_tmp.split("\n")
-        for i, line in enumerate(incar_tmp):
-            if "KSPACING" in line:
-                nfree_line = "NFREE = {nfree}"
-                symprec_line = "SYMPREC = {symprec}"
-                incar_tmp.insert(i + 1, symprec_line)
-                incar_tmp.insert(i + 1, nfree_line)
-            if "NCORE" in line:
-                incar_tmp[i] = "NPAR = 1"
-        incar_tmp = "\n".join([line for line in incar_tmp])
-    incar = incar_tmp.format(**calc_config, ncore=ncore)
-    with open(incar_path, "w+") as fw:
-        fw.write(incar)
-
-
-def make_vaspq(vaspq_path, mode, jobname=None, structure=None, increase_nodes=False):
-    """
-    mode should be 'rlx-coarse', 'rlx', 'bulkmod', 'bulkmod_rlx', or 'elastic'
-    """
-    calc_config = calc_config_dict[mode]
-    walltime = calc_config["walltime"]
-
-    parent_dir = os.path.dirname(vaspq_path)
-    if structure is None:
-        try:
-            poscar_path = os.path.join(parent_dir, "POSCAR")
-            structure = pmg.core.Structure.from_file(poscar_path)
-        except Exception as e:
-            raise Exception(f"Cannot load POSCAR in {parent_dir}: {e}")
-
-    # start with 1 node per 32 atoms
-    n_nodes = (len(structure) // 32) + 1
-    # create pad string for job naming to differentiate in the queue
-    if mode == "rlx" or mode == "rlx-coarse":
-        if mode == "rlx":
-            pad_string = "r"
-        elif mode == "rlx-coarse":
-            pad_string = "rc"
-        mode = "rlx"
-    elif "bulkmod" in mode:
-        pad_string = "b"
-        mode = "bulkmod"
-    elif mode == "elastic":
-        pad_string = "e"
-
-    if computer == "quest":
-        # quest has small nodes
-        n_nodes *= 2
-        n_procs = n_nodes * 28
-    else:
-        n_procs = n_nodes * 68
-
-    if jobname is None:
-        jobname = pad_string + structure.composition.reduced_formula
-    else:
-        jobname = pad_string + jobname
-
-    if increase_nodes:
-        n_nodes *= 2
-        n_procs *= 2
-        hours, minutes, seconds = walltime.split(":")
-        hours = str(int(hours) * 2)
-        walltime = ":".join([hours, minutes, seconds])
-
-    computer_config = computing_config_dict[computer].copy()
-    computer_config.update({"n_nodes": n_nodes, "n_procs": n_procs, "jobname": jobname})
-
-    q_name = q_mapper[computer][mode]
-    vaspq_tmp = pkgutil.get_data("vasp_manager", f"static_files/{q_name}").decode(
-        "utf-8"
-    )
-    vaspq = vaspq_tmp.format(**computer_config, walltime=walltime)
-    with open(vaspq_path, "w+") as fw:
-        fw.write(vaspq)
 
 
 def submit_job(compound_path, mode, ignore_errors=False):
     """ Call SLURM sbatch for the calculation and log the jobid """
     if "personal" in computer:
         ignore_errors = True
-        error_msg = "Cannot submit job on personal computer"
+        error_msg = f"Cannot submit {mode.upper()} job for on personal computer"
         error_msg += "\n\tIgnoring job submission..."
         logger.debug(error_msg)
         return True
@@ -187,14 +44,19 @@ def submit_job(compound_path, mode, ignore_errors=False):
     calc_path = os.path.join(compound_path, mode)
     jobid_path = os.path.join(calc_path, "jobid")
     if os.path.exists(jobid_path):
-        logger.info("Job already exists")
-        return
+        logger.info(f"{mode.upper()} Job already exists")
+        return True
+
     vaspq_location = os.path.join(calc_path, "vasp.q")
     if not os.path.exists(vaspq_location):
-        raise Exception(f"No vasp.q file in {calc_path}")
+        logger.info(f"No vasp.q file in {calc_path}")
+        # return False here instead of catching an exception
+        # This enables job resubmission
+        return False
     submission_call = "sbatch vasp.q | awk '{ print $4 }' | tee jobid"
     with change_directory(calc_path):
         subprocess.call(submission_call, shell=True)
+    return True
 
 
 def check_job_complete(jobid, ignore_errors=False):
@@ -218,164 +80,6 @@ def check_job_complete(jobid, ignore_errors=False):
             if jobid in line:
                 return False
         return True
-
-
-def make_archive(compound_path, mode):
-    """
-    Make an archive of a VASP calculation and copy back over relevant files
-
-    Args:
-        compound_path (str): base path of calculation
-        mode (str): subdirectory of compound_path to run the calculation
-    """
-    mode_path = os.path.join(compound_path, mode)
-    oqmd_id = compound_path.split("/")[1]
-    with change_directory(mode_path):
-        num_archives = len(glob.glob("archive*"))
-        all_files = [d for d in glob.glob("*") if os.path.isfile(d)]
-        archive_name = f"archive_{num_archives}"
-        logging.info(f"Making {archive_name}...")
-        os.mkdir(archive_name)
-
-        for f in all_files:
-            shutil.move(f, archive_name)
-
-        contcar_path = os.path.join(archive_name, "CONTCAR")
-        shutil.copy(contcar_path, "POSCAR")
-        potcar_path = os.path.join(archive_name, "POTCAR")
-        shutil.copy(potcar_path, "POTCAR")
-
-        incar_path = os.path.join(mode_path, "INCAR")
-        vaspq_path = os.path.join(mode_path, "vasp.q")
-        make_incar(incar_path, mode=mode)
-        make_vaspq(vaspq_path, mode=mode, jobname=oqmd_id)
-
-
-def setup_coarse_relax(
-    compound_path,
-    submit=False,
-    from_scratch=False,
-    rerun_relax=False,
-):
-    """
-    Set up a coarse relaxation
-
-    Args:
-        compound_path (str): base path of calculation
-        submit (bool): if True, submit calculation
-        from_scratch (bool): if True, remove previous calculation
-        rerun_relax (bool): if True, make an archive and resubmit
-    """
-    # POSCAR, POTCAR, INCAR, vasp.q
-    oqmd_id = compound_path.split("/")[1]
-    logger.info(f"{oqmd_id} Setting up rlx-coarse")
-    mode = "rlx-coarse"
-
-    crelax_path = os.path.join(compound_path, mode)
-    if from_scratch:
-        if os.path.exists(crelax_path):
-            shutil.rmtree(crelax_path)
-    if not os.path.exists(crelax_path):
-        os.mkdir(crelax_path)
-
-    # POSCAR
-    if rerun_relax:
-        make_archive(compound_path, mode=mode)
-    else:
-        orig_poscar_path = os.path.join(compound_path, "POSCAR")
-        final_poscar_path = os.path.join(crelax_path, "POSCAR")
-        shutil.copy(orig_poscar_path, final_poscar_path)
-
-        # POTCAR
-        structure = pmg.core.Structure.from_file(final_poscar_path)
-        potcar_path = os.path.join(crelax_path, "POTCAR")
-        make_potcar(structure, potcar_path)
-
-        # INCAR
-        incar_path = os.path.join(crelax_path, "INCAR")
-        make_incar(incar_path, mode=mode)
-
-        # vasp.q
-        vaspq_path = os.path.join(crelax_path, "vasp.q")
-        make_vaspq(vaspq_path, mode=mode, jobname=oqmd_id)
-
-    if submit:
-        submit_job(compound_path, mode=mode)
-
-
-def setup_relax(
-    compound_path,
-    submit=False,
-    from_scratch=False,
-    rerun_relax=False,
-    from_coarse=False,
-):
-    """
-    Set up a fine relaxation
-
-    Args:
-        compound_path (str): base path of calculation
-        submit (bool): if True, submit calculation
-        from_scratch (bool): if True, remove previous calculation
-        rerun_relax (bool): if True, make an archive and if submit, resubmit
-        from_coarse (bool): if True, copy the CONTCAR from the coarse relaxation
-            folder
-            If False, copy the POSCAR from compound_path
-    """
-    oqmd_id = compound_path.split("/")[1]
-    logger.info(f"{oqmd_id} Setting up rlx")
-
-    mode = "rlx"
-    if from_coarse:
-        crelax_done = check_relax(compound_path, mode="rlx-coarse")
-        if not crelax_done:
-            logger.info("RLX-COARSE not finished")
-            return
-
-    relax_path = os.path.join(compound_path, mode)
-    if from_scratch:
-        if os.path.exists(relax_path):
-            shutil.rmtree(relax_path)
-    if not os.path.exists(relax_path):
-        os.mkdir(relax_path)
-
-    if rerun_relax:
-        make_archive(compound_path, mode=mode)
-    else:
-        # POSCAR, POTCAR, INCAR, vasp.q
-        if from_coarse:
-            # POSCAR
-            crelax_path = os.path.join(compound_path, "rlx-coarse")
-            orig_poscar_path = os.path.join(crelax_path, "CONTCAR")
-            final_poscar_path = os.path.join(relax_path, "POSCAR")
-            shutil.copy(orig_poscar_path, final_poscar_path)
-            structure = pmg.core.Structure.from_file(final_poscar_path)
-
-            # POTCAR
-            orig_potcar_path = os.path.join(crelax_path, "POTCAR")
-            final_potcar_path = os.path.join(relax_path, "POTCAR")
-            shutil.copy(orig_potcar_path, final_potcar_path)
-        else:
-            # POSCAR
-            orig_poscar_path = os.path.join(compound_path, "POSCAR")
-            final_poscar_path = os.path.join(relax_path, "POSCAR")
-            shutil.copy(orig_poscar_path, final_poscar_path)
-            structure = pmg.core.Structure.from_file(final_poscar_path)
-
-            # POTCAR
-            potcar_path = os.path.join(relax_path, "POTCAR")
-            make_potcar(structure, potcar_path)
-
-        # INCAR
-        incar_path = os.path.join(relax_path, "INCAR")
-        make_incar(incar_path, mode=mode)
-
-        # vasp.q
-        vaspq_path = os.path.join(relax_path, "vasp.q")
-        make_vaspq(vaspq_path, mode=mode, jobname=oqmd_id)
-
-    if submit:
-        submit_job(compound_path, mode=mode)
 
 
 def check_relax(
@@ -422,6 +126,7 @@ def check_relax(
         )
         if "reached required accuracy" in grep_output:
             logger.info(f"{mode.upper()} Calculation: reached required accuracy")
+            logger.debug(grep_output)
             return True
         else:
             archive_dirs = glob.glob(f"{relax_path}/archive*")
@@ -500,10 +205,142 @@ def check_volume_difference(compound_path, rerun_relax=False, submit=False):
     return volume_converged
 
 
-def setup_simple_bulkmod(
+def setup_coarse_relax(
+    compound_path,
+    submit=False,
+    rerun_relax=False,
+):
+    """
+    Set up a coarse relaxation
+
+    Args:
+        compound_path (str): base path of calculation
+        submit (bool): if True, submit calculation
+        rerun_relax (bool): if True, make an archive and resubmit
+    """
+    # POSCAR, POTCAR, INCAR, vasp.q
+    oqmd_id = compound_path.split("/")[1]
+    logger.info(f"{oqmd_id} Setting up rlx-coarse")
+    mode = "rlx-coarse"
+
+    crelax_path = os.path.join(compound_path, mode)
+    if not os.path.exists(crelax_path):
+        os.mkdir(crelax_path)
+
+    # POSCAR
+    if rerun_relax:
+        archive_made = make_archive(compound_path, mode=mode)
+        if not archive_made:
+            # set rerun_relax to not make an achive and instead
+            # continue to make the input files
+            setup_coarse_relax(compound_path, submit=submit, rerun_relax=False)
+    else:
+        orig_poscar_path = os.path.join(compound_path, "POSCAR")
+        final_poscar_path = os.path.join(crelax_path, "POSCAR")
+        shutil.copy(orig_poscar_path, final_poscar_path)
+
+        # POTCAR
+        structure = pmg.core.Structure.from_file(final_poscar_path)
+        potcar_path = os.path.join(crelax_path, "POTCAR")
+        make_potcar(structure, potcar_path)
+
+        # INCAR
+        incar_path = os.path.join(crelax_path, "INCAR")
+        make_incar(incar_path, mode=mode)
+
+        # vasp.q
+        vaspq_path = os.path.join(crelax_path, "vasp.q")
+        make_vaspq(vaspq_path, mode=mode, jobname=oqmd_id)
+
+    if submit:
+        job_status = submit_job(compound_path, mode=mode)
+        if not job_submitted:
+            setup_coarse_relax(compound_path, submit=True, rerun_relax=True)
+
+
+def setup_relax(
+    compound_path,
+    submit=False,
+    rerun_relax=False,
+    from_coarse=False,
+):
+    """
+    Set up a fine relaxation
+
+    Args:
+        compound_path (str): base path of calculation
+        submit (bool): if True, submit calculation
+        rerun_relax (bool): if True, make an archive and if submit, resubmit
+        from_coarse (bool): if True, copy the CONTCAR from the coarse relaxation
+            folder
+            If False, copy the POSCAR from compound_path
+    """
+    oqmd_id = compound_path.split("/")[1]
+    logger.info(f"{oqmd_id} Setting up rlx")
+
+    mode = "rlx"
+    if from_coarse:
+        crelax_done = check_relax(compound_path, mode="rlx-coarse")
+        if not crelax_done:
+            logger.info("RLX-COARSE not finished")
+            return
+
+    relax_path = os.path.join(compound_path, mode)
+    if not os.path.exists(relax_path):
+        os.mkdir(relax_path)
+
+    if rerun_relax:
+        archive_made = make_archive(compound_path, mode=mode)
+        if not archive_made:
+            # set rerun_relax to not make an achive and instead
+            # continue to make the input files
+            setup_relax(
+                compound_path, submit=submit, rerun_relax=False, from_coarse=from_coarse
+            )
+    else:
+        # POSCAR, POTCAR, INCAR, vasp.q
+        if from_coarse:
+            # POSCAR
+            crelax_path = os.path.join(compound_path, "rlx-coarse")
+            orig_poscar_path = os.path.join(crelax_path, "CONTCAR")
+            final_poscar_path = os.path.join(relax_path, "POSCAR")
+            shutil.copy(orig_poscar_path, final_poscar_path)
+            structure = pmg.core.Structure.from_file(final_poscar_path)
+
+            # POTCAR
+            orig_potcar_path = os.path.join(crelax_path, "POTCAR")
+            final_potcar_path = os.path.join(relax_path, "POTCAR")
+            shutil.copy(orig_potcar_path, final_potcar_path)
+        else:
+            # POSCAR
+            orig_poscar_path = os.path.join(compound_path, "POSCAR")
+            final_poscar_path = os.path.join(relax_path, "POSCAR")
+            shutil.copy(orig_poscar_path, final_poscar_path)
+            structure = pmg.core.Structure.from_file(final_poscar_path)
+
+            # POTCAR
+            potcar_path = os.path.join(relax_path, "POTCAR")
+            make_potcar(structure, potcar_path)
+
+        # INCAR
+        incar_path = os.path.join(relax_path, "INCAR")
+        make_incar(incar_path, mode=mode)
+
+        # vasp.q
+        vaspq_path = os.path.join(relax_path, "vasp.q")
+        make_vaspq(vaspq_path, mode=mode, jobname=oqmd_id)
+
+    if submit:
+        job_status = submit_job(compound_path, mode=mode)
+        if not job_submitted:
+            setup_relax(
+                compound_path, submit=True, rerun_relax=True, from_coarse=from_coarse
+            )
+
+
+def setup_bulkmod(
     compound_path,
     submit=True,
-    from_scratch=False,
     from_relax=False,
 ):
     """
@@ -512,7 +349,6 @@ def setup_simple_bulkmod(
     Args:
         compound_path (str): base path of calculation
         submit (bool): if True, submit calculation
-        from_scratch (bool): if True, remove previous calculation
         from_relax (bool): if True, copy the CONTCAR from the relaxation folder
             If False, copy the POSCAR from compound_path
     """
@@ -533,9 +369,6 @@ def setup_simple_bulkmod(
         mode = "bulkmod"
     bulkmod_path = os.path.join(compound_path, mode)
 
-    if from_scratch:
-        if os.path.exists(bulkmod_path):
-            shutil.rmtree(bulkmod_path)
     if not os.path.exists(bulkmod_path):
         os.mkdir(bulkmod_path)
 
@@ -561,91 +394,30 @@ def setup_simple_bulkmod(
     vaspq_path = os.path.join(bulkmod_path, "vasp.q")
     make_vaspq(vaspq_path, mode=mode, jobname=oqmd_id)
 
-    logger.info("Making strain directories")
     strains = np.power(np.linspace(0.8, 1.2, 11), 1 / 3)
-    for i, strain in enumerate(strains):
-        middle = int(len(strains) / 2)
-        strain_index = i - middle
-        strain_name = f"strain_{strain_index}"
-        strain_path = os.path.join(bulkmod_path, strain_name)
-        logger.info(strain_path)
-
-        if not os.path.exists(strain_path):
-            os.mkdir(strain_path)
-        orig_poscar_path = os.path.join(bulkmod_path, "POSCAR")
-        strain_poscar_path = os.path.join(strain_path, "POSCAR")
-        shutil.copy(orig_poscar_path, strain_poscar_path)
-
-        # change second line to be {strain} rather than 1.0
-        with open(strain_poscar_path, "r") as fr:
-            strain_poscar = fr.read().splitlines()
-        strain_poscar[1] = f"{strain}"
-        with open(strain_poscar_path, "w+") as fw:
-            fw.write("\n".join(strain_poscar))
-
-        with change_directory(strain_path):
-            for f in ["POTCAR", "INCAR"]:
-                orig_path = "../" + f
-                f_path = f
-                os.symlink(orig_path, f_path, target_is_directory=False)
+    make_bulkmod_strains(bulkmod_path, strains)
 
     if submit:
         mode = "bulkmod"
         if from_relax:
             mode += "_rlx"
-        submit_job(compound_path, mode=mode)
+        job_status = submit_job(compound_path, mode=mode)
+        if not job_submitted:
+            setup_bulkmod(compound_path, submit=True, rerun_relax=from_relax)
 
 
-def analyze_bulkmod(compound_path, from_relax=False):
-    """
-    Fit an EOS to calculate the bulk modulus from a finished bulkmod calculation
-
-    Args:
-        compound_path (str): base path of calculation
-        from_relax (bool): if True, copy the CONTCAR from the relaxation folder
-            If False, copy the POSCAR from compound_path
-    """
-    mode = "bulkmod"
-    if from_relax:
-        mode += "_rlx"
-    bulkmod_path = os.path.join(compound_path, mode)
-
+def check_bulkmod(bulkmod_path, from_relax=False):
     jobid_path = os.path.join(bulkmod_path, "jobid")
     if os.path.exists(jobid_path):
         with open(jobid_path, "r") as fr:
             job_id = fr.readline().splitlines()[0]
         job_complete = check_job_complete(job_id)
         if not job_complete:
-            logger.info(f"{mode.upper()} not finished")
-            return -1
+            logger.info(f"{mode.upper()} job not finished")
+        return False
     else:
         raise Exception(f"No job id exists in {bulkmod_path}")
-
-    strain_paths = [
-        path for path in glob.glob(bulkmod_path + "/strain*") if os.path.isdir(path)
-    ]
-    strain_paths = sorted(strain_paths, key=lambda d: int(d.split("_")[-1]))
-    volumes = []
-    final_energies = []
-    for i, strain_path in enumerate(strain_paths):
-        poscar_path = os.path.join(strain_path, "POSCAR")
-        vasprun_path = os.path.join(strain_path, "vasprun.xml")
-        volume = pmg.core.Structure.from_file(poscar_path).volume
-        vasprun = pmg.io.vasp.outputs.Vasprun(
-            filename=vasprun_path,
-            parse_dos=False,
-            parse_eigen=False,
-            parse_potcar_file=False,
-        )
-        final_energy = vasprun.final_energy
-        volumes.append(volume)
-        final_energies.append(final_energy)
-    eos_analyzer = BirchMurnaghan(volumes, final_energies)
-    eos_analyzer.fit()
-    bulk_modulus = np.round(eos_analyzer.b0_GPa, 3)
-    logger.info(f"{mode.upper()} Calculation: Successful")
-    logger.info(f"BULK MODULUS: {bulk_modulus}")
-    return bulk_modulus
+    return True
 
 
 def setup_elastic(compound_path, submit=True, increase_nodes=False):
@@ -705,10 +477,12 @@ def setup_elastic(compound_path, submit=True, increase_nodes=False):
     )
 
     if submit:
-        submit_job(compound_path, mode="elastic")
+        job_status = submit_job(compound_path, mode=mode)
+        if not job_submitted:
+            setup_bulkmod(compound_path, submit=True, increase_nodes=increase_nodes)
 
 
-def check_elastic_calculation(compound_path, rerun=False, submit=False, tail=5):
+def check_elastic(elastic_path, rerun=False, submit=False, tail=5):
     """
     Check result of elastic calculation
 
@@ -721,10 +495,7 @@ def check_elastic_calculation(compound_path, rerun=False, submit=False, tail=5):
     Returns
         elastic_successful (bool): if True, elastic calculation completed successfully
     """
-    # check stdout.txt for 36/36
     mode = "elastic"
-    elastic_path = os.path.join(compound_path, "elastic")
-
     jobid_path = os.path.join(elastic_path, "jobid")
     if os.path.exists(jobid_path):
         with open(jobid_path, "r") as fr:
@@ -769,36 +540,31 @@ def check_elastic_calculation(compound_path, rerun=False, submit=False, tail=5):
         return False
 
 
-def do_analyze_elastic(compound_path):
-    elastic_successful = check_elastic_calculation(compound_path)
-    if not elastic_successful:
-        return
-
-    elastic_file = os.path.join(compound_path, "elastic", "elastic_constants.txt")
-    if not os.path.exists(elastic_file):
-        outcar_file = os.path.join(compound_path, "elastic", "OUTCAR")
-        make_elastic_constants(outcar_file)
-    results = analyze_elastic(elastic_file)
-    return results
-
-
-def manage_calculations(compound_path, calculation_types):
+def manage_calculation(compound_path, calculation_types, submit=True, rerun_relax=True):
     if "rlx-coarse" in calculation_types:
         coarse_rlx_path = os.path.join(compound_path, "rlx-coarse")
+        # if rlx-coarse doesn't exist, set it up
         if not os.path.exists(coarse_rlx_path):
-            setup_coarse_relax(compound_path, submit=True)
+            setup_coarse_relax(compound_path, submit=submit)
             return
-        check_relax(compound_path, mode="rlx-coarse")
+        # else, check if it finished
+        check_relax(compound_path, mode="rlx-coarse", rerun_relax=rerun_relax)
+        # if rlx-coarse fails, it'll be caught in check_relax
+        # and setup_relax won't run
         from_coarse = True
     else:
         from_coarse = False
 
     if "rlx-fine" in calculation_types:
         rlx_path = os.path.join(compound_path, "rlx")
+        # if rlx doesn't exist, set it up
         if not os.path.exists(rlx_path):
-            setup_relax(compound_path, submit=True, from_coarse=from_coarse)
+            setup_relax(compound_path, submit=submit, from_coarse=from_coarse)
             return
-        check_relax(compound_path, mode="rlx")
+        # else, check if it finished
+        check_relax(compound_path, mode="rlx", rerun_relax=rerun_relax, submit=submit)
+        # if rlx fails, it'll be caught in check_relax
+        # and setup_bulkmod (if from_relax=True) won't run
         from_relax = True
     else:
         from_relax = False
@@ -809,15 +575,40 @@ def manage_calculations(compound_path, calculation_types):
         else:
             bulkmod_path = os.path.join(compound_path, "bulkmod")
 
+        # if bulkmod doesn't exist, set it up
         if not os.path.exists(bulkmod_path):
-            setup_simple_bulkmod(compound_path, submit=True, from_relax=from_relax)
+            setup_bulkmod(compound_path, submit=submit, from_relax=from_relax)
+            return
+        # else, check it, then analyze it
+        bulkmod_successful = check_bulkmod(bulkmod_path, from_relax=from_relax)
+        if not bulkmod_successful:
             return
         analyze_bulkmod(compound_path, from_relax=from_relax)
+        # if it fails, don't auto resubmit so you can find the problem
 
     if "elastic" in calculation_types:
+        # if elastic doesn't exist, set it up
         elastic_path = os.path.join(compound_path, "elastic")
-
         if not os.path.exists(elastic_path):
-            setup_elastic(compound_path, submit=True)
+            setup_elastic(compound_path, submit=submit)
             return
-        do_analyze_elastic(compound_path)
+        # else, check if it finished
+        elastic_successful = check_elastic(elastic_path, rerun=True)
+        # else, check it, then analyze it
+        if not elastic_successful:
+            return
+        analyze_elastic(elastic_path)
+        # if it fails, don't auto resubmit so you can find the problem
+
+
+def manage_calculations(calculation_types):
+    compound_paths = [d for d in glob.glob("calculations/*") if os.path.isdir(d)]
+    # Sort the paths by name
+    compound_paths = sorted(compound_paths, key=lambda d: int(d.split("/")[1]))
+
+    for compound_path in compound_paths:
+        compound_name = compound_path.split("/")[1]
+        logger.info(compound_name)
+        manage_calculation(compound_path, calculation_types)
+        print("\n\n")
+        # else, check it, then analyze it
