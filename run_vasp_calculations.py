@@ -5,10 +5,6 @@ import sys
 
 from vasp_manager import manage_calculations
 
-global logger
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 
 def make_calculations_folder(data_path="structure_df.pickle.gz"):
     """
@@ -37,6 +33,12 @@ def make_calculations_folder(data_path="structure_df.pickle.gz"):
 
 
 if __name__ == "__main__":
+    get_logging = True
+    logging_level = logging.DEBUG
+    if get_logging:
+        logging.basicConfig()
+        logging.getLogger("vasp_manager").setLevel(logging_level)
+
     if not os.path.exists("calculations"):
         make_calculations_folder()
     calculation_types = ["rlx-coarse", "rlx-fine", "elastic"]

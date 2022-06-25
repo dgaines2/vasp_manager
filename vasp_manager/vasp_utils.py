@@ -16,9 +16,7 @@ from pymatgen.analysis.eos import BirchMurnaghan
 from .elastic_analysis import analyze_elastic_file, make_elastic_constants
 from .utils import change_directory
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 computing_config_dict = json.loads(
     pkgutil.get_data("vasp_manager", "config/computing_config.json").decode("utf-8")
@@ -49,7 +47,7 @@ def make_potcar(structure, write_path):
     potcar_dir = computing_config_dict[computer]["potcar_dir"]
 
     el_names = [el.name for el in structure.composition]
-    logging.debug(f"{structure.composition.reduced_formula}, {el_names}")
+    logger.debug(f"{structure.composition.reduced_formula}, {el_names}")
     pot_singles = [
         os.path.join(potcar_dir, potcar_dict[el_name], "POTCAR") for el_name in el_names
     ]
@@ -178,7 +176,7 @@ def make_archive(compound_path, mode):
         num_archives = len(glob.glob("archive*"))
         all_files = [d for d in glob.glob("*") if os.path.isfile(d)]
         archive_name = f"archive_{num_archives}"
-        logging.info(f"Making {archive_name}...")
+        logger.info(f"Making {archive_name}...")
         os.mkdir(archive_name)
         for f in all_files:
             shutil.move(f, archive_name)

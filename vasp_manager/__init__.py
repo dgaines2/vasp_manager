@@ -9,6 +9,7 @@ __package__ = "vasp_manager"
 __version__ = "1.0.0"
 __author__ = "Dale Gaines II"
 
+import logging
 
 from .calculation_manager import (
     manage_calculation,
@@ -18,3 +19,5 @@ from .calculation_manager import (
     setup_elastic,
     setup_relax,
 )
+
+logging.getLogger(__name__).addHandler(logging.NullHandler())

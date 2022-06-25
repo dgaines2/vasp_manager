@@ -25,9 +25,7 @@ from .vasp_utils import (
     make_vaspq,
 )
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 computing_config_dict = json.loads(
     pkgutil.get_data("vasp_manager", "config/computing_config.json").decode("utf-8")
@@ -36,7 +34,7 @@ computer = computing_config_dict["computer"]
 
 
 def submit_job(compound_path, mode, ignore_errors=False):
-    """ Call SLURM sbatch for the calculation and log the jobid """
+    """Call SLURM sbatch for the calculation and log the jobid"""
     if "personal" in computer:
         ignore_errors = True
         error_msg = f"Cannot submit {mode.upper()} job for on personal computer"
@@ -611,7 +609,6 @@ def manage_calculations(calculation_types):
 
     for compound_path in compound_paths:
         compound_name = compound_path.split("/")[1]
-        logger.info(compound_name)
+        print(compound_name)
         manage_calculation(compound_path, calculation_types)
-        print("\n\n")
-        # else, check it, then analyze it
+        print("\n")

@@ -11,9 +11,7 @@ import numpy as np
 
 from .utils import NumpyEncoder
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 
 def change_elastic_constants_from_vasp(vasp_elastic_tensor):
@@ -218,6 +216,6 @@ def analyze_elastic_file(elastic_file, verbose=True):
     elastic_dict["elastic_tensor"] = np.round(cij, 3)
 
     if verbose:
-        logging.info(json.dumps(elastic_dict, cls=NumpyEncoder, indent=2))
+        logger.info(json.dumps(elastic_dict, cls=NumpyEncoder, indent=2))
 
     return elastic_dict

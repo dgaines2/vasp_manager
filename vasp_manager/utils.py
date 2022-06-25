@@ -19,7 +19,7 @@ def change_directory(new_dir):
 
 
 class NumpyEncoder(json.JSONEncoder):
-    """ Special json encoder for numpy types """
+    """Special json encoder for numpy types"""
 
     def default(self, obj):
         if isinstance(obj, np.integer):
