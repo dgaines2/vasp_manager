@@ -1,3 +1,6 @@
+# Copyright (c) Dale Gaines II
+# Distributed under the terms of the MIT LICENSE
+
 import json
 import logging
 import os
