@@ -1,6 +1,10 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
+"""
+Set
+"""
+
 import glob
 import json
 import logging
@@ -32,6 +36,90 @@ computing_config_dict = json.loads(
 )
 computer = computing_config_dict["computer"]
 
+"""
+One single big CalculationManager?
+
+One CalculationManager and one QuqueManager
+VM -- handles calculation logic
+    like if rlx-coarse.isdone, do rlx
+QM -- handles job submission and status
+    submit_job
+    check_job_complete
+
+One CalculationsManager
+    Handles set up of each CalculationManager (rlx-coarse, rlx, bulkmod,
+    bulkmod_rlx, elastic)
+    -- self.calculation_types
+    -- self.compound_paths
+    -- self.calculations
+
+    A JobManager -- handles job submission and status
+        -- self.computer
+        -- self.job_exists
+        -- self.jobid
+        -- self.job_complete
+        -- self.ignore_personal_error
+        -- self.summary
+        -- self.submit()
+        -- self._check_job_complete()
+
+    with CalculationManager as a base class
+        and sublcasses that inherit CalcManager but have separate workflows with
+        -- self.compound_path
+        -- self.summary
+        -- self.job_manager
+        -- self.rerun (ABC)
+        -- self.setup_calc() (ABC)
+        -- self.check_calc() (ABC)
+        -- self.submit (ABC)
+        -- self.restart_calc() (ABC)
+        -- self._from_scratch() (ABC)
+
+        a standard api that should implement
+        -- self.calculation_type
+        -- self.calc_path
+        -- self.rerun
+        -- self.submit()
+        -- self.setup_calc()
+        -- self.check_calc()
+        -- self.restart_calc()
+        -- self._from_scratch()
+        -- self.summary
+
+"""
+
+
+class CalculationManager:
+    """
+    Run vasp job workflow for a single material
+
+    What other attributes should I store?
+        Computer
+        Computing
+        Calculation directory?
+
+    """
+
+    def __init__(
+        self,
+        compound_path,
+        calculation_types,
+    ):
+        self._calculation_types = calculation_types
+        self._compound_path = compound_path
+
+    @property
+    def func(self):
+        return self.func
+
+    @property
+    def calculation_types(self):
+        return self.calculation_types
+
+    @property
+    def compound_path(self):
+        return self.compound_path
+
 
 def submit_job(compound_path, mode, ignore_errors=False):
     """Call SLURM sbatch for the calculation and log the jobid"""
@@ -52,7 +140,8 @@ def submit_job(compound_path, mode, ignore_errors=False):
     if not os.path.exists(vaspq_location):
         logger.info(f"No vasp.q file in {calc_path}")
         # return False here instead of catching an exception
-        # This enables job resubmission
+        # This enables job resubmission by letting the calling function
+        # know that the calculation needs to be restarted
         return False
     submission_call = "sbatch vasp.q | awk '{ print $4 }' | tee jobid"
     with change_directory(calc_path):
@@ -67,6 +156,7 @@ def check_job_complete(jobid, ignore_errors=False):
         error_msg = "Cannot check job on personal computer"
         error_msg += "\n\tIgnoring job status check..."
         logger.debug(error_msg)
+        # This enables job resubmission by letting the calling function
         return True
     else:
         user_id = computing_config_dict[computer]["user_id"]
