@@ -86,7 +86,7 @@ def check_job_complete(jobid, ignore_errors=False):
 def check_relax(
     compound_path,
     mode="rlx-coarse",
-    rerun_relax=False,
+    rerun=False,
     submit=False,
     tail=5,
 ):
@@ -96,9 +96,9 @@ def check_relax(
 
     Args:
         compound_path (str): base path of calculation
-        rerun_relax (bool): if True and job fails, make an archive and re-setup
+        rerun (bool): if True and job fails, make an archive and re-setup
             the rlx folder
-        submit (bool): if True and rerun_relax, submit calculation
+        submit (bool): if True and rerun, submit calculation
         tail (int): If job fails, print {tail} lines from stdout.txt
         mode (str): "rlx" or "rlx-coarse"
 
@@ -133,25 +133,25 @@ def check_relax(
             archive_dirs = glob.glob(f"{relax_path}/archive*")
             if "coarse" in mode and len(archive_dirs) >= 3:
                 logger.warning("Many archives exist, suggest force based relaxation")
-                if rerun_relax:
-                    setup_relax(compound_path, submit=submit, rerun_relax=True)
+                if rerun:
+                    setup_relax(compound_path, submit=submit, rerun=True)
                 return True
 
             logger.warning(f"{mode.upper()} FAILED")
             logger.debug(grep_output)
-            if rerun_relax:
+            if rerun:
                 logger.info(f"Rerunning {compound_path}")
                 if "coarse" in mode:
-                    setup_coarse_relax(compound_path, submit=submit, rerun_relax=True)
+                    setup_coarse_relax(compound_path, submit=submit, rerun=True)
                 else:
-                    setup_relax(compound_path, submit=submit, rerun_relax=True)
+                    setup_relax(compound_path, submit=submit, rerun=True)
             return False
     else:
         logger.info(f"{mode.upper()} not started")
         return False
 
 
-def check_volume_difference(compound_path, rerun_relax=False, submit=False):
+def check_volume_difference(compound_path, rerun=False, submit=False):
     """
     check relaxation runs for volume difference
 
@@ -160,15 +160,13 @@ def check_volume_difference(compound_path, rerun_relax=False, submit=False):
 
     Args:
         compound_path (str): base path of calculation
-        rerun_relax (bool): if True, make an archive and re-setup the rlx folder
-        submit (bool): if True and rerun_relax, submit calculation
+        rerun (bool): if True, make an archive and re-setup the rlx folder
+        submit (bool): if True and rerun, submit calculation
 
     Returns:
         volume_converged (bool): if True, relaxation completed successfully
     """
-    relaxation_done = check_relax(
-        compound_path, rerun_relax=rerun_relax, submit=submit, mode="rlx"
-    )
+    relaxation_done = check_relax(compound_path, rerun=rerun, submit=submit, mode="rlx")
     if not relaxation_done:
         return False
 
@@ -197,8 +195,8 @@ def check_volume_difference(compound_path, rerun_relax=False, submit=False):
     if np.abs(volume_diff) >= 0.05:
         logger.warning(f"  NEED TO RE-RELAX: dV = {volume_diff:.4f}")
         volume_converged = False
-        if rerun_relax:
-            setup_relax(compound_path, rerun_relax=True, submit=submit)
+        if rerun:
+            setup_relax(compound_path, rerun=True, submit=submit)
     else:
         logger.info(f"  RLX volume converged")
         logger.info(f"  dV = {volume_diff:.4f}")
@@ -209,7 +207,7 @@ def check_volume_difference(compound_path, rerun_relax=False, submit=False):
 def setup_coarse_relax(
     compound_path,
     submit=False,
-    rerun_relax=False,
+    rerun=False,
 ):
     """
     Set up a coarse relaxation
@@ -217,7 +215,7 @@ def setup_coarse_relax(
     Args:
         compound_path (str): base path of calculation
         submit (bool): if True, submit calculation
-        rerun_relax (bool): if True, make an archive and resubmit
+        rerun (bool): if True, make an archive and resubmit
     """
     # POSCAR, POTCAR, INCAR, vasp.q
     oqmd_id = compound_path.split("/")[1]
@@ -229,12 +227,12 @@ def setup_coarse_relax(
         os.mkdir(crelax_path)
 
     # POSCAR
-    if rerun_relax:
+    if rerun:
         archive_made = make_archive(compound_path, mode=mode)
         if not archive_made:
-            # set rerun_relax to not make an achive and instead
+            # set rerun to not make an achive and instead
             # continue to make the input files
-            setup_coarse_relax(compound_path, submit=submit, rerun_relax=False)
+            setup_coarse_relax(compound_path, submit=submit, rerun=False)
     else:
         orig_poscar_path = os.path.join(compound_path, "POSCAR")
         final_poscar_path = os.path.join(crelax_path, "POSCAR")
@@ -257,13 +255,13 @@ def setup_coarse_relax(
         job_status = submit_job(compound_path, mode=mode)
         # job status returns True if sucessfully submitted, else False
         if not job_status:
-            setup_coarse_relax(compound_path, submit=True, rerun_relax=True)
+            setup_coarse_relax(compound_path, submit=True, rerun=True)
 
 
 def setup_relax(
     compound_path,
     submit=False,
-    rerun_relax=False,
+    rerun=False,
     from_coarse=False,
 ):
     """
@@ -272,7 +270,7 @@ def setup_relax(
     Args:
         compound_path (str): base path of calculation
         submit (bool): if True, submit calculation
-        rerun_relax (bool): if True, make an archive and if submit, resubmit
+        rerun (bool): if True, make an archive and if submit, resubmit
         from_coarse (bool): if True, copy the CONTCAR from the coarse relaxation
             folder
             If False, copy the POSCAR from compound_path
@@ -291,13 +289,13 @@ def setup_relax(
     if not os.path.exists(relax_path):
         os.mkdir(relax_path)
 
-    if rerun_relax:
+    if rerun:
         archive_made = make_archive(compound_path, mode=mode)
         if not archive_made:
-            # set rerun_relax to not make an achive and instead
+            # set rerun to not make an achive and instead
             # continue to make the input files
             setup_relax(
-                compound_path, submit=submit, rerun_relax=False, from_coarse=from_coarse
+                compound_path, submit=submit, rerun=False, from_coarse=from_coarse
             )
     else:
         # POSCAR, POTCAR, INCAR, vasp.q
@@ -336,7 +334,7 @@ def setup_relax(
         job_status = submit_job(compound_path, mode=mode)
         if not job_status:
             setup_relax(
-                compound_path, submit=True, rerun_relax=True, from_coarse=from_coarse
+                compound_path, submit=submit, rerun=False, from_coarse=from_coarse
             )
 
 
@@ -406,7 +404,7 @@ def setup_bulkmod(
         job_status = submit_job(compound_path, mode=mode)
         # job status returns True if sucessfully submitted, else False
         if not job_status:
-            setup_bulkmod(compound_path, submit=True, rerun_relax=from_relax)
+            setup_bulkmod(compound_path, submit=True, from_relax=from_relax)
 
 
 def check_bulkmod(bulkmod_path, from_relax=False):
@@ -487,7 +485,7 @@ def setup_elastic(compound_path, submit=True, increase_nodes=False):
         job_status = submit_job(compound_path, mode=mode)
         # job status returns True if sucessfully submitted, else False
         if not job_status:
-            setup_elastic(compound_path, submit=submit)
+            setup_elastic(compound_path, submit=submit, increase_nodes=increase_nodes)
 
 
 def check_elastic(elastic_path, rerun=False, submit=False, tail=5):
@@ -537,18 +535,27 @@ def check_elastic(elastic_path, rerun=False, submit=False, tail=5):
             logger.info(grep_output)
             logger.info(f"{mode.upper()} Calculation: FAILED")
             if rerun:
-            # increase nodes as its likely the calculation failed
+                # increase nodes as its likely the calculation failed
                 setup_elastic(elastic_path, submit=submit, increase_nodes=True)
             return False
     else:
         # shouldn't get here unless function was called with submit=False
         logger.info("{mode.upper()} Calculation: No stdout.txt available")
         if rerun:
-            setup_elastic(elastic_path, submit=submit)
+            setup_elastic(elastic_path, submit=submit, increase_nodes=False)
         return False
 
 
-def manage_calculation(compound_path, calculation_types, submit=True, rerun_relax=True):
+def manage_calculation(compound_path, calculation_types, submit=True, rerun=True):
+    """
+    Run vasp job workflow for a single material
+
+    Args:
+        compound_path (str)
+        calculation_types list(str):
+        submit (bool): if True, submit failed jobs
+        rerun (bool): if True, rerun failed relaxation jobs
+    """
     if "rlx-coarse" in calculation_types:
         coarse_rlx_path = os.path.join(compound_path, "rlx-coarse")
         # if rlx-coarse doesn't exist, set it up
@@ -556,7 +563,7 @@ def manage_calculation(compound_path, calculation_types, submit=True, rerun_rela
             setup_coarse_relax(compound_path, submit=submit)
             return
         # else, check if it finished
-        check_relax(compound_path, mode="rlx-coarse", rerun_relax=rerun_relax)
+        check_relax(compound_path, mode="rlx-coarse", rerun=rerun)
         # if rlx-coarse fails, it'll be caught in check_relax
         # and setup_relax won't run
         from_coarse = True
@@ -570,7 +577,7 @@ def manage_calculation(compound_path, calculation_types, submit=True, rerun_rela
             setup_relax(compound_path, submit=submit, from_coarse=from_coarse)
             return
         # else, check if it finished
-        check_relax(compound_path, mode="rlx", rerun_relax=rerun_relax, submit=submit)
+        check_relax(compound_path, mode="rlx", rerun=rerun, submit=submit)
         # if rlx fails, it'll be caught in check_relax
         # and setup_bulkmod (if from_relax=True) won't run
         from_relax = True

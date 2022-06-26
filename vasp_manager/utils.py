@@ -1,8 +1,8 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
-import os
 import json
+import os
 from contextlib import contextmanager
 
 import numpy as np
