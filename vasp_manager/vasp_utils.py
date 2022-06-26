@@ -239,6 +239,10 @@ def analyze_bulkmod(bulkmod_path, from_relax=False):
         from_relax (bool): if True, copy the CONTCAR from the relaxation folder
             If False, copy the POSCAR from compound_path
     """
+    mode = "bulkmod"
+    if from_relax:
+        mode += "_rlx"
+
     strain_paths = [
         path for path in glob.glob(bulkmod_path + "/strain*") if os.path.isdir(path)
     ]

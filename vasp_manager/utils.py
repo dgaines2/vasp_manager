@@ -1,6 +1,7 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
+import os
 import json
 from contextlib import contextmanager
 

@@ -255,7 +255,8 @@ def setup_coarse_relax(
 
     if submit:
         job_status = submit_job(compound_path, mode=mode)
-        if not job_submitted:
+        # job status returns True if sucessfully submitted, else False
+        if not job_status:
             setup_coarse_relax(compound_path, submit=True, rerun_relax=True)
 
 
@@ -333,7 +334,7 @@ def setup_relax(
 
     if submit:
         job_status = submit_job(compound_path, mode=mode)
-        if not job_submitted:
+        if not job_status:
             setup_relax(
                 compound_path, submit=True, rerun_relax=True, from_coarse=from_coarse
             )
@@ -403,11 +404,15 @@ def setup_bulkmod(
         if from_relax:
             mode += "_rlx"
         job_status = submit_job(compound_path, mode=mode)
-        if not job_submitted:
+        # job status returns True if sucessfully submitted, else False
+        if not job_status:
             setup_bulkmod(compound_path, submit=True, rerun_relax=from_relax)
 
 
 def check_bulkmod(bulkmod_path, from_relax=False):
+    mode = "bulkmod"
+    if from_relax:
+        mode += "_rlx"
     jobid_path = os.path.join(bulkmod_path, "jobid")
     if os.path.exists(jobid_path):
         with open(jobid_path, "r") as fr:
@@ -432,6 +437,7 @@ def setup_elastic(compound_path, submit=True, increase_nodes=False):
         submit (bool): if True, submit calculation
         increase_nodes (bool): if True, copy the CONTCAR from the relaxation folder
     """
+    mode = "elastic"
     oqmd_id = compound_path.split("/")[1]
     logger.info(f"{oqmd_id} Setting up ELASTIC Calculation")
     # POSCAR, POTCAR, KPOINTS, INCAR, vasp.q
@@ -479,8 +485,9 @@ def setup_elastic(compound_path, submit=True, increase_nodes=False):
 
     if submit:
         job_status = submit_job(compound_path, mode=mode)
-        if not job_submitted:
-            setup_bulkmod(compound_path, submit=True, increase_nodes=increase_nodes)
+        # job status returns True if sucessfully submitted, else False
+        if not job_status:
+            setup_elastic(compound_path, submit=submit)
 
 
 def check_elastic(elastic_path, rerun=False, submit=False, tail=5):
@@ -530,14 +537,14 @@ def check_elastic(elastic_path, rerun=False, submit=False, tail=5):
             logger.info(grep_output)
             logger.info(f"{mode.upper()} Calculation: FAILED")
             if rerun:
-                setup_elastic(compound_path, submit=submit, increase_nodes=True)
+            # increase nodes as its likely the calculation failed
+                setup_elastic(elastic_path, submit=submit, increase_nodes=True)
             return False
     else:
         # shouldn't get here unless function was called with submit=False
         logger.info("{mode.upper()} Calculation: No stdout.txt available")
         if rerun:
-            # increase nodes as its likely the calculation failed
-            setup_elastic(compound_path, submit=submit, increase_nodes=True)
+            setup_elastic(elastic_path, submit=submit)
         return False
 
 

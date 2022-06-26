@@ -2,3 +2,4 @@
 **/__pycache__/
 calculations_backup/
 vasp_manager.egg-info
+.vscode/*

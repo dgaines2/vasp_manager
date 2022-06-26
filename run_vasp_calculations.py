@@ -3,6 +3,8 @@ import logging
 import os
 import sys
 
+import pandas as pd
+from pymatgen.io.vasp import Poscar
 from vasp_manager import manage_calculations
 
 
