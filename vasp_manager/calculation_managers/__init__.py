@@ -1,4 +1,4 @@
+from .bulkmod import BulkmodCalculationManager
+from .elastic import ElasticCalculationManager
 from .rlx import RlxCalculationManager
 from .rlx_coarse import RlxCoarseCalculationManager
-from .elastic import ElasticCalculationManager
-from .bulkmod import BulkmodCalculationManager  

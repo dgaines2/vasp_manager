@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 
 from ..job_manager import JobManager
 
+
 class BaseCalculationManager(ABC):
     """
     Run vasp job workflow for a single material

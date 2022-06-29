@@ -1,17 +1,19 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
+import logging
 import os
 import shutil
 import subprocess
-import logging
+
 import pymatgen as pmg
 
-from .base import BaseCalculationManager
+from ..elastic_analysis import analyze_elastic_file, make_elastic_constants
 from ..vasp_utils import make_incar, make_potcar, make_vaspq
-from ..elastic_analysis import make_elastic_constants, analyze_elastic_file
+from .base import BaseCalculationManager
 
 logger = logging.getLogger(__name__)
+
 
 class ElasticCalculationManager(BaseCalculationManager):
     def __init__(

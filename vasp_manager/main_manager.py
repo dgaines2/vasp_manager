@@ -2,11 +2,18 @@
 # Distributed under the terms of the MIT LICENSE
 
 import glob
-import os
 import logging
-from .calculation_managers import RlxCalculationManager, RlxCoarseCalculationManager, BulkmodCalculationManager, ElasticCalculationManager
+import os
+
+from .calculation_managers import (
+    BulkmodCalculationManager,
+    ElasticCalculationManager,
+    RlxCalculationManager,
+    RlxCoarseCalculationManager,
+)
 
 logger = logging.getLogger(__name__)
+
 
 class VaspManager:
     """

@@ -2,17 +2,19 @@
 # Distributed under the terms of the MIT LICENSE
 
 import glob
+import logging
 import os
 import shutil
-import logging
+
 import numpy as np
 import pymatgen as pmg
 from pymatgen.analysis.eos import BirchMurnaghan
 
+from ..vasp_utils import change_directory, make_incar, make_potcar, make_vaspq
 from .base import BaseCalculationManager
-from ..vasp_utils import make_incar, make_potcar, make_vaspq, change_directory
 
 logger = logging.getLogger(__name__)
+
 
 class BulkmodCalculationManager(BaseCalculationManager):
     def __init__(
@@ -124,6 +126,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
                     orig_path = "../" + f
                     f_path = f
                     os.symlink(orig_path, f_path, target_is_directory=False)
+
 
 def _analyze_bulkmod(self):
     """

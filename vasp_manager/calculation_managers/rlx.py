@@ -2,18 +2,20 @@
 # Distributed under the terms of the MIT LICENSE
 
 import glob
+import logging
 import os
 import shutil
 import subprocess
-import logging
+
 import numpy as np
 import pymatgen as pmg
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
-from .base import BaseCalculationManager
 from ..vasp_utils import make_archive, make_incar, make_potcar, make_vaspq
+from .base import BaseCalculationManager
 
 logger = logging.getLogger(__name__)
+
 
 class RlxCalculationManager(BaseCalculationManager):
     def __init__(
