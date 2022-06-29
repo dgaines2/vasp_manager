@@ -5,7 +5,6 @@ import json
 import logging
 import os
 import subprocess
-import warnings
 
 import numpy as np
 
@@ -162,7 +161,6 @@ def get_VRH_average(mod1, mod2):
     return (mod1 + mod2) / 2.0
 
 
-# class ElasticAnalyzer
 def make_elastic_constants(outcar_path):
     """
     Utility function to scrape OUTCAR for elastic constants

@@ -1,16 +1,16 @@
 {
   "computer": "personal",
+  "personal": {
+    "user_id": "dalegaines",
+    "potcar_dir": "/Users/dalegaines/Documents/vasp_potentials/54/potpaw_pbe",
+    "queuetype": "short",
+    "allocation": "p31151",
+    "vasp_module": "vasp/5.4.4-vtst-openmpi-4.0.5-intel-19.0.5.281",
+    "ncore": 12
+  },
   "quest": {
       "user_id": "dwg4898",
       "potcar_dir": "/projects/b1004/potpaw_PBE_OQMD",
-      "queuetype": "short",
-      "allocation": "p31151",
-      "vasp_module": "vasp/5.4.4-vtst-openmpi-4.0.5-intel-19.0.5.281",
-      "ncore": 12
-  },
-  "personal": {
-      "user_id": "daleg",
-      "potcar_dir": "/home/daleg/Documents/research/utils/vasp_potentials/54/potpaw_pbe",
       "queuetype": "short",
       "allocation": "p31151",
       "vasp_module": "vasp/5.4.4-vtst-openmpi-4.0.5-intel-19.0.5.281",

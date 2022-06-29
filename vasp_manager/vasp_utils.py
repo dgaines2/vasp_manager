@@ -9,11 +9,8 @@ import pkgutil
 import shutil
 import subprocess
 
-import numpy as np
 import pymatgen as pmg
-from pymatgen.analysis.eos import BirchMurnaghan
 
-from .elastic_analysis import analyze_elastic_file, make_elastic_constants
 from .utils import change_directory
 
 logger = logging.getLogger(__name__)
@@ -51,13 +48,18 @@ def make_potcar(structure, write_path):
     pot_singles = [
         os.path.join(potcar_dir, potcar_dict[el_name], "POTCAR") for el_name in el_names
     ]
+    for pot_single in pot_singles:
+        if not os.path.exists(pot_single):
+            msg = "Unable to create POTCAR"
+            msg += f"\n\t POTCAR not found at path {pot_single}"
+            raise Exception(msg)
     cmd = "cat " + " ".join(pot_singles) + " > " + write_path
     subprocess.call(cmd, shell=True)
 
 
 def make_incar(incar_path, mode):
     """
-    mode should be 'rlx-coarse', 'rlx', 'bulkmod', 'bulkmod_rlx', or 'elastic'
+    mode should be 'rlx-coarse', 'rlx-fine', 'bulkmod', 'bulkmod_standalone', or 'elastic'
 
     Need to modify this to account for spin/magmom
     Current kpoints coming from the kspacing tag in the INCAR,
@@ -93,7 +95,7 @@ def make_incar(incar_path, mode):
 
 def make_vaspq(vaspq_path, mode, jobname=None, structure=None, increase_nodes=False):
     """
-    mode should be 'rlx-coarse', 'rlx', 'bulkmod', 'bulkmod_rlx', or 'elastic'
+    mode should be 'rlx-coarse', 'rlx', 'bulkmod', 'bulkmod_standalone', or 'elastic'
     """
     calc_config = calc_config_dict[mode]
     walltime = calc_config["walltime"]
@@ -168,7 +170,7 @@ def make_archive(compound_path, mode):
     oqmd_id = compound_path.split("/")[1]
 
     # if job was never submitted, don't make an archive
-    jobid_path = os.join(mode_path, "jobid")
+    jobid_path = os.path.join(mode_path, "jobid")
     if not os.path.exists(jobid_path):
         return False
 
@@ -191,96 +193,3 @@ def make_archive(compound_path, mode):
         make_incar(incar_path, mode=mode)
         make_vaspq(vaspq_path, mode=mode, jobname=oqmd_id)
     return True
-
-
-def make_bulkmod_strains(bulkmod_path, strains):
-    """
-    Create a set of strain directory for fitting the E-V info
-
-    Args:
-        bulkmod_path (str)
-        strains (iterable of floats)
-    """
-    logger.info("Making strain directories")
-    for i, strain in enumerate(strains):
-        middle = int(len(strains) / 2)
-        strain_index = i - middle
-        strain_name = f"strain_{strain_index}"
-        strain_path = os.path.join(bulkmod_path, strain_name)
-        logger.info(strain_path)
-
-        if not os.path.exists(strain_path):
-            os.mkdir(strain_path)
-        orig_poscar_path = os.path.join(bulkmod_path, "POSCAR")
-        strain_poscar_path = os.path.join(strain_path, "POSCAR")
-        shutil.copy(orig_poscar_path, strain_poscar_path)
-
-        # change second line to be {strain} rather than 1.0
-        with open(strain_poscar_path, "r") as fr:
-            strain_poscar = fr.read().splitlines()
-        strain_poscar[1] = f"{strain}"
-        logger.debug(f"{strain}")
-        with open(strain_poscar_path, "w+") as fw:
-            fw.write("\n".join(strain_poscar))
-
-        with change_directory(strain_path):
-            for f in ["POTCAR", "INCAR"]:
-                orig_path = "../" + f
-                f_path = f
-                os.symlink(orig_path, f_path, target_is_directory=False)
-
-
-def analyze_bulkmod(bulkmod_path, from_relax=False):
-    """
-    Fit an EOS to calculate the bulk modulus from a finished bulkmod calculation
-
-    Args:
-        bulkmod_path (str): bulkmod path of the calculation
-        from_relax (bool): if True, copy the CONTCAR from the relaxation folder
-            If False, copy the POSCAR from compound_path
-    """
-    mode = "bulkmod"
-    if from_relax:
-        mode += "_rlx"
-
-    strain_paths = [
-        path for path in glob.glob(bulkmod_path + "/strain*") if os.path.isdir(path)
-    ]
-    strain_paths = sorted(strain_paths, key=lambda d: int(d.split("_")[-1]))
-    volumes = []
-    final_energies = []
-    for i, strain_path in enumerate(strain_paths):
-        poscar_path = os.path.join(strain_path, "POSCAR")
-        vasprun_path = os.path.join(strain_path, "vasprun.xml")
-        volume = pmg.core.Structure.from_file(poscar_path).volume
-        vasprun = pmg.io.vasp.outputs.Vasprun(
-            filename=vasprun_path,
-            parse_dos=False,
-            parse_eigen=False,
-            parse_potcar_file=False,
-        )
-        final_energy = vasprun.final_energy
-        volumes.append(volume)
-        final_energies.append(final_energy)
-    logger.debug("Volumes")
-    logger.debug(f"{volumes}")
-    logger.debug("Final Energies")
-    logger.debug(f"{final_energies}")
-    eos_analyzer = BirchMurnaghan(volumes, final_energies)
-    eos_analyzer.fit()
-    bulk_modulus = np.round(eos_analyzer.b0_GPa, 3)
-    logger.info(f"{mode.upper()} Calculation: Successful")
-    logger.info(f"BULK MODULUS: {bulk_modulus}")
-    return bulk_modulus
-
-
-def analyze_elastic(elastic_path):
-    """
-    Get results from elastic calculation
-    """
-    elastic_file = os.path.join(elastic_path, "elastic_constants.txt")
-    if not os.path.exists(elastic_file):
-        outcar_file = os.path.join(elastic_path, "OUTCAR")
-        make_elastic_constants(outcar_file)
-    results = analyze_elastic_file(elastic_file)
-    return results

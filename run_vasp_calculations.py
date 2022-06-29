@@ -1,12 +1,11 @@
 import glob
 import logging
 import os
-import sys
 
 import pandas as pd
 from pymatgen.io.vasp import Poscar
 
-from vasp_manager import manage_calculations
+from vasp_manager import VaspManager
 
 
 def make_calculations_folder(data_path="structure_df.pickle.gz"):
@@ -37,7 +36,7 @@ def make_calculations_folder(data_path="structure_df.pickle.gz"):
 
 if __name__ == "__main__":
     get_logging = True
-    logging_level = logging.DEBUG
+    logging_level = logging.INFO
     if get_logging:
         logging.basicConfig()
         logging.getLogger("vasp_manager").setLevel(logging_level)
@@ -45,5 +44,10 @@ if __name__ == "__main__":
     if not os.path.exists("calculations"):
         make_calculations_folder()
     calculation_types = ["rlx-coarse", "rlx-fine", "elastic"]
+    # material_paths = sorted(glob.glob("calculations_test/*"))
+    # print(material_paths)
 
-    manage_calculations(calculation_types)
+    vaspManager = VaspManager(
+        calculation_types, material_paths=None, to_rerun=True, to_submit=True
+    )
+    vaspManager.run_calculations()
