@@ -5,7 +5,7 @@ import glob
 import logging
 import os
 
-from .calculation_managers import (
+from vasp_manager.calculation_managers import (
     BulkmodCalculationManager,
     ElasticCalculationManager,
     RlxCalculationManager,
@@ -71,69 +71,69 @@ class VaspManager:
         """
         calc_managers = []
         for calc_type in self.calculation_types:
-            if calc_type == "rlx-coarse":
-                manager = RlxCoarseCalculationManager(
-                    base_path=material_path,
-                    to_rerun=self.to_rerun,
-                    to_submit=self.to_submit,
-                    ignore_personal_errors=self.ignore_personal_errors,
-                    tail=self.tail,
-                    from_scratch=self.from_scratch,
-                )
-
-            elif calc_type == "rlx-fine":
-                if "rlx-coarse" in self.calculation_types:
-                    from_coarse_relax = True
-                else:
-                    from_coarse_relax = False
-                manager = RlxCalculationManager(
-                    base_path=material_path,
-                    to_rerun=self.to_rerun,
-                    to_submit=self.to_submit,
-                    ignore_personal_errors=self.ignore_personal_errors,
-                    from_coarse_relax=from_coarse_relax,
-                    tail=self.tail,
-                    from_scratch=self.from_scratch,
-                )
-
-            elif calc_type == "bulkmod":
-                if "rlx-fine" in self.calculation_types:
-                    from_relax = True
-                else:
-                    from_relax = False
-                    msg = "Running bulk modulus calculation without previous relaxation"
-                    msg += (
-                        "\n\t starting structure must be fairly close to equilibrium"
-                        " volume!"
+            match calc_type:
+                case "rlx-coarse":
+                    manager = RlxCoarseCalculationManager(
+                        base_path=material_path,
+                        to_rerun=self.to_rerun,
+                        to_submit=self.to_submit,
+                        ignore_personal_errors=self.ignore_personal_errors,
+                        tail=self.tail,
+                        from_scratch=self.from_scratch,
                     )
-                    logger.warning(msg)
-                manager = BulkmodCalculationManager(
-                    base_path=material_path,
-                    to_rerun=self.to_rerun,
-                    to_submit=self.to_submit,
-                    ignore_personal_errors=self.ignore_personal_errors,
-                    from_relax=from_relax,
-                    from_scratch=self.from_scratch,
-                )
-
-            elif calc_type == "elastic":
-                if "rlx-fine" not in self.calculation_types:
-                    msg = (
-                        "Cannot perform elastic calculation without mode='rlx-fine'"
-                        " first"
+                case "rlx-fine":
+                    if "rlx-coarse" in self.calculation_types:
+                        from_coarse_relax = True
+                    else:
+                        from_coarse_relax = False
+                    manager = RlxCalculationManager(
+                        base_path=material_path,
+                        to_rerun=self.to_rerun,
+                        to_submit=self.to_submit,
+                        ignore_personal_errors=self.ignore_personal_errors,
+                        from_coarse_relax=from_coarse_relax,
+                        tail=self.tail,
+                        from_scratch=self.from_scratch,
                     )
-                    raise Exception(msg)
-                manager = ElasticCalculationManager(
-                    base_path=material_path,
-                    to_rerun=self.to_rerun,
-                    to_submit=self.to_submit,
-                    ignore_personal_errors=self.ignore_personal_errors,
-                    tail=self.tail,
-                    from_scratch=self.from_scratch,
-                )
-
-            else:
-                raise Exception(f"Calc type {calc_type} not supported")
+                case "bulkmod":
+                    if "rlx-fine" in self.calculation_types:
+                        from_relax = True
+                    else:
+                        from_relax = False
+                        msg = (
+                            "Running bulk modulus calculation without previous"
+                            " relaxation"
+                        )
+                        msg += (
+                            "\n\t starting structure must be fairly close to equilibrium"
+                            " volume!"
+                        )
+                        logger.warning(msg)
+                    manager = BulkmodCalculationManager(
+                        base_path=material_path,
+                        to_rerun=self.to_rerun,
+                        to_submit=self.to_submit,
+                        ignore_personal_errors=self.ignore_personal_errors,
+                        from_relax=from_relax,
+                        from_scratch=self.from_scratch,
+                    )
+                case "elastic":
+                    if "rlx-fine" not in self.calculation_types:
+                        msg = (
+                            "Cannot perform elastic calculation without mode='rlx-fine'"
+                            " first"
+                        )
+                        raise Exception(msg)
+                    manager = ElasticCalculationManager(
+                        base_path=material_path,
+                        to_rerun=self.to_rerun,
+                        to_submit=self.to_submit,
+                        ignore_personal_errors=self.ignore_personal_errors,
+                        tail=self.tail,
+                        from_scratch=self.from_scratch,
+                    )
+                case _:
+                    raise Exception(f"Calc type {calc_type} not supported")
 
             calc_managers.append(manager)
         return calc_managers

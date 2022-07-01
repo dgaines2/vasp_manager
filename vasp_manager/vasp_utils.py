@@ -11,7 +11,7 @@ import subprocess
 
 import pymatgen as pmg
 
-from .utils import change_directory
+from vasp_manager.utils import change_directory, get_pmg_structure_from_poscar
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +104,7 @@ def make_vaspq(vaspq_path, mode, jobname=None, structure=None, increase_nodes=Fa
     if structure is None:
         try:
             poscar_path = os.path.join(parent_dir, "POSCAR")
-            structure = pmg.core.Structure.from_file(poscar_path)
+            structure = get_pmg_structure_from_poscar(poscar_path)
         except Exception as e:
             raise Exception(f"Cannot load POSCAR in {parent_dir}: {e}")
 
@@ -126,9 +126,7 @@ def make_vaspq(vaspq_path, mode, jobname=None, structure=None, increase_nodes=Fa
     if computer == "quest":
         # quest has small nodes
         n_nodes *= 2
-        n_procs = n_nodes * 28
-    else:
-        n_procs = n_nodes * 68
+    n_procs = n_nodes * computing_config_dict[computer]["ncore_per_node"]
 
     if jobname is None:
         jobname = pad_string + structure.composition.reduced_formula

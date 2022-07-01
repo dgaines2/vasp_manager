@@ -7,7 +7,7 @@ import os
 import pkgutil
 import subprocess
 
-from .utils import change_directory
+from vasp_manager.utils import change_directory
 
 logger = logging.getLogger(__name__)
 

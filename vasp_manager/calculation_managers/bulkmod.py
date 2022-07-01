@@ -10,8 +10,8 @@ import numpy as np
 import pymatgen as pmg
 from pymatgen.analysis.eos import BirchMurnaghan
 
-from ..vasp_utils import change_directory, make_incar, make_potcar, make_vaspq
-from .base import BaseCalculationManager
+from vasp_manager.calculation_managers.base import BaseCalculationManager
+from vasp_manager.vasp_utils import change_directory, make_incar, make_potcar, make_vaspq
 
 logger = logging.getLogger(__name__)
 

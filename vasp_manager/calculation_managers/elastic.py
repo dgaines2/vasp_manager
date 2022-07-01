@@ -8,9 +8,10 @@ import subprocess
 
 import pymatgen as pmg
 
-from ..elastic_analysis import analyze_elastic_file, make_elastic_constants
-from ..vasp_utils import make_incar, make_potcar, make_vaspq
-from .base import BaseCalculationManager
+from vasp_manager.calculation_managers.base import BaseCalculationManager
+from vasp_manager.elastic_analysis import analyze_elastic_file, make_elastic_constants
+from vasp_manager.utils import get_pmg_structure_from_poscar
+from vasp_manager.vasp_utils import make_incar, make_potcar, make_vaspq
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         relax_path = os.path.join(self.base_path, "rlx")
         contcar_path = os.path.join(relax_path, "CONTCAR")
         shutil.copy(contcar_path, poscar_path)
-        structure = pmg.core.Structure.from_file(poscar_path)
+        structure = get_pmg_structure_from_poscar(poscar_path)
 
         # POTCAR
         potcar_path = os.path.join(self.calc_path, "POTCAR")

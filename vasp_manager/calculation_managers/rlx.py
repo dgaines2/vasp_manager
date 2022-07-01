@@ -11,8 +11,9 @@ import numpy as np
 import pymatgen as pmg
 from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
-from ..vasp_utils import make_archive, make_incar, make_potcar, make_vaspq
-from .base import BaseCalculationManager
+from vasp_manager.calculation_managers.base import BaseCalculationManager
+from vasp_manager.utils import get_pmg_structure_from_poscar
+from vasp_manager.vasp_utils import make_archive, make_incar, make_potcar, make_vaspq
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +70,7 @@ class RlxCalculationManager(BaseCalculationManager):
                 orig_poscar_path = os.path.join(self.base_path, "POSCAR")
                 final_poscar_path = os.path.join(self.calc_path, "POSCAR")
                 shutil.copy(orig_poscar_path, final_poscar_path)
-            structure = pmg.core.Structure.from_file(final_poscar_path)
+            structure = get_pmg_structure_from_poscar(final_poscar_path)
 
             # POTCAR
             potcar_path = os.path.join(self.calc_path, "POTCAR")
@@ -145,16 +146,16 @@ class RlxCalculationManager(BaseCalculationManager):
         poscar_path = os.path.join(self.calc_path, "POSCAR")
         contcar_path = os.path.join(self.calc_path, "CONTCAR")
         try:
-            p_structure = pmg.core.Structure.from_file(poscar_path)
-            c_structure = pmg.core.Structure.from_file(contcar_path)
+            p_structure, p_spacegroup = get_pmg_structure_from_poscar(
+                poscar_path, return_sg=True
+            )
+            c_structure, c_spacegroup = get_pmg_structure_from_poscar(
+                contcar_path, return_sg=True
+            )
         except Exception as e:
             logger.info(f"  RLX CONTCAR doesn't exist or is empty: {e}")
             return False
 
-        sga1 = SpacegroupAnalyzer(p_structure, symprec=1e-3)
-        sga2 = SpacegroupAnalyzer(c_structure, symprec=1e-3)
-        p_spacegroup = sga1.get_space_group_number()
-        c_spacegroup = sga2.get_space_group_number()
         if p_spacegroup == c_spacegroup:
             logger.info(f"  Spacegroups match {p_spacegroup}=={c_spacegroup}")
         else:

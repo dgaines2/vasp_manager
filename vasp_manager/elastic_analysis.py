@@ -8,7 +8,7 @@ import subprocess
 
 import numpy as np
 
-from .utils import NumpyEncoder
+from vasp_manager.utils import NumpyEncoder
 
 logger = logging.getLogger(__name__)
 

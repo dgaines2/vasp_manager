@@ -9,8 +9,14 @@ import subprocess
 
 import pymatgen as pmg
 
-from ..vasp_utils import make_archive, make_incar, make_potcar, make_vaspq
-from .base import BaseCalculationManager
+from vasp_manager.calculation_managers.base import BaseCalculationManager
+from vasp_manager.vasp_utils import (
+    get_pmg_structure_from_poscar,
+    make_archive,
+    make_incar,
+    make_potcar,
+    make_vaspq,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +66,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             shutil.copy(orig_poscar_path, final_poscar_path)
 
             # POTCAR
-            structure = pmg.core.Structure.from_file(final_poscar_path)
+            structure = get_pmg_structure_from_poscar(final_poscar_path)
             potcar_path = os.path.join(self.calc_path, "POTCAR")
             make_potcar(structure, potcar_path)
 

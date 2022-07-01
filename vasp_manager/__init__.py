@@ -11,6 +11,6 @@ __author__ = "Dale Gaines II"
 
 import logging
 
-from .main_manager import VaspManager
+from vasp_manager.main_manager import VaspManager
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
