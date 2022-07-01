@@ -1,4 +1,3 @@
-import glob
 import logging
 import os
 
@@ -29,8 +28,8 @@ def make_calculations_folder(data_path="structure_df.pickle.gz"):
         oqmd_id_path = os.path.join(calcs_path, oqmd_id)
         if not os.path.exists(oqmd_id_path):
             os.mkdir(oqmd_id_path)
-        poscar_path = os.path.join(oqmd_id_path, "POSCAR")
         poscar = Poscar(structure)
+        poscar_path = os.path.join(oqmd_id_path, "POSCAR")
         poscar.write_file(poscar_path)
 
 
