@@ -1,3 +1,4 @@
+import glob
 import logging
 import os
 
@@ -43,10 +44,9 @@ if __name__ == "__main__":
     if not os.path.exists("calculations"):
         make_calculations_folder()
     calculation_types = ["rlx-coarse", "rlx-fine", "elastic"]
-    # material_paths = sorted(glob.glob("calculations_test/*"))
-    # print(material_paths)
+    material_paths = sorted(glob.glob("calculations_test/*"))
 
     vaspManager = VaspManager(
-        calculation_types, material_paths=None, to_rerun=True, to_submit=True
+        calculation_types, material_paths=material_paths, to_rerun=True, to_submit=True
     )
     vaspManager.run_calculations()

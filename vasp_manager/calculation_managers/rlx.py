@@ -13,7 +13,7 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 from vasp_manager.calculation_managers.base import BaseCalculationManager
 from vasp_manager.utils import get_pmg_structure_from_poscar
-from vasp_manager.vasp_utils import make_archive, make_incar, make_potcar, make_vaspq
+from vasp_manager.vasp_input_creator import VaspInputCreator
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +26,8 @@ class RlxCalculationManager(BaseCalculationManager):
         to_submit,
         ignore_personal_errors=True,
         from_coarse_relax=True,
-        tail=5,
         from_scratch=False,
+        tail=5,
     ):
         super().__init__(
             base_path=base_path,
@@ -43,46 +43,33 @@ class RlxCalculationManager(BaseCalculationManager):
     def mode(self):
         return "rlx"
 
+    @property
+    def poscar_source_path(self):
+        if self.from_coarse_relax:
+            poscar_source_path = os.path.join(self.base_path, "rlx-coarse", "CONTCAR")
+        else:
+            poscar_source_path = os.path.join(self.base_path, "POSCAR")
+        return poscar_source_path
+
     def setup_calc(self):
         """
         Set up a fine relaxation
         """
-        if not os.path.exists(self.calc_path):
-            os.mkdir(self.calc_path)
-
+        vasp_input_creator = VaspInputCreator(
+            self.calc_path,
+            mode=self.mode,
+            poscar_source_path=self.poscar_source_path,
+            name=self.material_name,
+        )
         if self.to_rerun:
-            archive_made = make_archive(self.base_path, mode=self.mode)
+            archive_made = vasp_input_creator.make_archive()
             if not archive_made:
                 # set rerun to not make an achive and instead
                 # continue to make the input files
                 self.to_rerun = False
                 self.setup_calc()
         else:
-            # POSCAR, POTCAR, INCAR, vasp.q
-            if self.from_coarse_relax:
-                # POSCAR
-                crelax_path = os.path.join(self.base_path, "rlx-coarse")
-                orig_poscar_path = os.path.join(crelax_path, "CONTCAR")
-                final_poscar_path = os.path.join(self.calc_path, "POSCAR")
-                shutil.copy(orig_poscar_path, final_poscar_path)
-            else:
-                # POSCAR
-                orig_poscar_path = os.path.join(self.base_path, "POSCAR")
-                final_poscar_path = os.path.join(self.calc_path, "POSCAR")
-                shutil.copy(orig_poscar_path, final_poscar_path)
-            structure = get_pmg_structure_from_poscar(final_poscar_path)
-
-            # POTCAR
-            potcar_path = os.path.join(self.calc_path, "POTCAR")
-            make_potcar(structure, potcar_path)
-
-            # INCAR
-            incar_path = os.path.join(self.calc_path, "INCAR")
-            make_incar(incar_path, mode=self.mode)
-
-            # vasp.q
-            vaspq_path = os.path.join(self.calc_path, "vasp.q")
-            make_vaspq(vaspq_path, mode=self.mode, jobname=self.material_name)
+            vasp_input_creator.create()
 
         if self.to_submit:
             job_submitted = self.submit_job()

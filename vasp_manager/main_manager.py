@@ -27,26 +27,28 @@ class VaspManager:
         to_rerun=True,
         to_submit=True,
         ignore_personal_errrors=True,
-        tail=5,
         from_scratch=False,
+        tail=5,
     ):
         """
         Args:
-            calculation_types (list):
-            material_paths (list):
-            to_rerun (bool):
-            to_submit (bool):
-            ignore_personal_errors (bool):
-            tail (int):
+            calculation_types (list): list of calculation types
+            material_paths (list): list of material paths
+            to_rerun (bool): if True, rerun failed calculations
+            to_submit (bool): if True, submit calculations
+            ignore_personal_errors (bool): if True, ignore job submission errors
+                if on personal computer
             from_scratch (bool): if True, remove the first calculation's folder
                 DANGEROUS
+            tail (int): number of last lines to log in debugging if job failed
         """
         self.calculation_types = calculation_types
         self.to_rerun = to_rerun
         self.to_submit = to_submit
-        self.tail = tail
         self.ignore_personal_errors = ignore_personal_errrors
         self.from_scratch = from_scratch
+        self.tail = tail
+
         self.material_paths = (
             self._get_material_paths() if material_paths is None else material_paths
         )
@@ -78,8 +80,8 @@ class VaspManager:
                         to_rerun=self.to_rerun,
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
-                        tail=self.tail,
                         from_scratch=self.from_scratch,
+                        tail=self.tail,
                     )
                 case "rlx-fine":
                     if "rlx-coarse" in self.calculation_types:
@@ -92,8 +94,8 @@ class VaspManager:
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
                         from_coarse_relax=from_coarse_relax,
-                        tail=self.tail,
                         from_scratch=self.from_scratch,
+                        tail=self.tail,
                     )
                 case "bulkmod":
                     if "rlx-fine" in self.calculation_types:
@@ -129,8 +131,8 @@ class VaspManager:
                         to_rerun=self.to_rerun,
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
-                        tail=self.tail,
                         from_scratch=self.from_scratch,
+                        tail=self.tail,
                     )
                 case _:
                     raise Exception(f"Calc type {calc_type} not supported")
@@ -151,9 +153,6 @@ class VaspManager:
     def _manage_calculations(self, material_name):
         """
         Run vasp job workflow for a single material
-
-        Faulty logic here..
-
         """
         for calc_manager in self.calculation_managers[material_name]:
             if not calc_manager.job_exists:

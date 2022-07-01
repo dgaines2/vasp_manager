@@ -10,13 +10,7 @@ import subprocess
 import pymatgen as pmg
 
 from vasp_manager.calculation_managers.base import BaseCalculationManager
-from vasp_manager.vasp_utils import (
-    get_pmg_structure_from_poscar,
-    make_archive,
-    make_incar,
-    make_potcar,
-    make_vaspq,
-)
+from vasp_manager.vasp_input_creator import VaspInputCreator
 
 logger = logging.getLogger(__name__)
 
@@ -28,8 +22,8 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
         to_rerun,
         to_submit,
         ignore_personal_errors=True,
-        tail=5,
         from_scratch=False,
+        tail=5,
     ):
         super().__init__(
             base_path=base_path,
@@ -44,39 +38,30 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
     def mode(self):
         return "rlx-coarse"
 
+    @property
+    def poscar_source_path(self):
+        poscar_source_path = os.path.join(self.base_path, "POSCAR")
+        return poscar_source_path
+
     def setup_calc(self):
         """
         Set up a coarse relaxation
         """
-        # POSCAR, POTCAR, INCAR, vasp.q
-        if not os.path.exists(self.calc_path):
-            os.mkdir(self.calc_path)
-
-        # POSCAR
+        vasp_input_creator = VaspInputCreator(
+            self.calc_path,
+            mode=self.mode,
+            poscar_source_path=self.poscar_source_path,
+            name=self.material_name,
+        )
         if self.to_rerun:
-            archive_made = make_archive(self.calc_path, mode=self.mode)
+            archive_made = vasp_input_creator.make_archive()
             if not archive_made:
                 # set rerun to False to not make an achive and instead
                 # continue to make the input files
                 self.to_rerun = False
                 self.setup_calc()
         else:
-            orig_poscar_path = os.path.join(self.base_path, "POSCAR")
-            final_poscar_path = os.path.join(self.calc_path, "POSCAR")
-            shutil.copy(orig_poscar_path, final_poscar_path)
-
-            # POTCAR
-            structure = get_pmg_structure_from_poscar(final_poscar_path)
-            potcar_path = os.path.join(self.calc_path, "POTCAR")
-            make_potcar(structure, potcar_path)
-
-            # INCAR
-            incar_path = os.path.join(self.calc_path, "INCAR")
-            make_incar(incar_path, mode=self.mode)
-
-            # vasp.q
-            vaspq_path = os.path.join(self.calc_path, "vasp.q")
-            make_vaspq(vaspq_path, mode=self.mode, jobname=self.material_name)
+            vasp_input_creator.create()
 
         if self.to_submit:
             job_submitted = self.submit_job()

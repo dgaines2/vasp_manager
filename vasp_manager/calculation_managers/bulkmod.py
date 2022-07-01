@@ -11,7 +11,8 @@ import pymatgen as pmg
 from pymatgen.analysis.eos import BirchMurnaghan
 
 from vasp_manager.calculation_managers.base import BaseCalculationManager
-from vasp_manager.vasp_utils import change_directory, make_incar, make_potcar, make_vaspq
+from vasp_manager.utils import change_directory
+from vasp_manager.vasp_input_creator import VaspInputCreator
 
 logger = logging.getLogger(__name__)
 
@@ -42,35 +43,25 @@ class BulkmodCalculationManager(BaseCalculationManager):
             mode_str += "_standalone"
         return mode_str
 
+    @property
+    def poscar_source_path(self):
+        if self.from_relax:
+            poscar_source_path = os.path.join(self.base_path, "rlx", "CONTCAR")
+        else:
+            poscar_source_path = os.path.join(self.base_path, "POSCAR")
+        return poscar_source_path
+
     def setup_calc(self):
         """
         Set up EOS bulkmod calculation
         """
-        if not os.path.exists(self.calc_path):
-            os.mkdir(self.calc_path)
-
-        # POSCAR
-        poscar_path = os.path.join(self.calc_path, "POSCAR")
-        if self.from_relax:
-            relax_path = os.path.join(self.base_path, "rlx")
-            contcar_path = os.path.join(relax_path, "CONTCAR")
-            shutil.copy(contcar_path, poscar_path)
-        else:
-            orig_poscar_path = os.path.join(self.base_path, "POSCAR")
-            shutil.copy(orig_poscar_path, poscar_path)
-        structure = pmg.core.Structure.from_file(poscar_path)
-
-        # POTCAR
-        potcar_path = os.path.join(self.calc_path, "POTCAR")
-        make_potcar(structure, potcar_path)
-
-        # INCAR
-        incar_path = os.path.join(self.calc_path, "INCAR")
-        make_incar(incar_path, mode=self.mode)
-
-        # vasp.q
-        vaspq_path = os.path.join(self.calc_path, "vasp.q")
-        make_vaspq(vaspq_path, mode=self.mode, jobname=self.material_name)
+        vasp_input_creator = VaspInputCreator(
+            self.calc_path,
+            mode=self.mode,
+            poscar_source_path=self.poscar_source_path,
+            name=self.material_name,
+        )
+        vasp_input_creator.create()
 
         strains = np.power(np.linspace(0.8, 1.2, 11), 1 / 3)
         self._make_bulkmod_strains(strains)
@@ -131,11 +122,6 @@ class BulkmodCalculationManager(BaseCalculationManager):
 def _analyze_bulkmod(self):
     """
     Fit an EOS to calculate the bulk modulus from a finished bulkmod calculation
-
-    Args:
-        bulkmod_path (str): bulkmod path of the calculation
-        from_relax (bool): if True, copy the CONTCAR from the relaxation folder
-            If False, copy the POSCAR from compound_path
     """
     strain_paths = [
         path for path in glob.glob(self.calc_path + "/strain*") if os.path.isdir(path)

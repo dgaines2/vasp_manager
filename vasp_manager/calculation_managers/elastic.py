@@ -3,15 +3,13 @@
 
 import logging
 import os
-import shutil
 import subprocess
 
 import pymatgen as pmg
 
 from vasp_manager.calculation_managers.base import BaseCalculationManager
 from vasp_manager.elastic_analysis import analyze_elastic_file, make_elastic_constants
-from vasp_manager.utils import get_pmg_structure_from_poscar
-from vasp_manager.vasp_utils import make_incar, make_potcar, make_vaspq
+from vasp_manager.vasp_input_creator import VaspInputCreator
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +21,8 @@ class ElasticCalculationManager(BaseCalculationManager):
         to_rerun,
         to_submit,
         ignore_personal_errors=True,
-        tail=5,
         from_scratch=False,
+        tail=5,
     ):
         super().__init__(
             base_path=base_path,
@@ -39,37 +37,25 @@ class ElasticCalculationManager(BaseCalculationManager):
     def mode(self):
         return "elastic"
 
+    @property
+    def poscar_source_path(self):
+        poscar_source_path = os.path.join(self.base_path, "rlx", "CONTCAR")
+        return poscar_source_path
+
     def setup_calc(self, increase_nodes=False):
         """
         Run elastic constants routine through VASP
         By default, requires relaxation (as the elastic constants routine needs
             the cell to be nearly at equilibrium)
         """
-        if not os.path.exists(self.calc_path):
-            os.mkdir(self.calc_path)
-
-        poscar_path = os.path.join(self.calc_path, "POSCAR")
-        relax_path = os.path.join(self.base_path, "rlx")
-        contcar_path = os.path.join(relax_path, "CONTCAR")
-        shutil.copy(contcar_path, poscar_path)
-        structure = get_pmg_structure_from_poscar(poscar_path)
-
-        # POTCAR
-        potcar_path = os.path.join(self.calc_path, "POTCAR")
-        make_potcar(structure, potcar_path)
-
-        # INCAR
-        incar_path = os.path.join(self.calc_path, "INCAR")
-        make_incar(incar_path, mode=self.mode)
-
-        # vasp.q
-        vaspq_path = os.path.join(self.calc_path, "vasp.q")
-        make_vaspq(
-            vaspq_path,
+        vasp_input_creator = VaspInputCreator(
+            self.calc_path,
             mode=self.mode,
-            jobname=self.material_name,
+            poscar_source_path=self.poscar_source_path,
+            name=self.material_name,
             increase_nodes=increase_nodes,
         )
+        vasp_input_creator.create()
 
         if self.to_submit:
             job_submitted = self.submit_job()

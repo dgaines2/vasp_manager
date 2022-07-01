@@ -17,14 +17,15 @@ class JobManager:
     A JobManager -- handles job submission and status
     """
 
-    def __init__(self, path, ignore_personal_errors=True):
+    def __init__(self, calc_path, ignore_personal_errors=True):
         """
         Args:
-            path (str)
-            ignore_personal_errors (bool)
+            calc_path (str): base directory of job
+            ignore_personal_errors (bool): if True, ignore job submission errors
+                if on personal computer
         """
-        self.path = path
-        self.ignore_personal_errors = True
+        self.calc_path = calc_path
+        self.ignore_personal_errors = ignore_personal_errors
 
         self.computing_config_dict = self._get_computing_config_dict()
         self._jobid = None
@@ -47,11 +48,11 @@ class JobManager:
 
     @property
     def mode(self):
-        return self.path.split("/")[-1]
+        return self.calc_path.split("/")[-1]
 
     @property
     def job_exists(self):
-        jobid_path = os.path.join(self.path, "jobid")
+        jobid_path = os.path.join(self.calc_path, "jobid")
         if os.path.exists(jobid_path):
             return True
         else:
@@ -88,16 +89,16 @@ class JobManager:
             logger.debug(error_msg)
             return True
 
-        vaspq_location = os.path.join(self.path, "vasp.q")
-        if not os.path.exists(vaspq_location):
-            logger.info(f"No vasp.q file in {self.path}")
+        vaspq_path = os.path.join(self.calc_path, "vasp.q")
+        if not os.path.exists(vaspq_path):
+            logger.info(f"No vasp.q file in {self.calc_path}")
             # return False here instead of catching an exception
             # This enables job resubmission by letting the calling function
             # know that the calculation needs to be restarted
             return False
 
         submission_call = "sbatch vasp.q | awk '{ print $4 }' | tee jobid"
-        with change_directory(self.path):
+        with change_directory(self.calc_path):
             jobid = subprocess.check_output(submission_call, shell=True).decode("utf-8")
         self.jobid = jobid
         return True

@@ -5,7 +5,7 @@ import os
 import shutil
 from abc import ABC, abstractmethod
 
-from ..job_manager import JobManager
+from vasp_manager.job_manager import JobManager
 
 
 class BaseCalculationManager(ABC):
@@ -25,7 +25,7 @@ class BaseCalculationManager(ABC):
         self.to_rerun = to_rerun
         self.to_submit = to_submit
         self.job_manager = JobManager(
-            path=self.calc_path, ignore_personal_errors=ignore_personal_errors
+            calc_path=self.calc_path, ignore_personal_errors=ignore_personal_errors
         )
 
         if from_scratch:
