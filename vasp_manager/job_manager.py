@@ -103,7 +103,7 @@ class JobManager:
         submission_call = "sbatch vasp.q | awk '{ print $4 }' | tee jobid"
         with change_directory(self.calc_path):
             jobid = subprocess.check_output(submission_call, shell=True).decode("utf-8")
-        logger.info("Submitted job {jobid}")
+        logger.info(f"Submitted job {jobid}")
         self.jobid = jobid
         return True
 
