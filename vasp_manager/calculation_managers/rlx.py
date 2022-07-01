@@ -35,6 +35,7 @@ class RlxCalculationManager(BaseCalculationManager):
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
+        self._results = None
 
     @property
     def mode(self):
@@ -168,3 +169,7 @@ class RlxCalculationManager(BaseCalculationManager):
                 return True
         else:
             return False
+
+    @property
+    def results(self):
+        return self._results

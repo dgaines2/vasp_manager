@@ -30,6 +30,7 @@ class ElasticCalculationManager(BaseCalculationManager):
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
+        self._results = None
 
     @property
     def mode(self):
@@ -122,5 +123,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         return results
 
     @property
-    def elastic_results(self):
-        return self._analyze_elastic()
+    def results(self):
+        if self._results is None:
+            self._results = self._analyze_elastic()
+        return self._results

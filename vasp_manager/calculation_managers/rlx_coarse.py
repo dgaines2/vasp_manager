@@ -30,6 +30,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
+        self._results = None
 
     @property
     def mode(self):
@@ -114,3 +115,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
     @property
     def is_done(self):
         return self.check_calc()
+
+    @property
+    def results(self):
+        return self._results

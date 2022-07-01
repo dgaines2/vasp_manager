@@ -163,13 +163,12 @@ def make_elastic_constants(outcar_path):
     subprocess.call(elastic_call, shell=True)
 
 
-def analyze_elastic_file(elastic_file, verbose=True):
+def analyze_elastic_file(elastic_file):
     """
     Grab important quantities from the elastic calculation results
 
     Args:
         elastic_file (str): filepath
-        to_print (bool): if True, print the result
     Returns:
         elastic_dict (dict): dict of extracted info from
             elastic calculation
@@ -205,7 +204,6 @@ def analyze_elastic_file(elastic_file, verbose=True):
     elastic_dict["warning"] = warning
     elastic_dict["elastic_tensor"] = np.round(cij, 3)
 
-    if verbose:
-        logger.info(json.dumps(elastic_dict, cls=NumpyEncoder, indent=2))
+    logger.debug(json.dumps(elastic_dict, cls=NumpyEncoder, indent=2))
 
     return elastic_dict

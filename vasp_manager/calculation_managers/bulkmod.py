@@ -34,6 +34,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
+        self._results = None
 
     @property
     def mode(self):
@@ -54,6 +55,11 @@ class BulkmodCalculationManager(BaseCalculationManager):
         """
         Set up EOS bulkmod calculation
         """
+        msg = (
+            "Running bulk modulus calculation without previous relaxation"
+            "\n\t starting structure must be fairly close to equilibrium volume!"
+        )
+        logger.warning(msg)
         vasp_input_creator = VaspInputCreator(
             self.calc_path,
             mode=self.mode,
@@ -120,41 +126,45 @@ class BulkmodCalculationManager(BaseCalculationManager):
                     f_path = f
                     os.symlink(orig_path, f_path, target_is_directory=False)
 
-
-def _analyze_bulkmod(self):
-    """
-    Fit an EOS to calculate the bulk modulus from a finished bulkmod calculation
-    """
-    strain_paths = [
-        path for path in glob.glob(self.calc_path + "/strain*") if os.path.isdir(path)
-    ]
-    strain_paths = sorted(strain_paths, key=lambda d: int(d.split("_")[-1]))
-    volumes = []
-    final_energies = []
-    for i, strain_path in enumerate(strain_paths):
-        poscar_path = os.path.join(strain_path, "POSCAR")
-        vasprun_path = os.path.join(strain_path, "vasprun.xml")
-        volume = pmg.core.Structure.from_file(poscar_path).volume
-        vasprun = pmg.io.vasp.outputs.Vasprun(
-            filename=vasprun_path,
-            parse_dos=False,
-            parse_eigen=False,
-            parse_potcar_file=False,
-        )
-        final_energy = vasprun.final_energy
-        volumes.append(volume)
-        final_energies.append(final_energy)
-    logger.debug("Volumes")
-    logger.debug(f"{volumes}")
-    logger.debug("Final Energies")
-    logger.debug(f"{final_energies}")
-    eos_analyzer = pmg.analysis.eos.BirchMurnaghan(volumes, final_energies)
-    eos_analyzer.fit()
-    bulk_modulus = np.round(eos_analyzer.b0_GPa, 3)
-    logger.info(f"{self.mode.upper()} Calculation: Successful")
-    logger.info(f"BULK MODULUS: {bulk_modulus}")
-    return bulk_modulus
+    def _analyze_bulkmod(self):
+        """
+        Fit an EOS to calculate the bulk modulus from a finished bulkmod calculation
+        """
+        strain_paths = [
+            path
+            for path in glob.glob(self.calc_path + "/strain*")
+            if os.path.isdir(path)
+        ]
+        strain_paths = sorted(strain_paths, key=lambda d: int(d.split("_")[-1]))
+        volumes = []
+        final_energies = []
+        for i, strain_path in enumerate(strain_paths):
+            poscar_path = os.path.join(strain_path, "POSCAR")
+            vasprun_path = os.path.join(strain_path, "vasprun.xml")
+            volume = pmg.core.Structure.from_file(poscar_path).volume
+            vasprun = pmg.io.vasp.outputs.Vasprun(
+                filename=vasprun_path,
+                parse_dos=False,
+                parse_eigen=False,
+                parse_potcar_file=False,
+            )
+            final_energy = vasprun.final_energy
+            volumes.append(volume)
+            final_energies.append(final_energy)
+        logger.debug("Volumes")
+        logger.debug(f"{volumes}")
+        logger.debug("Final Energies")
+        logger.debug(f"{final_energies}")
+        eos_analyzer = pmg.analysis.eos.BirchMurnaghan(volumes, final_energies)
+        eos_analyzer.fit()
+        bulk_modulus = np.round(eos_analyzer.b0_GPa, 3)
+        logger.info(f"{self.mode.upper()} Calculation: Successful")
+        logger.info(f"BULK MODULUS: {bulk_modulus}")
+        b_dict = {"B": bulk_modulus}
+        return b_dict
 
     @property
-    def bulk_modulus(self):
-        return self._analyze_bulkmod(self)
+    def results(self):
+        if self._results is None:
+            self._results = self._analyze_bulkmod()
+        return self._results

@@ -2,6 +2,7 @@
 # Distributed under the terms of the MIT LICENSE
 
 import glob
+import json
 import logging
 import os
 
@@ -12,6 +13,7 @@ from vasp_manager.calculation_managers import (
     RlxCoarseCalculationManager,
     StaticCalculationManager,
 )
+from vasp_manager.utils import NumpyEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +32,7 @@ class VaspManager:
         ignore_personal_errrors=True,
         from_scratch=False,
         tail=5,
+        write_results=True,
     ):
         """
         Args:
@@ -42,6 +45,7 @@ class VaspManager:
             from_scratch (bool): if True, remove the first calculation's folder
                 DANGEROUS
             tail (int): number of last lines to log in debugging if job failed
+            write_results (bool): if True, dump results to results.json
         """
         self.calculation_types = calculation_types
         self.to_rerun = to_rerun
@@ -49,6 +53,7 @@ class VaspManager:
         self.ignore_personal_errors = ignore_personal_errrors
         self.from_scratch = from_scratch
         self.tail = tail
+        self.write_results = write_results
 
         self.material_paths = (
             self._get_material_paths() if material_paths is None else material_paths
@@ -118,15 +123,7 @@ class VaspManager:
                         from_relax = True
                     else:
                         from_relax = False
-                        msg = (
-                            "Running bulk modulus calculation without previous"
-                            " relaxation"
-                        )
-                        msg += (
-                            "\n\t starting structure must be fairly close to equilibrium"
-                            " volume!"
-                        )
-                        logger.warning(msg)
+
                     manager = BulkmodCalculationManager(
                         base_path=material_path,
                         to_rerun=self.to_rerun,
@@ -170,6 +167,7 @@ class VaspManager:
         """
         Run vasp job workflow for a single material
         """
+        results = {}
         for calc_manager in self.calculation_managers[material_name]:
             if not calc_manager.job_exists:
                 logger.info(
@@ -183,13 +181,27 @@ class VaspManager:
                 break
 
             logger.info(f"Calculation {calc_manager.mode.upper()} successful")
+            if calc_manager.results:
+                logger.info(json.dumps(calc_manager.results, indent=2, cls=NumpyEncoder))
+            results[calc_manager.mode] = calc_manager.results
+        return results
 
     def run_calculations(self):
         """
         Run vasp job workflow for all materials
         """
+        all_results = {}
         for material_path in self.material_paths:
             material_name = self._get_material_name_from_path(material_path)
             print(material_name)
-            self._manage_calculations(material_name)
+            results = self._manage_calculations(material_name)
+            all_results[material_name] = results
             print("\n")
+
+        json_str = json.dumps(all_results, indent=2, cls=NumpyEncoder)
+        logger.info(json_str)
+        if self.write_results:
+            with open("results.json", "w+") as fw:
+                fw.write(json_str)
+
+        return all_results
