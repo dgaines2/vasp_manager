@@ -3,10 +3,10 @@
 #SBATCH -N {n_nodes}
 #SBATCH -n {n_procs}
 #SBATCH -p {queuetype}
-#SBATCH -J b{jobname}
+#SBATCH -J {jobname}
 #SBATCH -A {allocation}
 #SBATCH -t {walltime}
-#SBATCH --mem=O
+#SBATCH --mem=0
 
 #OpenMP settings:
 ulimit -s unlimited

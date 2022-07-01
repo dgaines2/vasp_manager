@@ -2,7 +2,7 @@
 
 #SBATCH -N {n_nodes}
 #SBATCH -p {queuetype}
-#SBATCH -J b{jobname}
+#SBATCH -J {jobname}
 #SBATCH -A {allocation}
 #SBATCH -t {walltime}
 #SBATCH -L SCRATCH
