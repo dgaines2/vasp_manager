@@ -5,8 +5,6 @@ import logging
 import os
 import subprocess
 
-import pymatgen as pmg
-
 from vasp_manager.calculation_managers.base import BaseCalculationManager
 from vasp_manager.elastic_analysis import analyze_elastic_file, make_elastic_constants
 from vasp_manager.vasp_input_creator import VaspInputCreator
@@ -122,3 +120,7 @@ class ElasticCalculationManager(BaseCalculationManager):
             make_elastic_constants(outcar_file)
         results = analyze_elastic_file(elastic_file)
         return results
+
+    @property
+    def elastic_results(self):
+        return self._analyze_elastic()

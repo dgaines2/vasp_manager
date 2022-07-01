@@ -8,7 +8,6 @@ import shutil
 
 import numpy as np
 import pymatgen as pmg
-from pymatgen.analysis.eos import BirchMurnaghan
 
 from vasp_manager.calculation_managers.base import BaseCalculationManager
 from vasp_manager.utils import change_directory
@@ -73,6 +72,9 @@ class BulkmodCalculationManager(BaseCalculationManager):
                 self.setup_calc()
 
     def check_calc(self):
+        # //TODO: make sure results look reasonable here
+        # perhaps call self.bulk_modulus to make sure
+        # everything parses correctly
         if not self.job_complete:
             logger.info(f"{self.mode.upper()} job not finished")
             return False
@@ -146,9 +148,13 @@ def _analyze_bulkmod(self):
     logger.debug(f"{volumes}")
     logger.debug("Final Energies")
     logger.debug(f"{final_energies}")
-    eos_analyzer = BirchMurnaghan(volumes, final_energies)
+    eos_analyzer = pmg.analysis.eos.BirchMurnaghan(volumes, final_energies)
     eos_analyzer.fit()
     bulk_modulus = np.round(eos_analyzer.b0_GPa, 3)
     logger.info(f"{self.mode.upper()} Calculation: Successful")
     logger.info(f"BULK MODULUS: {bulk_modulus}")
     return bulk_modulus
+
+    @property
+    def bulk_modulus(self):
+        return self._analyze_bulkmod(self)

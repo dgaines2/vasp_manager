@@ -10,6 +10,7 @@ from vasp_manager.calculation_managers import (
     ElasticCalculationManager,
     RlxCalculationManager,
     RlxCoarseCalculationManager,
+    StaticCalculationManager,
 )
 
 logger = logging.getLogger(__name__)
@@ -94,6 +95,21 @@ class VaspManager:
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
                         from_coarse_relax=from_coarse_relax,
+                        from_scratch=self.from_scratch,
+                        tail=self.tail,
+                    )
+                case "static":
+                    if "rlx-fine" not in self.calculation_types:
+                        msg = (
+                            "Cannot perform static calculation without mode='rlx-fine'"
+                            " first"
+                        )
+                        raise Exception(msg)
+                    manager = StaticCalculationManager(
+                        base_path=material_path,
+                        to_rerun=self.to_rerun,
+                        to_submit=self.to_submit,
+                        ignore_personal_errors=self.ignore_personal_errors,
                         from_scratch=self.from_scratch,
                         tail=self.tail,
                     )

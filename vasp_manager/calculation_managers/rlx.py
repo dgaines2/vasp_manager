@@ -4,12 +4,9 @@
 import glob
 import logging
 import os
-import shutil
 import subprocess
 
 import numpy as np
-import pymatgen as pmg
-from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 from vasp_manager.calculation_managers.base import BaseCalculationManager
 from vasp_manager.utils import get_pmg_structure_from_poscar
@@ -140,7 +137,7 @@ class RlxCalculationManager(BaseCalculationManager):
                 contcar_path, return_sg=True
             )
         except Exception as e:
-            logger.info(f"  RLX CONTCAR doesn't exist or is empty: {e}")
+            logger.error(f"  RLX CONTCAR doesn't exist or is empty: {e}")
             return False
 
         if p_spacegroup == c_spacegroup:

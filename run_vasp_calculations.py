@@ -44,7 +44,7 @@ if __name__ == "__main__":
     if not os.path.exists("calculations"):
         make_calculations_folder()
     calculation_types = ["rlx-coarse", "rlx-fine", "elastic"]
-    material_paths = sorted(glob.glob("calculations_test/*"))
+    material_paths = sorted(glob.glob("calculations/*"))
 
     vaspManager = VaspManager(
         calculation_types, material_paths=material_paths, to_rerun=True, to_submit=True
