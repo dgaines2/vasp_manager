@@ -54,6 +54,9 @@ class JobManager:
     def job_exists(self):
         jobid_path = os.path.join(self.calc_path, "jobid")
         if os.path.exists(jobid_path):
+            with open(jobid_path) as fr:
+                jobid = fr.read()
+            self._jobid = jobid
             return True
         else:
             return False
@@ -100,6 +103,7 @@ class JobManager:
         submission_call = "sbatch vasp.q | awk '{ print $4 }' | tee jobid"
         with change_directory(self.calc_path):
             jobid = subprocess.check_output(submission_call, shell=True).decode("utf-8")
+        logger.info("Submitted job {jobid}")
         self.jobid = jobid
         return True
 

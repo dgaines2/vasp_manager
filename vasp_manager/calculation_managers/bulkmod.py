@@ -26,6 +26,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
         from_relax=True,
         from_scratch=False,
     ):
+        self.from_relax = from_relax
         super().__init__(
             base_path=base_path,
             to_rerun=to_rerun,
@@ -33,7 +34,6 @@ class BulkmodCalculationManager(BaseCalculationManager):
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
-        self.from_relax = from_relax
 
     @property
     def mode(self):

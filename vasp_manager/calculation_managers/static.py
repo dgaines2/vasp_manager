@@ -22,6 +22,7 @@ class StaticCalculationManager(BaseCalculationManager):
         from_scratch=False,
         tail=5,
     ):
+        self.tail = tail
         super().__init__(
             base_path=base_path,
             to_rerun=to_rerun,
@@ -29,7 +30,6 @@ class StaticCalculationManager(BaseCalculationManager):
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
-        self.tail = tail
 
     @property
     def mode(self):

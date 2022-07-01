@@ -26,6 +26,8 @@ class RlxCalculationManager(BaseCalculationManager):
         from_scratch=False,
         tail=5,
     ):
+        self.from_coarse_relax = from_coarse_relax
+        self.tail = tail
         super().__init__(
             base_path=base_path,
             to_rerun=to_rerun,
@@ -33,8 +35,6 @@ class RlxCalculationManager(BaseCalculationManager):
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
-        self.from_coarse_relax = from_coarse_relax
-        self.tail = tail
 
     @property
     def mode(self):

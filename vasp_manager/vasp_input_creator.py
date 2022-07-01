@@ -95,6 +95,17 @@ class VaspInputCreator:
         poscar_path = os.path.join(self.calc_path, "POSCAR")
         poscar.write_file(poscar_path)
 
+    @property
+    def n_nodes(self):
+        # start with 1 node per 32 atoms
+        num_nodes = (len(self.structure) // 32) + 1
+        if self.computer == "quest":
+            # quest has small nodes
+            num_nodes *= 2
+        if self.increase_nodes:
+            n_nodes *= 2
+        return num_nodes
+
     def make_potcar(self):
         """
         Create and write a POTCAR
@@ -140,7 +151,8 @@ class VaspInputCreator:
                     incar_tmp.insert(i + 1, symprec_line)
                     incar_tmp.insert(i + 1, nfree_line)
                 if "NCORE" in line:
-                    incar_tmp[i] = "NPAR = 1"
+                    # elastic calculation won't run unless NCORE=1
+                    incar_tmp[i] = f"NCORE = 1"
             incar_tmp = "\n".join([line for line in incar_tmp])
         incar = incar_tmp.format(**calc_config, ncore=ncore)
         logger.debug(incar)
@@ -155,23 +167,23 @@ class VaspInputCreator:
         calc_config = self.calc_config_dict[self.mode]
         walltime = calc_config["walltime"]
 
-        # start with 1 node per 32 atoms
-        n_nodes = (len(self.structure) // 32) + 1
         # create pad string for job naming to differentiate in the queue
         if self.mode == "rlx" or self.mode == "rlx-coarse":
             if self.mode == "rlx":
                 pad_string = "r"
             elif self.mode == "rlx-coarse":
                 pad_string = "rc"
+            mode = "rlx"
         elif self.mode == "bulkmod":
             pad_string = "b"
+            mode = "bulkmod"
         elif self.mode == "elastic":
             pad_string = "e"
+            mode = "elastic"
 
-        if self.computer == "quest":
-            # quest has small nodes
-            n_nodes *= 2
-        n_procs = n_nodes * self.computing_config_dict[self.computer]["ncore_per_node"]
+        n_procs = (
+            self.n_nodes * self.computing_config_dict[self.computer]["ncore_per_node"]
+        )
 
         if self.name is None:
             jobname = pad_string + self.structure.composition.reduced_formula
@@ -179,7 +191,6 @@ class VaspInputCreator:
             jobname = pad_string + self.name
 
         if self.increase_nodes:
-            n_nodes *= 2
             n_procs *= 2
             hours, minutes, seconds = walltime.split(":")
             hours = str(int(hours) * 2)
@@ -187,10 +198,10 @@ class VaspInputCreator:
 
         computer_config = self.computing_config_dict[self.computer].copy()
         computer_config.update(
-            {"n_nodes": n_nodes, "n_procs": n_procs, "jobname": jobname}
+            {"n_nodes": self.n_nodes, "n_procs": n_procs, "jobname": jobname}
         )
 
-        q_name = self.q_mapper[self.computer][self.mode]
+        q_name = self.q_mapper[self.computer][mode]
         vaspq_tmp = pkgutil.get_data("vasp_manager", f"static_files/{q_name}").decode(
             "utf-8"
         )

@@ -113,7 +113,7 @@ class VaspManager:
                         from_scratch=self.from_scratch,
                         tail=self.tail,
                     )
-                case "bulkmod":
+                case "bulkmod" | "bulkmod_standalone":
                     if "rlx-fine" in self.calculation_types:
                         from_relax = True
                     else:
