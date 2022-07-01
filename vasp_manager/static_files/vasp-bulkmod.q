@@ -2,7 +2,7 @@
 
 #SBATCH -N {n_nodes}
 #SBATCH -p {queuetype}
-#SBATCH -J {jobname}
+#SBATCH -J b{jobname}
 #SBATCH -A {allocation}
 #SBATCH -t {walltime}
 #SBATCH -L SCRATCH
@@ -17,8 +17,12 @@ module load {vasp_module}
 
 starttime=$(date +%s)
 
-mpitasks=$(echo $SLURM_JOB_NUM_NODES*64|bc)
-srun -n $mpitasks -c 4 --cpu_bind=cores vasp_std > stdout.txt 2> stderr.txt
+mpitasks=$(echo "$SLURM_JOB_NUM_NODES * {ncore_per_node}" |bc)
+for p in strain*; do
+    cd $p
+    srun -n $mpitasks -c 4 --cpu_bind=cores vasp_std > stdout.txt 2> stderr.txt
+    cd ..
+done
 
 stoptime=$(date +%s)
 tottime=$(echo "$stoptime - $starttime" | bc -l)
