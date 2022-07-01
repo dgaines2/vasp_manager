@@ -28,9 +28,9 @@ def change_elastic_constants_from_vasp(vasp_elastic_tensor):
     So perform swapping to match expectations
 
     Args:
-        vasp_elastic_tensor (6x6 np.array)
+        vasp_elastic_tensor  (6x6 np.array[float])
     Returns:
-        elastic_tensor (6x6 np.array): reordered to match Voigt notation
+        elastic_tensor (6x6 np.array[float]): reordered to match Voigt notation
     """
     elastic_tensor = vasp_elastic_tensor.copy()
     for j in range(6):
@@ -51,6 +51,13 @@ def change_elastic_constants_from_vasp(vasp_elastic_tensor):
 def read_stiffness_tensor(elastic_file, change_from_vasp=True):
     """
     Read vasp stiffness tensor from elastic_file
+
+    Args:
+        elastic_file (str): path to elastic_constants.txt
+        change_from_vasp (bool): if True, change elastic constants
+            to the IEEE Voigt format
+    Returns:
+        elastic_tensor (6x6 np.array[float])
     """
     with open(elastic_file, "r") as fr:
         raw_elastic_data = fr.readlines()
@@ -64,31 +71,12 @@ def read_stiffness_tensor(elastic_file, change_from_vasp=True):
     return elastic_tensor
 
 
-def get_stiffness_tensor(c11, c12, c44):
-    """
-    cij is stiffness tensor
-    Provide alternate way to construct the tensor from c11, c12, and c44
-
-    Args:
-        c11 (float)
-        c12 (float)
-        c44 (float)
-    Returns:
-        cij (6x6 np.array)
-    """
-    cij = np.zeros((6, 6))
-    cij[0, 0], cij[1, 1], cij[2, 2] = c11 * np.ones(3)
-    cij[0, 1], cij[0, 2], cij[1, 0], cij[1, 2], cij[2, 0], cij[2, 1] = c12 * np.ones(6)
-    cij[3, 3], cij[4, 4], cij[5, 5] = c44 * np.ones(3)
-    return cij
-
-
 def get_compliance_tensor(cij):
     """
     Args:
-        cij (6x6 np.arrray): stiffness tensor
+        cij (6x6 np.arrray[float]): stiffness tensor
     Returns:
-        sij (6x6 np.arrray): compliance tensor
+        sij (6x6 np.arrray[float]): compliance tensor
     """
     sij = np.linalg.inv(cij)
     return sij
@@ -97,7 +85,7 @@ def get_compliance_tensor(cij):
 def get_B_Reuss(sij):
     """
     Args:
-        sij (6x6 np.arrray): compliance tensor
+        sij (6x6 np.arrray[float]): compliance tensor
     Returns:
         B_Reuss (float): Reuss bulk modulus
     """
@@ -110,7 +98,7 @@ def get_B_Reuss(sij):
 def get_B_Voigt(cij):
     """
     Args:
-        cij (6x6 np.arrray): compliance_tensor
+        cij (6x6 np.arrray[float]): compliance_tensor
     Returns:
         B_Reuss (float): Reuss bulk modulus
     """
@@ -123,7 +111,7 @@ def get_B_Voigt(cij):
 def get_G_Reuss(sij):
     """
     Args:
-        sij (6x6 np.arrray): compliance tensor
+        sij (6x6 np.arrray[float]): compliance tensor
     Returns:
         B_Reuss (float): Reuss bulk modulus
     """
@@ -138,7 +126,7 @@ def get_G_Reuss(sij):
 def get_G_Voigt(cij):
     """
     Args:
-        cij (6x6 np.arrray): stiffness tensor
+        cij (6x6 np.arrray[float]): stiffness tensor
     Returns:
         G_Reuss (float): Reuss shear modulus
     """
@@ -182,6 +170,9 @@ def analyze_elastic_file(elastic_file, verbose=True):
     Args:
         elastic_file (str): filepath
         to_print (bool): if True, print the result
+    Returns:
+        elastic_dict (dict): dict of extracted info from
+            elastic calculation
     """
     try:
         cij = read_stiffness_tensor(elastic_file)
