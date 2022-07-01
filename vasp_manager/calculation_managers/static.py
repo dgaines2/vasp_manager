@@ -30,6 +30,7 @@ class StaticCalculationManager(BaseCalculationManager):
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
+        self._results = None
 
     @property
     def mode(self):
@@ -75,7 +76,7 @@ class StaticCalculationManager(BaseCalculationManager):
             if not self.job_complete:
                 logger.info(f"{self.mode.upper()} not finished")
                 return False
-            grep_call = f"tail -n{self.tail}"
+            grep_call = f"tail -n{self.tail} {stdout_path}"
             grep_output = (
                 subprocess.check_output(grep_call, shell=True).decode("utf-8").strip()
             )
@@ -97,3 +98,7 @@ class StaticCalculationManager(BaseCalculationManager):
     @property
     def is_done(self):
         return self.check_calc()
+
+    @property
+    def results(self):
+        return self._results

@@ -2,6 +2,7 @@
   "AlAs": {
     "rlx-coarse": null,
     "rlx": null,
+    "static": null,
     "bulkmod": {
       "B": 66.823
     },
@@ -68,6 +69,7 @@
   "AlSb": {
     "rlx-coarse": null,
     "rlx": null,
+    "static": null,
     "bulkmod": {
       "B": 49.085
     },
@@ -134,6 +136,7 @@
   "BAs": {
     "rlx-coarse": null,
     "rlx": null,
+    "static": null,
     "bulkmod": {
       "B": 131.098
     },
