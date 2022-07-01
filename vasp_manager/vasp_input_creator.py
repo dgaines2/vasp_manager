@@ -227,9 +227,21 @@ class VaspInputCreator:
         # check if CONTCAR is empty -- calculation failed almost immediately
         # if it is empty, don't make an archive, just recreate the files
         contcar_path = os.path.join(self.calc_path, "CONTCAR")
-        if os.stat(contcar_path).st_size == 0:
-            os.path.remove(jobid_path)
-            return True
+        if not os.path.exists(contcar_path):
+            logger.error(
+                f"CONTCAR in {contcar_path} did not exist.\nAttempting to rerun but it's"
+                " likely there was an immediate job failure!"
+            )
+            shutil.rmtree(self.calc_path)
+            return False
+        else:
+            if os.stat(contcar_path).st_size == 0:
+                logger.error(
+                    f"CONTCAR in {contcar_path} was empty.\nAttempting to rerun but it's"
+                    " likely there was an immediate job failure!"
+                )
+                shutil.rmtree(self.calc_path)
+                return False
 
         with change_directory(self.calc_path):
             num_archives = len(glob.glob("archive*"))
