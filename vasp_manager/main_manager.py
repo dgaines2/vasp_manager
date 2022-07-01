@@ -180,9 +180,6 @@ class VaspManager:
             if not calc_manager.is_done:
                 break
 
-            logger.info(f"Calculation {calc_manager.mode.upper()} successful")
-            if calc_manager.results:
-                logger.info(json.dumps(calc_manager.results, indent=2, cls=NumpyEncoder))
             results[calc_manager.mode] = calc_manager.results
         return results
 
@@ -203,5 +200,6 @@ class VaspManager:
         if self.write_results:
             with open("results.json", "w+") as fw:
                 fw.write(json_str)
+            logger.info("Dumping to results.json")
 
         return all_results
