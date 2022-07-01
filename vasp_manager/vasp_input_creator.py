@@ -221,12 +221,8 @@ class VaspInputCreator:
                 shutil.move(f, archive_name)
 
             contcar_path = os.path.join(archive_name, "CONTCAR")
-            shutil.copy(contcar_path, "POSCAR")
-            potcar_path = os.path.join(archive_name, "POTCAR")
-            shutil.copy(potcar_path, "POTCAR")
-
-            self.make_incar()
-            self.make_vaspq()
+            self.poscar_source_path = contcar_path
+            self.create()
         return True
 
     def create(self):
