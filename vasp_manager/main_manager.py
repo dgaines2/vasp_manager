@@ -61,7 +61,7 @@ class VaspManager:
         """
         material_paths = [d for d in glob.glob("calculations/*") if os.path.isdir(d)]
         # Sort the paths by name
-        material_paths = sorted(material_paths, key=lambda d: int(d.split("/")[1]))
+        material_paths = sorted(material_paths)
         return material_paths
 
     def _get_material_name_from_path(self, material_path):
