@@ -56,7 +56,7 @@ class JobManager:
         if os.path.exists(jobid_path):
             with open(jobid_path) as fr:
                 jobid = fr.read()
-            self._jobid = jobid
+            self.jobid = jobid
             return True
         else:
             return False
@@ -70,16 +70,14 @@ class JobManager:
 
     @jobid.setter
     def jobid(self, job_value):
-        if not self.job_exists:
-            raise Exception("Can't get jobid. Job does not exist yet")
         # some criteria to make sure jobid actually looks reasonable?
         # but I think SLURM will throw and error if sbatch fails
         try:
-            jobid_float = float(job_value)
+            jobid_int = int(job_value)
         except Exception as e:
             raise Exception(f"{e}")
-        else:
-            self._jobid = job_value
+        self._jobid = jobid_int
+        return self._jobid
 
     def submit_job(self):
         if self.job_exists:

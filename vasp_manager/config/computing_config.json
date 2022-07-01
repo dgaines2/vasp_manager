@@ -5,7 +5,7 @@
     "potcar_dir": "/Users/dalegaines/Documents/vasp_potentials/54/potpaw_pbe",
     "queuetype": "short",
     "allocation": "p31151",
-    "vasp_module": "vasp/5.4.4-vtst-openmpi-4.0.5-intel-19.0.5.281",
+    "vasp_module": "vasp/5.4.4-openmpi-4.0.5-intel-19.0.5.281",
     "ncore": 12,
     "ncore_per_node": 28
   },
@@ -14,7 +14,7 @@
     "potcar_dir": "/projects/b1004/potpaw_PBE_OQMD",
     "queuetype": "short",
     "allocation": "p31151",
-    "vasp_module": "vasp/5.4.4-vtst-openmpi-4.0.5-intel-19.0.5.281",
+    "vasp_module": "vasp/5.4.4-openmpi-4.0.5-intel-19.0.5.281",
     "ncore": 12,
     "ncore_per_node": 28
   },

@@ -16,7 +16,7 @@
     "ismear": 0,
     "sigma": 0.1,
     "kpar": 4,
-    "gga": "PE",
+    "gga": "PS",
     "walltime": "02:00:00"
   },
   "rlx": {
@@ -36,7 +36,7 @@
     "ismear": 0,
     "sigma": 0.1,
     "kpar": 4,
-    "gga": "PE",
+    "gga": "PS",
     "walltime": "02:00:00"
   },
   "static": {
@@ -56,7 +56,7 @@
     "ismear": -5,
     "sigma": 0,
     "kpar": 4,
-    "gga": "PE",
+    "gga": "PS",
     "walltime": "02:00:00"
   },
   "bulkmod": {
@@ -76,7 +76,7 @@
     "ismear": -5,
     "sigma": 0,
     "kpar": 4,
-    "gga": "PE",
+    "gga": "PS",
     "walltime": "02:00:00"
   },
   "elastic": {
@@ -98,7 +98,7 @@
     "ismear": 0,
     "sigma": 0.01,
     "kpar": 4,
-    "gga": "PE",
+    "gga": "PS",
     "walltime": "04:00:00"
   }
 }

@@ -43,7 +43,7 @@ class VaspInputCreator:
         try:
             structure = get_pmg_structure_from_poscar(self.poscar_source_path)
         except Exception as e:
-            raise Exception(f"Cannot load POSCAR in {self.poscar_path}: {e}")
+            raise Exception(f"Cannot load POSCAR in {self.poscar_source_path}: {e}")
         return structure
 
     @property
@@ -224,6 +224,12 @@ class VaspInputCreator:
         jobid_path = os.path.join(self.calc_path, "jobid")
         if not os.path.exists(jobid_path):
             return False
+        # check if CONTCAR is empty -- calculation failed almost immediately
+        # if it is empty, don't make an archive, just recreate the files
+        contcar_path = os.path.join(self.calc_path, "CONTCAR")
+        if os.stat(contcar_path).st_size == 0:
+            os.path.remove(jobid_path)
+            return True
 
         with change_directory(self.calc_path):
             num_archives = len(glob.glob("archive*"))
@@ -234,9 +240,9 @@ class VaspInputCreator:
             for f in all_files:
                 shutil.move(f, archive_name)
 
-            contcar_path = os.path.join(archive_name, "CONTCAR")
-            self.poscar_source_path = contcar_path
-            self.create()
+        contcar_path = os.path.join(self.calc_path, archive_name, "CONTCAR")
+        self.poscar_source_path = contcar_path
+        self.create()
         return True
 
     def create(self):
