@@ -174,6 +174,9 @@ class VaspInputCreator:
             elif self.mode == "rlx-coarse":
                 pad_string = "rc"
             mode = "rlx"
+        elif self.mode == "static":
+            pad_string = "s"
+            mode = "static"
         elif self.mode == "bulkmod":
             pad_string = "b"
             mode = "bulkmod"

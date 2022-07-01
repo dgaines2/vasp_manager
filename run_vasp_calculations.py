@@ -22,7 +22,7 @@ def make_calculations_folder(data_path="structure_df.pickle.gz"):
 
     # This was my data file, but of course you can specify your own here
     df = pd.read_pickle(data_path)
-    oqmd_ids = df["oqmd_id"].values
+    composition = df["composition"].values
     structures = df["structure"].values
     for oqmd_id, structure in zip(oqmd_ids, structures):
         print(oqmd_id)
@@ -43,7 +43,12 @@ if __name__ == "__main__":
 
     if not os.path.exists("calculations"):
         make_calculations_folder()
-    calculation_types = ["rlx-coarse", "rlx-fine", "elastic"]
+    calculation_types = [
+        "rlx-coarse",
+        "rlx-fine",
+        "bulkmod",
+        "elastic",
+    ]
     material_paths = sorted(glob.glob("calculations/*"))
 
     vaspManager = VaspManager(
