@@ -8,6 +8,7 @@ import shutil
 
 import numpy as np
 import pymatgen as pmg
+from pymatgen.analysis.eos import BirchMurnaghan
 
 from vasp_manager.calculation_managers.base import BaseCalculationManager
 from vasp_manager.utils import change_directory
@@ -155,7 +156,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
         logger.debug(f"{volumes}")
         logger.debug("Final Energies")
         logger.debug(f"{final_energies}")
-        eos_analyzer = pmg.analysis.eos.BirchMurnaghan(volumes, final_energies)
+        eos_analyzer = BirchMurnaghan(volumes, final_energies)
         eos_analyzer.fit()
         bulk_modulus = np.round(eos_analyzer.b0_GPa, 3)
         logger.info(f"{self.mode.upper()} Calculation: Successful")
