@@ -1,5 +1,5 @@
 # vasp_manager
-Automatically run vasp relaxation and bulk moduli calculations
+Automatically run vasp relaxation, static, bulk moduli, and elastic calculations
 
 This package serves to automate `VASP` calculations. We include calculation
 modes `"rlx-coarse"`, `"rlx-fine"`, `"static"`, `"bulkmod"`,
