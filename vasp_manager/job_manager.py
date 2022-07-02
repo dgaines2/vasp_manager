@@ -26,17 +26,17 @@ class JobManager:
         """
         self.calc_path = calc_path
         self.ignore_personal_errors = ignore_personal_errors
-
-        self.computing_config_dict = self._get_computing_config_dict()
         self._jobid = None
 
-    def _get_computing_config_dict(self):
-        computing_config_dict = json.loads(
-            pkgutil.get_data("vasp_manager", "config/computing_config.json").decode(
-                "utf-8"
-            )
-        )
-        return computing_config_dict
+    @property
+    def computing_config_dict(self):
+        fpath = "computing_config.json"
+        if os.path.exists(fpath):
+            with open(fpath) as fr:
+                computing_config = json.load(fr)
+        else:
+            raise Exception(f"No {fpath} found in current path")
+        return computing_config
 
     @property
     def computer(self):
