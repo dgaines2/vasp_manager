@@ -4,7 +4,7 @@ Automatically run vasp relaxation and bulk moduli calculations
 This package serves to automate `VASP` calculations. We include calculation
 modes `"rlx-coarse"`, `"rlx-fine"`, `"static"`, `"bulkmod"`,
 `"bulkmod_standalone"`, and `"elastic"`.  Each mode has its own configuration
-settings `vasp_manager/config/calc_config.json` with sensible defaults, but
+settings in `calc_config.json` with sensible defaults, but
 these can be easily customized by the user.
 
 ## Calculation Modes
@@ -36,11 +36,14 @@ In order to use this package, you MUST
 unique name and contain a `POSCAR`. A sample method of creating the calculations
 folder from a `pandas.DataFrame` is available in `run_vasp_calculations.py`, and
 an example calculations folder is provided in `calculations.tar.gz`.
-2) Configure `vasp_manager/config/computing_config.json`. You will need to
-specify your `user_id`, a `potcar directory`, a `queuetype`, and a `vasp
-module`. As of now, only CORI at NERSC and QUEST at Northwestern University
-are supported. Any other SLURM based supercomputers can be easily added,
-but modifications could be made for other queue management systems.
+2) Configure `computing_config.json` and place it in the base directory with
+`run_vasp_calculations.py`. You will need to specify your `user_id`, a `potcar
+directory`, a `queuetype`, and a `vasp module`. As of now, only CORI at NERSC
+and QUEST at Northwestern University are supported. Any other SLURM based
+supercomputers can be easily added, but modifications could be made for other
+queue management systems.
+3) If desired, make modifications to `calc_config.json`. This must also be
+placed in the base directory with `run_vasp_calculations.py`.
 
 Vasp input creation is automatic, and so is job submission and analysis. Simply
 rerun the main script and any calculations that are ready for the next type of
