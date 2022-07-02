@@ -3,9 +3,10 @@
 #SBATCH -N {n_nodes}
 #SBATCH -n {n_procs}
 #SBATCH -p {queuetype}
-#SBATCH -J b{jobname}
+#SBATCH -J {jobname}
 #SBATCH -A {allocation}
 #SBATCH -t {walltime}
+#SBATCH --mem=0
 
 #OpenMP settings:
 ulimit -s unlimited
@@ -16,7 +17,7 @@ module load {vasp_module}
 
 starttime=$(date +%s)
 
-mpi_tasks=$(echo "$SLURM_NTASKS - ($SLURM_NTASKS/28)*4" | bc)
+mpi_tasks=$(echo "$SLURM_NTASKS * 24/28" | bc)
 for p in strain*; do
     cd $p
     mpirun -np $mpi_tasks vasp_std > stdout.txt 2> stderr.txt

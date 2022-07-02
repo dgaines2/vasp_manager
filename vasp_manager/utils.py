@@ -32,14 +32,32 @@ class NumpyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
-def get_primitive_structure_from_poscar(poscar_path):
+def get_pmg_structure_from_poscar(
+    poscar_path,
+    to_process=True,
+    primitive=True,
+    symprec=1e-3,
+    return_sg=False,
+):
     """
     Args:
         poscar_path (str)
+        to_process (bool): if True, get standard reduced structure
+        primitive (bool): if True, get primitive structure, else get
+        conventional structure
+        symprec (float): symprec for SpacegroupAnalyzer
+        return_sg (bool): if True, return spacegroup number
     Returns:
-        structure (pmg.Structure): primitive structure from POSCAR
+        structure (pmg.Structure): structure from POSCAR
     """
     structure = pmg.core.Structure.from_file(poscar_path)
-    sga = pmg.symmetry.analyzer.SpacegroupAnalyzer(structure, symprec=1e-3)
-    structure = sga.get_primitive_standard_structure()
+    if to_process:
+        sga = pmg.symmetry.analyzer.SpacegroupAnalyzer(structure, symprec=symprec)
+        if primitive:
+            structure = sga.get_primitive_standard_structure()
+        else:
+            structure = sga.get_conventional_standard_structure()
+        if return_sg:
+            sg = sga.get_space_group_number()
+            return structure, sg
     return structure

@@ -1,4 +1,4 @@
-from setuptools import find_packages, setup
+from setuptools import setup
 
 setup(
     name="vasp_manager",
@@ -11,8 +11,9 @@ setup(
     license="MIT",
     include_package_data=True,
     install_requires=[
-        "numpy",
-        "pandas",
-        "pymatgen",
+        "numpy>=1.22",
+        "pandas>=1.4",
+        "pymatgen>=2022.5",
     ],
+    extras_require={"dev": ["black", "isort", "pre-commit"]},
 )

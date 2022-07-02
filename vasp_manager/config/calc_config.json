@@ -12,11 +12,11 @@
     "ediffg": "1e-04",
     "encut": 520,
     "ediff": "1e-05",
-    "algo": "Normal",
+    "algo": "FAST",
     "ismear": 0,
     "sigma": 0.1,
     "kpar": 4,
-    "gga": "PE",
+    "gga": "PS",
     "walltime": "02:00:00"
   },
   "rlx": {
@@ -32,11 +32,31 @@
     "ediffg": "-1e-02",
     "encut": 520,
     "ediff": "1e-06",
-    "algo": "Normal",
+    "algo": "FAST",
     "ismear": 0,
     "sigma": 0.1,
     "kpar": 4,
-    "gga": "PE",
+    "gga": "PS",
+    "walltime": "02:00:00"
+  },
+  "static": {
+    "prec": "ACC",
+    "ispin": 1,
+    "magmom": "",
+    "kspacing": 0.10,
+    "nsw": 0,
+    "ibrion": -1,
+    "isif": 3,
+    "lreal": ".FALSE",
+    "potim": 0,
+    "ediffg": 0,
+    "encut": 520,
+    "ediff": "1e-06",
+    "algo": "FAST",
+    "ismear": -5,
+    "sigma": 0,
+    "kpar": 4,
+    "gga": "PS",
     "walltime": "02:00:00"
   },
   "bulkmod": {
@@ -52,11 +72,11 @@
     "ediffg": "-1e-02",
     "encut": 520,
     "ediff": "1e-06",
-    "algo": "Fast",
+    "algo": "FAST",
     "ismear": -5,
     "sigma": 0,
     "kpar": 4,
-    "gga": "PE",
+    "gga": "PS",
     "walltime": "02:00:00"
   },
   "elastic": {
@@ -78,7 +98,7 @@
     "ismear": 0,
     "sigma": 0.01,
     "kpar": 4,
-    "gga": "PE",
+    "gga": "PS",
     "walltime": "04:00:00"
   }
 }
