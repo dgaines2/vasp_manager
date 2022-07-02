@@ -48,19 +48,26 @@ class VaspInputCreator:
 
     @property
     def calc_config_dict(self):
-        calc_config_dict = json.loads(
-            pkgutil.get_data("vasp_manager", "config/calc_config.json").decode("utf-8")
-        )
-        return calc_config_dict
+        # calc_config_dict = json.loads(
+        #     pkgutil.get_data("vasp_manager", "config/calc_config.json").decode("utf-8")
+        # )
+        fpath = "calc_config.json"
+        if os.path.exists(fpath):
+            with open(fpath) as fr:
+                calc_config = json.load(fr)
+        else:
+            raise Exception(f"No {fpath} found in current path")
+        return calc_config
 
     @property
     def computing_config_dict(self):
-        computing_config_dict = json.loads(
-            pkgutil.get_data("vasp_manager", "config/computing_config.json").decode(
-                "utf-8"
-            )
-        )
-        return computing_config_dict
+        fpath = "computing_config.json"
+        if os.path.exists(fpath):
+            with open(fpath) as fr:
+                computing_config = json.load(fr)
+        else:
+            raise Exception(f"No {fpath} found in current path")
+        return computing_config
 
     @property
     def incar_template(self):

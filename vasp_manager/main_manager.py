@@ -119,10 +119,19 @@ class VaspManager:
                         tail=self.tail,
                     )
                 case "bulkmod" | "bulkmod_standalone":
-                    if "rlx-fine" in self.calculation_types:
-                        from_relax = True
+                    if calc_type == "bulkmod":
+                        if "rlx-fine" in self.calculation_types:
+                            from_relax = True
+                        else:
+                            from_relax = False
                     else:
                         from_relax = False
+                        if len(self.calculation_types) > 1:
+                            msg = (
+                                "bulkmod_standalone must be run alone -- remove other"
+                                " calculation types to fix"
+                            )
+                            raise Exception()
 
                     manager = BulkmodCalculationManager(
                         base_path=material_path,
