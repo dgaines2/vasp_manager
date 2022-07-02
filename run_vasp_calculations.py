@@ -50,7 +50,7 @@ if __name__ == "__main__":
         # "bulkmod",
         "elastic",
     ]
-    material_paths = sorted(glob.glob("calcs/*"))
+    material_paths = sorted(glob.glob("calculations/*"))
     material_paths = [p for p in material_paths if os.path.isdir(p)]
 
     vaspManager = VaspManager(

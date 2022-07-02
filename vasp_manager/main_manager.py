@@ -37,7 +37,7 @@ class VaspManager:
         """
         Args:
             calculation_types (list): list of calculation types
-            material_paths (list): list of material paths
+            material_paths (list) or (str): list of material paths OR name of calculations dir
             to_rerun (bool): if True, rerun failed calculations
             to_submit (bool): if True, submit calculations
             ignore_personal_errors (bool): if True, ignore job submission errors
@@ -55,20 +55,25 @@ class VaspManager:
         self.tail = tail
         self.write_results = write_results
 
-        self.material_paths = (
-            self._get_material_paths() if material_paths is None else material_paths
-        )
+        self.material_paths = self._get_material_paths(material_paths)
         self.calculation_managers = self._get_all_calculation_managers()
-
-    def _get_material_paths(self):
+    
+    def _get_material_paths(self, _material_paths):
         """
         Defaults to all paths under calculations/*
         """
-        material_paths = [d for d in glob.glob("calculations/*") if os.path.isdir(d)]
+        if isinstance(_material_paths, str):
+            self.base_path = _material_paths
+            material_paths = [d for d in glob.glob(f"{_material_paths}/*") if os.path.isdir(d)]
+        elif isinstance(_material_paths, list):
+            mat_path = _material_paths[0]
+            # self.base_path = "".join(mat_path.split("/")[:-1])
+            self.base_path = os.path.dirname(mat_path)
+            material_paths = _material_paths
         # Sort the paths by name
         material_paths = sorted(material_paths)
         return material_paths
-
+    
     def _get_material_name_from_path(self, material_path):
         material_name = material_path.split("/")[-1]
         return material_name
@@ -206,7 +211,8 @@ class VaspManager:
         json_str = json.dumps(all_results, indent=2, cls=NumpyEncoder)
         logger.info(json_str)
         if self.write_results:
-            with open("calculations/results.json", "w+") as fw:
+            results_path = os.path.join(self.base_path, "results.json")
+            with open(results_path, "w+") as fw:
                 fw.write(json_str)
             logger.info("Dumping to results.json")
 
@@ -243,6 +249,7 @@ class VaspManager:
             
         summary_str = ""
         summary_str += f"Total Materials = {n_materials}\n"
+        summary_str += "-"*30 + "\n"
         for calc_type in summary_dict:
             name = calc_type.upper()
             n_finished = summary_dict[calc_type]["n_finished"]
