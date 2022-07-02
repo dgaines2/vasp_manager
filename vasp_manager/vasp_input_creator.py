@@ -110,7 +110,7 @@ class VaspInputCreator:
             # quest has small nodes
             num_nodes *= 2
         if self.increase_nodes:
-            n_nodes *= 2
+            num_nodes *= 2
         return num_nodes
 
     def make_potcar(self):

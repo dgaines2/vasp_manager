@@ -35,7 +35,7 @@ class RlxCalculationManager(BaseCalculationManager):
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
-        self._results = None
+        self._results = "not complete"
 
     @property
     def mode(self):
@@ -84,8 +84,11 @@ class RlxCalculationManager(BaseCalculationManager):
         Returns:
             relaxation_successful (bool): if True, relaxation completed successfully
         """
-        stdout_path = os.path.join(self.calc_path, "stdout.txt")
+        if not self.job_complete:
+            logger.info(f"{self.mode.upper()} job not finished")
+            return False
 
+        stdout_path = os.path.join(self.calc_path, "stdout.txt")
         if os.path.exists(stdout_path):
             if not self.job_complete:
                 logger.info(f"{self.mode.upper()} not finished")
@@ -167,10 +170,18 @@ class RlxCalculationManager(BaseCalculationManager):
         if calc_done:
             volume_converged = self.check_volume_difference()
             if volume_converged:
+                self.results = "done"
                 return True
         else:
             return False
 
     @property
     def results(self):
+        return self._results
+
+    @results.setter
+    def results(self, value):
+        if not "done" in value:
+            raise Exception
+        self._results = value
         return self._results

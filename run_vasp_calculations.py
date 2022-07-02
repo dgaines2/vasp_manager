@@ -46,8 +46,8 @@ if __name__ == "__main__":
     calculation_types = [
         "rlx-coarse",
         "rlx-fine",
-        "static",
-        "bulkmod",
+        # "static",
+        # "bulkmod",
         "elastic",
     ]
     material_paths = sorted(glob.glob("calculations/*"))

@@ -55,7 +55,7 @@ class JobManager:
         jobid_path = os.path.join(self.calc_path, "jobid")
         if os.path.exists(jobid_path):
             with open(jobid_path) as fr:
-                jobid = fr.read()
+                jobid = fr.read().strip()
             self.jobid = jobid
             return True
         else:
@@ -123,7 +123,7 @@ class JobManager:
             )
             for line in queue_call:
                 line = line.strip().split()
-                if self.jobid in line:
+                if str(self.jobid) in line:
                     return False
             return True
 

@@ -69,6 +69,10 @@ class ElasticCalculationManager(BaseCalculationManager):
         Returns
             elastic_successful (bool): if True, elastic calculation completed successfully
         """
+        if not self.job_complete:
+            logger.info(f"{self.mode.upper()} job not finished")
+            return False
+
         stdout_path = os.path.join(self.calc_path, "stdout.txt")
         if os.path.exists(stdout_path):
             grep_call = f"grep 'Total' {stdout_path}"
@@ -101,7 +105,7 @@ class ElasticCalculationManager(BaseCalculationManager):
                 return False
         else:
             # shouldn't get here unless function was called with submit=False
-            logger.info("{self.mode.upper()} Calculation: No stdout.txt available")
+            logger.info(f"{self.mode.upper()} Calculation: No stdout.txt available")
             if self.to_rerun:
                 # setup_elastic(elastic_path, submit=submit, increase_nodes=False)
                 self.setup_calc(increase_nodes=False)
