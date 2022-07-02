@@ -89,7 +89,7 @@ class VaspManager:
                         from_scratch=self.from_scratch,
                         tail=self.tail,
                     )
-                case "rlx-fine":
+                case "rlx":
                     if "rlx-coarse" in self.calculation_types:
                         from_coarse_relax = True
                     else:
@@ -104,9 +104,9 @@ class VaspManager:
                         tail=self.tail,
                     )
                 case "static":
-                    if "rlx-fine" not in self.calculation_types:
+                    if "rlx" not in self.calculation_types:
                         msg = (
-                            "Cannot perform static calculation without mode='rlx-fine'"
+                            "Cannot perform static calculation without mode='rlx'"
                             " first"
                         )
                         raise Exception(msg)
@@ -120,7 +120,7 @@ class VaspManager:
                     )
                 case "bulkmod" | "bulkmod_standalone":
                     if calc_type == "bulkmod":
-                        if "rlx-fine" in self.calculation_types:
+                        if "rlx" in self.calculation_types:
                             from_relax = True
                         else:
                             from_relax = False
@@ -141,7 +141,7 @@ class VaspManager:
                         from_scratch=self.from_scratch,
                     )
                 case "elastic":
-                    if "rlx-fine" not in self.calculation_types:
+                    if "rlx" not in self.calculation_types:
                         msg = (
                             "Cannot perform elastic calculation without mode='rlx-fine'"
                             " first"
@@ -210,4 +210,41 @@ class VaspManager:
                 fw.write(json_str)
             logger.info("Dumping to results.json")
 
+        self.results = all_results
         return all_results
+    
+    def summary(self):
+        n_materials = len(self.material_paths)
+        summary_dict = {}
+        for calc_type in self.calculation_types:
+            summary_dict[calc_type] = {} 
+            summary_dict[calc_type]["n_finished"] = 0
+            summary_dict[calc_type]["finished"] = []
+            summary_dict[calc_type]["unfinished"] = []
+
+            for material, mat_results in self.results.items():
+                # need to account for case key doesn't yet exist
+                if calc_type in mat_results:
+                    match calc_type:
+                        case "rlx-coarse" | "rlx" | "static":
+                            if mat_results[calc_type] == "done":
+                                summary_dict[calc_type]["n_finished"] += 1
+                                summary_dict[calc_type]["finished"].append(material)
+                            else:
+                                summary_dict[calc_type]["unfinished"].append(material)
+                        case  "bulkmod" | "bulkmod_standalone" | "elastic":
+                            if mat_results[calc_type] is not None:
+                                summary_dict[calc_type]["n_finished"] += 1
+                                summary_dict[calc_type]["finished"].append(material)
+                            else:
+                                summary_dict[calc_type]["unfinished"].append(material)
+                else:
+                    summary_dict[calc_type]["unfinished"].append(material)
+            
+        summary_str = ""
+        summary_str += f"Total Materials = {n_materials}\n"
+        for calc_type in summary_dict:
+            name = calc_type.upper()
+            n_finished = summary_dict[calc_type]["n_finished"]
+            summary_str += f"{name} {n_finished}/{n_materials} completed\n"
+        return summary_str

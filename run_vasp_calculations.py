@@ -35,7 +35,7 @@ def make_calculations_folder(data_path="structure_df.pickle.gz"):
 
 
 if __name__ == "__main__":
-    get_logging = True
+    get_logging = False
     logging_level = logging.INFO
     if get_logging:
         logging.basicConfig()
@@ -45,7 +45,7 @@ if __name__ == "__main__":
         make_calculations_folder()
     calculation_types = [
         "rlx-coarse",
-        "rlx-fine",
+        "rlx",
         # "static",
         # "bulkmod",
         "elastic",
@@ -57,3 +57,4 @@ if __name__ == "__main__":
         calculation_types, material_paths=material_paths, to_rerun=True, to_submit=True
     )
     results = vaspManager.run_calculations()
+    print(vaspManager.summary())

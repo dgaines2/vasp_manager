@@ -2,7 +2,7 @@
 Automatically run vasp relaxation, static, bulk moduli, and elastic calculations
 
 This package serves to automate `VASP` calculations. We include calculation
-modes `"rlx-coarse"`, `"rlx-fine"`, `"static"`, `"bulkmod"`,
+modes `"rlx-coarse"`, `"rlx"`, `"static"`, `"bulkmod"`,
 `"bulkmod_standalone"`, and `"elastic"`.  Each mode has its own configuration
 settings in `calc_config.json` with sensible defaults, but
 these can be easily customized by the user.
@@ -10,7 +10,7 @@ these can be easily customized by the user.
 ## Calculation Modes
 `rlx-coarse`: (optional) lower precision energy-based relaxation
 
-`rlx-fine`: tighter force-based relaxation
+`rlx`: tighter force-based relaxation
 
 `static`: high accuracy static SCF calculation
 
@@ -24,7 +24,7 @@ rlx-fine output structure
 built into VASP
 
 I generally recommend starting from `rlx-coarse`, although the functionality is
-there to start a `rlx-fine` from the initially provided POSCAR.
+there to start a `rlx` from the initially provided POSCAR.
 
 Example workflows might look like `rlx-coarse` &#8594; `rlx` &#8594; `bulkmod`, or
 `rlx` &#8594; `elastic`, or simply `bulkmod_standalone` (although this is not recommended).
