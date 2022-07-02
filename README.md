@@ -23,9 +23,6 @@ rlx-fine output structure
 `elastic`: Determination of elastic constants using the deformation method
 built into VASP
 
-\\\ TODO: Implement `band-structure` calculations and
-possibly `phonopy` calculations
-
 I generally recommend starting from `rlx-coarse`, although the functionality is
 there to start a `rlx-fine` from the initially provided POSCAR.
 
@@ -68,3 +65,6 @@ on the unix utilities `cat` and `grep`.*
 tag in the INCAR, but future versions will be able to specify KPPRA or a manual
 grid instead. Magnetic or spin-orbit coupling calculations are also not currently
 supported.*
+
+\\\ TODO: Implement `band-structure` calculations and
+possibly `phonopy` calculations
