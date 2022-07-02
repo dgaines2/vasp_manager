@@ -13,6 +13,10 @@ logger = logging.getLogger(__name__)
 
 
 class RlxCoarseCalculationManager(BaseCalculationManager):
+    """
+    Runs coarse relaxation job workflow for a single material
+    """
+
     def __init__(
         self,
         base_path,
@@ -22,6 +26,13 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
         from_scratch=False,
         tail=5,
     ):
+        """
+        For base_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
+        see BaseCalculationManager
+
+        Args:
+            tail (int): number of last lines to log in debugging if job failed
+        """
         self.tail = tail
         super().__init__(
             base_path=base_path,
@@ -43,7 +54,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
 
     def setup_calc(self):
         """
-        Set up a coarse relaxation
+        Sets up a coarse relaxation
         """
         vasp_input_creator = VaspInputCreator(
             self.calc_path,
@@ -72,8 +83,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
 
     def check_calc(self):
         """
-        Check if calculation has finished and reached required accuracy
-        (No real automatic logging or fixing of VASP errors)
+        Checks if calculation has finished and reached required accuracy
 
         Returns:
             relaxation_successful (bool): if True, relaxation completed successfully

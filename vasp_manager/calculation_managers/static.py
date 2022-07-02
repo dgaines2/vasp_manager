@@ -13,6 +13,10 @@ logger = logging.getLogger(__name__)
 
 
 class StaticCalculationManager(BaseCalculationManager):
+    """
+    Runs static job workflow for a single material
+    """
+
     def __init__(
         self,
         base_path,
@@ -22,6 +26,13 @@ class StaticCalculationManager(BaseCalculationManager):
         from_scratch=False,
         tail=5,
     ):
+        """
+        For base_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
+        see BaseCalculationManager
+
+        Args:
+            tail (int): number of last lines to log in debugging if job failed
+        """
         self.tail = tail
         super().__init__(
             base_path=base_path,
@@ -44,6 +55,7 @@ class StaticCalculationManager(BaseCalculationManager):
     def setup_calc(self):
         """
         Runs a static SCF calculation through VASP
+
         By default, requires previous relaxation run
         """
         vasp_input_creator = VaspInputCreator(
@@ -71,6 +83,12 @@ class StaticCalculationManager(BaseCalculationManager):
                 self.setup_calc()
 
     def check_calc(self):
+        """
+        Checks result of static calculation
+
+        Returns
+            static_successful (bool): if True, static calculation completed successfully
+        """
         if not self.job_complete:
             logger.info(f"{self.mode.upper()} job not finished")
             return False

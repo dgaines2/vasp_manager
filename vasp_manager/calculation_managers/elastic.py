@@ -13,6 +13,10 @@ logger = logging.getLogger(__name__)
 
 
 class ElasticCalculationManager(BaseCalculationManager):
+    """
+    Runs elastic deformation job workflow for a single material
+    """
+
     def __init__(
         self,
         base_path,
@@ -22,6 +26,13 @@ class ElasticCalculationManager(BaseCalculationManager):
         from_scratch=False,
         tail=5,
     ):
+        """
+        For base_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
+        see BaseCalculationManager
+
+        Args:
+            tail (int): number of last lines to log in debugging if job failed
+        """
         self.tail = tail
         super().__init__(
             base_path=base_path,
@@ -43,7 +54,8 @@ class ElasticCalculationManager(BaseCalculationManager):
 
     def setup_calc(self, increase_nodes=False):
         """
-        Run elastic constants routine through VASP
+        Runs elastic constants routine through VASP
+
         By default, requires relaxation (as the elastic constants routine needs
             the cell to be nearly at equilibrium)
         """
@@ -64,9 +76,9 @@ class ElasticCalculationManager(BaseCalculationManager):
 
     def check_calc(self):
         """
-        Check result of elastic calculation
+        Checks result of elastic calculation
 
-        Returns
+        Returns:
             elastic_successful (bool): if True, elastic calculation completed successfully
         """
         if not self.job_complete:
@@ -117,7 +129,7 @@ class ElasticCalculationManager(BaseCalculationManager):
 
     def _analyze_elastic(self):
         """
-        Get results from elastic calculation
+        Gets results from elastic calculation
         """
         elastic_file = os.path.join(self.calc_path, "elastic_constants.txt")
         if not os.path.exists(elastic_file):

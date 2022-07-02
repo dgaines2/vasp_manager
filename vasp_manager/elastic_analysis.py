@@ -25,7 +25,7 @@ def change_elastic_constants_from_vasp(vasp_elastic_tensor):
     5: 13 or xz
     6: 12 or xy
     but VASP differs as it presents 1, 2, 3, 6 (xy), 4 (yz), 5 (xz)
-    So perform swapping to match expectations
+    This function performs swapping to match expectations
 
     Args:
         vasp_elastic_tensor  (6x6 np.array[float])
@@ -50,7 +50,7 @@ def change_elastic_constants_from_vasp(vasp_elastic_tensor):
 
 def read_stiffness_tensor(elastic_file, change_from_vasp=True):
     """
-    Read vasp stiffness tensor from elastic_file
+    Reads vasp stiffness tensor from elastic_file
 
     Args:
         elastic_file (str): path to elastic_constants.txt
@@ -151,7 +151,7 @@ def get_VRH_average(mod1, mod2):
 
 def make_elastic_constants(outcar_path):
     """
-    Utility function to scrape OUTCAR for elastic constants
+    Utility function that scrapes OUTCAR for elastic constants
     Writes to elastic_constants.txt
     """
     if not os.path.exists(outcar_path):
@@ -165,7 +165,7 @@ def make_elastic_constants(outcar_path):
 
 def analyze_elastic_file(elastic_file):
     """
-    Grab important quantities from the elastic calculation results
+    Grabs important quantities from the elastic calculation results
 
     Args:
         elastic_file (str): filepath

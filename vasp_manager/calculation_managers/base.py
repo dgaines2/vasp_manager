@@ -10,7 +10,7 @@ from vasp_manager.job_manager import JobManager
 
 class BaseCalculationManager(ABC):
     """
-    Run vasp job workflow for a single material
+    Runs vasp job workflow for a single material
     """
 
     def __init__(
@@ -21,6 +21,18 @@ class BaseCalculationManager(ABC):
         ignore_personal_errors=True,
         from_scratch=False,  ## DANGEROUS, WILL DELETE PREVIOUS CALCULATION
     ):
+        """
+        Args:
+            base_path (str): path for a single material
+                ex. calculations/AlAs
+            to_rerun (bool): if True, rerun failed calculations
+            to_submit (bool): if True, submit calculations to job manager
+            ignore_personal_errors (bool): if True, ignore job submission errors
+                if on personal computer
+            from_scratch (bool): if True, remove the calculation's folder and
+                restart
+                note: DANGEROUS
+        """
         self.base_path = base_path
         self.to_rerun = to_rerun
         self.to_submit = to_submit

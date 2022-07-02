@@ -16,6 +16,10 @@ logger = logging.getLogger(__name__)
 
 
 class RlxCalculationManager(BaseCalculationManager):
+    """
+    Runs relaxation job workflow for a single material
+    """
+
     def __init__(
         self,
         base_path,
@@ -26,6 +30,14 @@ class RlxCalculationManager(BaseCalculationManager):
         from_scratch=False,
         tail=5,
     ):
+        """
+        For base_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
+        see BaseCalculationManager
+
+        Args:
+            from_coarse_relax (bool): if True, use CONTCAR from coarse relax
+            tail (int): number of last lines to log in debugging if job failed
+        """
         self.from_coarse_relax = from_coarse_relax
         self.tail = tail
         super().__init__(
@@ -51,7 +63,7 @@ class RlxCalculationManager(BaseCalculationManager):
 
     def setup_calc(self):
         """
-        Set up a fine relaxation
+        Sets up a fine relaxation
         """
         vasp_input_creator = VaspInputCreator(
             self.calc_path,
@@ -78,8 +90,7 @@ class RlxCalculationManager(BaseCalculationManager):
 
     def check_calc(self):
         """
-        Check if calculation has finished and reached required accuracy
-        (No real automatic logging or fixing of VASP errors)
+        Checks if calculation has finished and reached required accuracy
 
         Returns:
             relaxation_successful (bool): if True, relaxation completed successfully
@@ -124,10 +135,10 @@ class RlxCalculationManager(BaseCalculationManager):
 
     def check_volume_difference(self):
         """
-        check relaxation runs for volume difference
+        Checks relaxation runs for volume difference
 
-        if abs(volume difference) is >= 5%, rerun relaxation
-        only check for mode='rlx' as that's the structure for elastic analysis
+        if abs(volume difference) is >= 5%, reruns relaxation
+        only checks for mode='rlx' as that's the structure for further calculation
 
         Returns:
             volume_converged (bool): if True, relaxation completed successfully

@@ -17,9 +17,21 @@ logger = logging.getLogger(__name__)
 
 
 class VaspInputCreator:
+    """
+    Handles VASP file creation
+    """
+
     def __init__(
         self, calc_path, mode, poscar_source_path, name=None, increase_nodes=False
     ):
+        """
+        Args:
+            calc_path
+            mode
+            poscar_source_path
+            name
+            increase_nodes
+        """
         self.calc_path = calc_path
         self.poscar_source_path = poscar_source_path
         self.increase_nodes = increase_nodes
@@ -27,7 +39,7 @@ class VaspInputCreator:
         self.mode = self._get_mode(mode)
 
     def _get_mode(self, mode):
-        # rlx-coarse, rlx, bulkmod, or elastic
+        # rlx-coarse, rlx, bulkmod, stc, or elastic
         # needed to add this to ensure bulkmod or bulkmod_standalone
         # share same config
         if "bulkmod" in mode:
@@ -59,7 +71,7 @@ class VaspInputCreator:
         return self.computing_config_dict["computer"]
 
     @property
-    def structure(self):
+    def source_structure(self):
         try:
             structure = get_pmg_structure_from_poscar(self.poscar_source_path)
         except Exception as e:
@@ -95,14 +107,14 @@ class VaspInputCreator:
         """
         Create and write a POSCAR
         """
-        poscar = pmg.io.vasp.Poscar(self.structure)
+        poscar = pmg.io.vasp.Poscar(self.source_structure)
         poscar_path = os.path.join(self.calc_path, "POSCAR")
         poscar.write_file(poscar_path)
 
     @property
     def n_nodes(self):
         # start with 1 node per 32 atoms
-        num_nodes = (len(self.structure) // 32) + 1
+        num_nodes = (len(self.source_structure) // 32) + 1
         if self.computer == "quest":
             # quest has small nodes
             num_nodes *= 2
@@ -117,8 +129,8 @@ class VaspInputCreator:
         potcar_path = os.path.join(self.calc_path, "POTCAR")
         potcar_dir = self.computing_config_dict[self.computer]["potcar_dir"]
 
-        el_names = [el.name for el in self.structure.composition]
-        logger.debug(f"{self.structure.composition.reduced_formula}, {el_names}")
+        el_names = [el.name for el in self.source_structure.composition]
+        logger.debug(f"{self.source_structure.composition.reduced_formula}, {el_names}")
         pot_singles = [
             os.path.join(potcar_dir, self.potcar_dict[el_name], "POTCAR")
             for el_name in el_names
@@ -172,28 +184,33 @@ class VaspInputCreator:
         walltime = calc_config["walltime"]
 
         # create pad string for job naming to differentiate in the queue
-        if self.mode == "rlx" or self.mode == "rlx-coarse":
-            if self.mode == "rlx":
-                pad_string = "r"
-            elif self.mode == "rlx-coarse":
-                pad_string = "rc"
-            mode = "rlx"
-        elif self.mode == "static":
-            pad_string = "s"
-            mode = "static"
-        elif self.mode == "bulkmod":
-            pad_string = "b"
-            mode = "bulkmod"
-        elif self.mode == "elastic":
-            pad_string = "e"
-            mode = "elastic"
-
+        match self.mode:
+            case "rlx-coarse" | "rlx":
+                if self.mode == "rlx":
+                    pad_string = "r"
+                elif self.mode == "rlx-coarse":
+                    pad_string = "rc"
+                mode = "rlx"
+            case "static":
+                pad_string = "s"
+                mode = "static"
+            case "bulkmod":
+                pad_string = "b"
+                mode = "bulkmod"
+            case "elastic":
+                pad_string = "e"
+                mode = "elastic"
+            case _:
+                raise ValueError(
+                    "Calculation type {self.mode} not in supported calculation types"
+                    "of VaspInputCreator"
+                )
         n_procs = (
             self.n_nodes * self.computing_config_dict[self.computer]["ncore_per_node"]
         )
 
         if self.name is None:
-            jobname = pad_string + self.structure.composition.reduced_formula
+            jobname = pad_string + self.source_structure.composition.reduced_formula
         else:
             jobname = pad_string + self.name
 
@@ -222,7 +239,8 @@ class VaspInputCreator:
         Make an archive of a VASP calculation and copy back over relevant files
 
         Returns:
-            archive_made (bool): if job was never submitted, return False
+            archive_made (bool): if job was never submitted or failed immediately,
+                return False
         """
         # if job was never submitted, don't make an archive
         jobid_path = os.path.join(self.calc_path, "jobid")
@@ -230,6 +248,7 @@ class VaspInputCreator:
             return False
         # check if CONTCAR is empty -- calculation failed almost immediately
         # if it is empty, don't make an archive, just recreate the files
+        # by returning False
         contcar_path = os.path.join(self.calc_path, "CONTCAR")
         if not os.path.exists(contcar_path):
             logger.error(

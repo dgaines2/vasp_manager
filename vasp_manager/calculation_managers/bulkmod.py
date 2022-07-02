@@ -18,6 +18,10 @@ logger = logging.getLogger(__name__)
 
 
 class BulkmodCalculationManager(BaseCalculationManager):
+    """
+    Runs bulk modulus job workflow for a single material
+    """
+
     def __init__(
         self,
         base_path,
@@ -27,6 +31,13 @@ class BulkmodCalculationManager(BaseCalculationManager):
         from_relax=True,
         from_scratch=False,
     ):
+        """
+        For base_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
+        see BaseCalculationManager
+
+        Args:
+            from_relax (bool): if True, use CONTCAR from relax
+        """
         self.from_relax = from_relax
         super().__init__(
             base_path=base_path,
@@ -54,7 +65,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
     def setup_calc(self):
         """
-        Set up EOS bulkmod calculation
+        Sets up an EOS bulkmod calculation
         """
         msg = (
             "Running bulk modulus calculation without previous relaxation"
@@ -79,6 +90,12 @@ class BulkmodCalculationManager(BaseCalculationManager):
                 self.setup_calc()
 
     def check_calc(self):
+        """
+        Checks result of bulk modulus calculation
+
+        Returns:
+            bulkmod_sucessful (bool): if True, bulkmod calculation completed successfully
+        """
         # //TODO: make sure results look reasonable here
         # perhaps call self.bulk_modulus to make sure
         # everything parses correctly
@@ -94,7 +111,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
     def _make_bulkmod_strains(self, strains):
         """
-        Create a set of strain directory for fitting the E-V info
+        Creates a set of strain directory for fitting the E-V info
 
         Args:
             strains (iterable of floats)

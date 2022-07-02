@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class JobManager:
     """
-    A JobManager -- handles job submission and status
+    Handles job submission and status monitoring
     """
 
     def __init__(self, calc_path, ignore_personal_errors=True):
@@ -63,10 +63,9 @@ class JobManager:
 
     @property
     def jobid(self):
-        if self._jobid is None:
+        if not self.job_exists:
             raise Exception("jobid has not been set")
-        else:
-            return self._jobid
+        return self._jobid
 
     @jobid.setter
     def jobid(self, job_value):
@@ -80,6 +79,9 @@ class JobManager:
         return self._jobid
 
     def submit_job(self):
+        """
+        Submits job, making sure to not make duplicate jobs
+        """
         if self.job_exists:
             logger.info(f"{self.mode.upper()} Job already exists")
             return True
@@ -106,7 +108,7 @@ class JobManager:
         return True
 
     def _check_job_complete(self):
-        """Return True if job done"""
+        """Returns True if job done"""
         if self.computer == "personal":
             error_msg = "Cannot check job on personal computer"
             error_msg += "\n\tIgnoring job status check..."

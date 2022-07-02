@@ -6,6 +6,8 @@ import json
 import logging
 import os
 
+import numpy as np
+
 from vasp_manager.calculation_managers import (
     BulkmodCalculationManager,
     ElasticCalculationManager,
@@ -57,30 +59,37 @@ class VaspManager:
 
         self.material_paths = self._get_material_paths(material_paths)
         self.calculation_managers = self._get_all_calculation_managers()
-    
+
     def _get_material_paths(self, _material_paths):
         """
-        Defaults to all paths under calculations/*
+        Gets paths for all materials
         """
-        if isinstance(_material_paths, str):
-            self.base_path = _material_paths
-            material_paths = [d for d in glob.glob(f"{_material_paths}/*") if os.path.isdir(d)]
-        elif isinstance(_material_paths, list):
-            mat_path = _material_paths[0]
-            # self.base_path = "".join(mat_path.split("/")[:-1])
-            self.base_path = os.path.dirname(mat_path)
-            material_paths = _material_paths
+        match _material_paths:
+            case str():
+                self.base_path = _material_paths
+                material_paths = [
+                    d for d in glob.glob(f"{_material_paths}/*") if os.path.isdir(d)
+                ]
+            case list() | np.array():
+                mat_path = _material_paths[0]
+                # self.base_path = "".join(mat_path.split("/")[:-1])
+                self.base_path = os.path.dirname(mat_path)
+                material_paths = _material_paths
+            case _:
+                raise TypeError(
+                    "material_paths must be a directory name ora list of paths"
+                )
         # Sort the paths by name
         material_paths = sorted(material_paths)
         return material_paths
-    
+
     def _get_material_name_from_path(self, material_path):
         material_name = material_path.split("/")[-1]
         return material_name
 
     def _get_calculation_managers(self, material_path):
         """
-        Get calculation managers for a single material
+        Gets calculation managers for a single material
         """
         calc_managers = []
         for calc_type in self.calculation_types:
@@ -111,8 +120,7 @@ class VaspManager:
                 case "static":
                     if "rlx" not in self.calculation_types:
                         msg = (
-                            "Cannot perform static calculation without mode='rlx'"
-                            " first"
+                            "Cannot perform static calculation without mode='rlx' first"
                         )
                         raise Exception(msg)
                     manager = StaticCalculationManager(
@@ -168,7 +176,7 @@ class VaspManager:
 
     def _get_all_calculation_managers(self):
         """
-        Get calculation managers for all materials
+        Gets calculation managers for all materials
         """
         calc_managers = {}
         for material_path in self.material_paths:
@@ -178,7 +186,7 @@ class VaspManager:
 
     def _manage_calculations(self, material_name):
         """
-        Run vasp job workflow for a single material
+        Runs vasp job workflow for a single material
         """
         results = {}
         for calc_manager in self.calculation_managers[material_name]:
@@ -198,7 +206,7 @@ class VaspManager:
 
     def run_calculations(self):
         """
-        Run vasp job workflow for all materials
+        Runs vasp job workflow for all materials
         """
         all_results = {}
         for material_path in self.material_paths:
@@ -218,12 +226,12 @@ class VaspManager:
 
         self.results = all_results
         return all_results
-    
+
     def summary(self):
         n_materials = len(self.material_paths)
         summary_dict = {}
         for calc_type in self.calculation_types:
-            summary_dict[calc_type] = {} 
+            summary_dict[calc_type] = {}
             summary_dict[calc_type]["n_finished"] = 0
             summary_dict[calc_type]["finished"] = []
             summary_dict[calc_type]["unfinished"] = []
@@ -233,23 +241,22 @@ class VaspManager:
                 if calc_type in mat_results:
                     match calc_type:
                         case "rlx-coarse" | "rlx" | "static":
-                            if mat_results[calc_type] == "done":
-                                summary_dict[calc_type]["n_finished"] += 1
-                                summary_dict[calc_type]["finished"].append(material)
-                            else:
-                                summary_dict[calc_type]["unfinished"].append(material)
-                        case  "bulkmod" | "bulkmod_standalone" | "elastic":
-                            if mat_results[calc_type] is not None:
-                                summary_dict[calc_type]["n_finished"] += 1
-                                summary_dict[calc_type]["finished"].append(material)
-                            else:
-                                summary_dict[calc_type]["unfinished"].append(material)
+                            case_condition = mat_results[calc_type] == "done"
+                        case "bulkmod" | "bulkmod_standalone" | "elastic":
+                            case_condition = mat_results[calc_type] is not None
+                        case _:
+                            raise ValueError(f"Unexpected calc_type: {calc_type}")
+                    if case_condition:
+                        summary_dict[calc_type]["n_finished"] += 1
+                        summary_dict[calc_type]["finished"].append(material)
+                    else:
+                        summary_dict[calc_type]["unfinished"].append(material)
                 else:
                     summary_dict[calc_type]["unfinished"].append(material)
-            
+
         summary_str = ""
         summary_str += f"Total Materials = {n_materials}\n"
-        summary_str += "-"*30 + "\n"
+        summary_str += "-" * 30 + "\n"
         for calc_type in summary_dict:
             name = calc_type.upper()
             n_finished = summary_dict[calc_type]["n_finished"]
