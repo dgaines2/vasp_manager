@@ -22,15 +22,15 @@ def make_calculations_folder(data_path="structure_df.pickle.gz"):
 
     # This was my data file, but of course you can specify your own here
     df = pd.read_pickle(data_path)
-    composition = df["composition"].values
+    materials = df["composition"].values
     structures = df["structure"].values
-    for oqmd_id, structure in zip(oqmd_ids, structures):
-        print(oqmd_id)
-        oqmd_id_path = os.path.join(calcs_path, oqmd_id)
-        if not os.path.exists(oqmd_id_path):
-            os.mkdir(oqmd_id_path)
+    for material, structure in zip(materials, structures):
+        print(material)
+        material_path = os.path.join(calcs_path, material)
+        if not os.path.exists(material_path):
+            os.mkdir(material_path)
         poscar = Poscar(structure)
-        poscar_path = os.path.join(oqmd_id_path, "POSCAR")
+        poscar_path = os.path.join(material_path, "POSCAR")
         poscar.write_file(poscar_path)
 
 
