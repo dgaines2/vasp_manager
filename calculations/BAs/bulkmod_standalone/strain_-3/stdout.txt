@@ -1,0 +1,52 @@
+ running on   48 total cores
+ distrk:  each k-point on   12 cores,    4 groups
+ distr:  one band on   12 cores,    1 groups
+ using from now: INCAR     
+ vasp.5.4.4.18Apr17-6-g9f103f2a35 (build Nov 04 2020 14:40:39) complex          
+  
+ POSCAR found type information on POSCAR  B  As
+ POSCAR found :  2 types and       2 ions
+ scaLAPACK will be used
+
+ ----------------------------------------------------------------------------- 
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|      You have enabled k-point parallelism (KPAR>1).                         |
+|      This developmental code was originally  written by Paul Kent at ORNL,  |
+|      and carefully double checked in Vienna.                                |
+|      GW as well as linear response parallelism added by Martijn Marsman     |
+|      and Georg Kresse.                                                      |
+|      Carefully verify results versus KPAR=1.                                |
+|      Report problems to Paul Kent and Vienna.                               |
+|                                                                             |
+ ----------------------------------------------------------------------------- 
+
+ LDA part: xc-table for Pade appr. of Perdew
+ POSCAR found type information on POSCAR  B  As
+ POSCAR found :  2 types and       2 ions
+ generate k-points for:   24   24   24
+ POSCAR, INCAR and KPOINTS ok, starting setup
+ FFT: planning ...
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1     0.104498417021E+02    0.10450E+02   -0.40847E+03  6624   0.885E+02
+DAV:   2    -0.118283022374E+02   -0.22278E+02   -0.21799E+02 10096   0.109E+02
+DAV:   3    -0.120666509190E+02   -0.23835E+00   -0.23835E+00  7696   0.135E+01
+DAV:   4    -0.120669078596E+02   -0.25694E-03   -0.25694E-03 10168   0.435E-01
+DAV:   5    -0.120669079260E+02   -0.66426E-07   -0.66426E-07  7624   0.475E-03    0.457E+00
+RMM:   6    -0.112629452861E+02    0.80396E+00   -0.87130E-01  6689   0.654E+00    0.186E+00
+RMM:   7    -0.111728778145E+02    0.90067E-01   -0.16745E-01  7060   0.283E+00    0.750E-01
+RMM:   8    -0.111645844409E+02    0.82934E-02   -0.23326E-02  7326   0.116E+00    0.845E-02
+RMM:   9    -0.111648357408E+02   -0.25130E-03   -0.30738E-04  7824   0.149E-01    0.403E-02
+RMM:  10    -0.111649272026E+02   -0.91462E-04   -0.15143E-04  7358   0.104E-01    0.938E-03
+RMM:  11    -0.111649289819E+02   -0.17793E-05   -0.27162E-05  7396   0.343E-02    0.100E-02
+RMM:  12    -0.111649239342E+02    0.50477E-05   -0.72583E-06  7509   0.183E-02    0.282E-04
+RMM:  13    -0.111649239498E+02   -0.15602E-07   -0.96257E-08  4813   0.243E-03
+   1 F= -.11164924E+02 E0= -.11164924E+02  d E =0.000000E+00

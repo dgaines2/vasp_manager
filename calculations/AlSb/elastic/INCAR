@@ -1,0 +1,37 @@
+#= General Settings =#
+PREC = ACC
+ISTART = 0
+ISPIN = 1
+
+ADDGRID = .TRUE.
+KSPACING = 0.1
+NFREE = 4
+SYMPREC = 1e-08
+
+#= Ionic Relaxation Settings =#
+NSW = 60
+IBRION = 6
+ISIF = 3
+LREAL = .FALSE
+POTIM = 0.01
+EDIFFG = -1e-02
+
+#= Electronic Relxation Settings =#
+ENCUT = 700
+NELMIN = 5
+EDIFF = 1e-07
+ALGO = Fast
+
+#= Write flags =#
+LCHARG = .FALSE.
+LWAVE = .FALSE.
+LVTOT = .FALSE.
+
+#= DOS =#
+ISMEAR = 0
+SIGMA = 0.01
+
+#= Parallelization =#
+NCORE = 1
+KPAR = 4
+GGA = PE

@@ -36,15 +36,14 @@ In order to use this package, you MUST
 subfolder of `calculations/` should have a unique name and contain a `POSCAR`. A
 sample method of creating the calculations folder from a `pandas.DataFrame` is
 available in `run_vasp_calculations.py`, and an example calculations folder is
-provided in `calculations.tar.gz`.
-2) Configure `computing_config.json` and place it in the base directory with
-`run_vasp_calculations.py`. You will need to specify your `user_id`, a
-`potcar_directory`, a `queuetype`, and a `vasp_module`. As of now, only CORI at
-NERSC and QUEST at Northwestern University are supported. Any other SLURM based
-supercomputers can be easily added, but modifications could be made for other
-queue management systems.
+provided in `calculations/`.
+2) Configure `computing_config.json` and place it in the `calculations/` directory.
+You will need to specify your `user_id`, a `potcar_directory`, a `queuetype`,
+and a `vasp_module`. As of now, only CORI at NERSC and QUEST at Northwestern
+University are supported. Any other SLURM based supercomputers can be easily
+added, but modifications could be made for other queue management systems.
 3) If desired, make modifications to `calc_config.json`. This must also be
-placed in the base directory with `run_vasp_calculations.py`.
+placed in the `calculations/` directory.
 
 Vasp input creation is automatic, and so is job submission and analysis. Simply
 rerun the main script and any calculations that are ready for the next type of
@@ -54,7 +53,7 @@ constant analysis is through custom personal scripts.
 
 The main object for handling all calculations is `vasp_manager.VaspManager`,
 which takes in a list of calculation modes. See the class documentation for more
-details.
+details. By default, results are exported to `calculations/results.json`.
 
 The module logger is also made available for information and  debugging and can
 be accessed through `logging.getLogger("vasp_manager")`.

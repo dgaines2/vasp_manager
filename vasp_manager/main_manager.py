@@ -132,7 +132,6 @@ class VaspManager:
                                 " calculation types to fix"
                             )
                             raise Exception()
-
                     manager = BulkmodCalculationManager(
                         base_path=material_path,
                         to_rerun=self.to_rerun,
@@ -207,7 +206,7 @@ class VaspManager:
         json_str = json.dumps(all_results, indent=2, cls=NumpyEncoder)
         logger.info(json_str)
         if self.write_results:
-            with open("results.json", "w+") as fw:
+            with open("calculations/results.json", "w+") as fw:
                 fw.write(json_str)
             logger.info("Dumping to results.json")
 
