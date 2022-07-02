@@ -30,7 +30,7 @@ class JobManager:
 
     @property
     def computing_config_dict(self):
-        fpath = "computing_config.json"
+        fpath = "calculations/computing_config.json"
         if os.path.exists(fpath):
             with open(fpath) as fr:
                 computing_config = json.load(fr)
