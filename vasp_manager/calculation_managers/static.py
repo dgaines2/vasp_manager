@@ -61,6 +61,7 @@ class StaticCalculationManager(BaseCalculationManager):
                 # continue to make the input files
                 self.to_rerun = False
                 self.setup_calc()
+                return
         else:
             vasp_input_creator.create()
 
