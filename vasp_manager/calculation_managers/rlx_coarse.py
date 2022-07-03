@@ -98,15 +98,15 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
                 logger.info(f"{self.mode.upper()} not finished")
                 return False
 
-            grep_call = f"tail -n{self.tail} {stdout_path}"
-            grep_output = (
-                subprocess.check_output(grep_call, shell=True).decode("utf-8").strip()
+            tail_call = f"tail -n{self.tail} {stdout_path}"
+            tail_output = (
+                subprocess.check_output(tail_call, shell=True).decode("utf-8").strip()
             )
-            if "reached required accuracy" in grep_output:
+            if "reached required accuracy" in tail_output:
                 logger.info(
                     f"{self.mode.upper()} Calculation: reached required accuracy"
                 )
-                logger.debug(grep_output)
+                logger.debug(tail_output)
                 self.results = "done"
                 return True
             else:
@@ -118,7 +118,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
                     return True
 
                 logger.warning(f"{self.mode.upper()} FAILED")
-                logger.debug(grep_output)
+                logger.debug(tail_output)
                 if self.to_rerun:
                     logger.info(f"Rerunning {self.calc_path}")
                     self.setup_calc()

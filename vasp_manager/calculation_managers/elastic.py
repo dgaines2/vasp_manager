@@ -102,13 +102,13 @@ class ElasticCalculationManager(BaseCalculationManager):
                 logger.info(f"{self.mode.upper()} Calculation: Success")
                 return True
             else:
-                grep_call = f"tail -n{self.tail} {stdout_path}"
-                grep_output = (
-                    subprocess.check_output(grep_call, shell=True)
+                tail_call = f"tail -n{self.tail} {stdout_path}"
+                tail_output = (
+                    subprocess.check_output(tail_call, shell=True)
                     .decode("utf-8")
                     .strip()
                 )
-                logger.info(grep_output)
+                logger.info(tail_output)
                 logger.info(f"{self.mode.upper()} Calculation: FAILED")
                 if self.to_rerun:
                     # increase nodes as its likely the calculation failed
