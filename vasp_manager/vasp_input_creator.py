@@ -11,7 +11,7 @@ import subprocess
 
 import pymatgen as pmg
 
-from vasp_manager.utils import change_directory, get_pmg_structure_from_poscar
+from vasp_manager.utils import change_directory, get_pmg_structure_from_poscar, pcat
 
 logger = logging.getLogger(__name__)
 
@@ -140,8 +140,10 @@ class VaspInputCreator:
                 msg = "Unable to create POTCAR"
                 msg += f"\n\t POTCAR not found at path {pot_single}"
                 raise Exception(msg)
-        cmd = "cat " + " ".join(pot_singles) + " > " + potcar_path
-        subprocess.call(cmd, shell=True)
+
+        potcar = pcat(pot_singles)
+        with open(potcar_path, "w+") as fw:
+            fw.write(potcar)
 
     def make_incar(self):
         """
