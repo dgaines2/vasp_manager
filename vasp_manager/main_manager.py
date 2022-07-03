@@ -5,8 +5,10 @@ import glob
 import json
 import logging
 import os
+from multiprocessing import Pool, cpu_count
 
 import numpy as np
+from tqdm import tqdm
 
 from vasp_manager.calculation_managers import (
     BulkmodCalculationManager,
@@ -35,6 +37,7 @@ class VaspManager:
         from_scratch=False,
         tail=5,
         write_results=True,
+        ncore=None,
     ):
         """
         Args:
@@ -48,6 +51,7 @@ class VaspManager:
                 DANGEROUS
             tail (int): number of last lines to log in debugging if job failed
             write_results (bool): if True, dump results to results.json
+            ncore (int): if int, use ncore for multiprocessing
         """
         self.calculation_types = calculation_types
         self.to_rerun = to_rerun
@@ -56,9 +60,22 @@ class VaspManager:
         self.from_scratch = from_scratch
         self.tail = tail
         self.write_results = write_results
+        self._ncore = ncore
 
         self.material_paths = self._get_material_paths(material_paths)
         self.calculation_managers = self._get_all_calculation_managers()
+
+    @property
+    def ncore(self):
+        if self._ncore is None:
+            self._ncore = cpu_count()
+        return self._ncore
+
+    @ncore.setter
+    def ncore(self, value):
+        if not isinstance(value, int):
+            raise Exception
+        self._ncore = value
 
     def _get_material_paths(self, _material_paths):
         """
@@ -204,17 +221,22 @@ class VaspManager:
             results[calc_manager.mode] = calc_manager.results
         return results
 
+    def _manage_calculations_wrapper(self, material_paths):
+        material_names = [self._get_material_name_from_path(p) for p in material_paths]
+        with Pool(self.ncore) as pool:
+            results = pool.map(self._manage_calculations, tqdm(material_names))
+
+        results_dict = {}
+        for material_path, result in zip(material_paths, results):
+            material_name = self._get_material_name_from_path(material_path)
+            results_dict[material_name] = result
+        return results_dict
+
     def run_calculations(self):
         """
         Runs vasp job workflow for all materials
         """
-        all_results = {}
-        for material_path in self.material_paths:
-            material_name = self._get_material_name_from_path(material_path)
-            print(material_name)
-            results = self._manage_calculations(material_name)
-            all_results[material_name] = results
-            print("\n")
+        all_results = self._manage_calculations_wrapper(self.material_paths)
 
         json_str = json.dumps(all_results, indent=2, cls=NumpyEncoder)
         logger.info(json_str)

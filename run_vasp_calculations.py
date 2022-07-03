@@ -53,8 +53,9 @@ if __name__ == "__main__":
     material_paths = sorted(glob.glob("calculations/*"))
     material_paths = [p for p in material_paths if os.path.isdir(p)]
 
-    vaspManager = VaspManager(
+    vmg = VaspManager(
         calculation_types, material_paths=material_paths, to_rerun=True, to_submit=True
     )
-    results = vaspManager.run_calculations()
-    print(vaspManager.summary())
+    print(vmg.ncore)
+    results = vmg.run_calculations()
+    print(vmg.summary())
