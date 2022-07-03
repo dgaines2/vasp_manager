@@ -50,12 +50,11 @@ if __name__ == "__main__":
         # "bulkmod",
         "elastic",
     ]
-    material_paths = sorted(glob.glob("calculations/*"))
-    material_paths = [p for p in material_paths if os.path.isdir(p)]
+    calc_paths = os.path.join("calculations", "*")
+    material_paths = [p for p in sorted(glob.glob(calc_paths)) if os.path.isdir(p)]
 
     vmg = VaspManager(
         calculation_types, material_paths=material_paths, to_rerun=True, to_submit=True
     )
-    print(vmg.ncore)
     results = vmg.run_calculations()
     print(vmg.summary())

@@ -21,7 +21,7 @@ class RlxCalculationManager(BaseCalculationManager):
 
     def __init__(
         self,
-        base_path,
+        material_path,
         to_rerun,
         to_submit,
         ignore_personal_errors=True,
@@ -30,7 +30,7 @@ class RlxCalculationManager(BaseCalculationManager):
         tail=5,
     ):
         """
-        For base_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
+        For material_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
         see BaseCalculationManager
 
         Args:
@@ -40,7 +40,7 @@ class RlxCalculationManager(BaseCalculationManager):
         self.from_coarse_relax = from_coarse_relax
         self.tail = tail
         super().__init__(
-            base_path=base_path,
+            material_path=material_path,
             to_rerun=to_rerun,
             to_submit=to_submit,
             ignore_personal_errors=ignore_personal_errors,
@@ -55,9 +55,9 @@ class RlxCalculationManager(BaseCalculationManager):
     @property
     def poscar_source_path(self):
         if self.from_coarse_relax:
-            poscar_source_path = os.path.join(self.base_path, "rlx-coarse", "CONTCAR")
+            poscar_source_path = os.path.join(self.calc_path, "rlx-coarse", "CONTCAR")
         else:
-            poscar_source_path = os.path.join(self.base_path, "POSCAR")
+            poscar_source_path = os.path.join(self.calc_path, "POSCAR")
         return poscar_source_path
 
     def setup_calc(self):
@@ -112,7 +112,7 @@ class RlxCalculationManager(BaseCalculationManager):
                 logger.debug(tail_output)
                 return True
             else:
-                archive_dirs = glob.glob(f"{self.calc_path}/archive*")
+                archive_dirs = glob.glob(os.path.join(self.calc_path, "archive*"))
                 if len(archive_dirs) >= 3:
                     logger.warning("Many archives exist, suggest force based relaxation")
                     if self.to_rerun:

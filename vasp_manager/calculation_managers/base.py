@@ -15,7 +15,7 @@ class BaseCalculationManager(ABC):
 
     def __init__(
         self,
-        base_path,
+        material_path,
         to_rerun,
         to_submit,
         ignore_personal_errors=True,
@@ -23,7 +23,7 @@ class BaseCalculationManager(ABC):
     ):
         """
         Args:
-            base_path (str): path for a single material
+            material_path (str): path for a single material
                 ex. calculations/AlAs
             to_rerun (bool): if True, rerun failed calculations
             to_submit (bool): if True, submit calculations to job manager
@@ -33,7 +33,7 @@ class BaseCalculationManager(ABC):
                 restart
                 note: DANGEROUS
         """
-        self.base_path = base_path
+        self.material_path = material_path
         self.to_rerun = to_rerun
         self.to_submit = to_submit
         self.job_manager = JobManager(
@@ -63,11 +63,11 @@ class BaseCalculationManager(ABC):
 
     @property
     def calc_path(self):
-        return os.path.join(self.base_path, self.mode)
+        return os.path.join(self.material_path, self.mode)
 
     @property
     def material_name(self):
-        return self.base_path.split("/")[-1]
+        return os.path.basename(self.material_path)
 
     @property
     def job_exists(self):

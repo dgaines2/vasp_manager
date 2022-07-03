@@ -19,7 +19,7 @@ class StaticCalculationManager(BaseCalculationManager):
 
     def __init__(
         self,
-        base_path,
+        material_path,
         to_rerun,
         to_submit,
         ignore_personal_errors=True,
@@ -27,7 +27,7 @@ class StaticCalculationManager(BaseCalculationManager):
         tail=5,
     ):
         """
-        For base_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
+        For material_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
         see BaseCalculationManager
 
         Args:
@@ -35,7 +35,7 @@ class StaticCalculationManager(BaseCalculationManager):
         """
         self.tail = tail
         super().__init__(
-            base_path=base_path,
+            material_path=material_path,
             to_rerun=to_rerun,
             to_submit=to_submit,
             ignore_personal_errors=ignore_personal_errors,
@@ -49,7 +49,7 @@ class StaticCalculationManager(BaseCalculationManager):
 
     @property
     def poscar_source_path(self):
-        poscar_source_path = os.path.join(self.base_path, "rlx", "CONTCAR")
+        poscar_source_path = os.path.join(self.calc_path, "rlx", "CONTCAR")
         return poscar_source_path
 
     def setup_calc(self):

@@ -80,28 +80,34 @@ class VaspManager:
     def _get_material_paths(self, _material_paths):
         """
         Gets paths for all materials
+
+        Args:
+            _material_paths (list) or (str): list of material paths OR name of calculations dir
+                if is list, use that list directly
+                if is string, find folders inside of that directory named {_material_paths}
         """
         match _material_paths:
             case str():
                 self.base_path = _material_paths
                 material_paths = [
-                    d for d in glob.glob(f"{_material_paths}/*") if os.path.isdir(d)
+                    d
+                    for d in glob.glob(os.path.join(_material_paths, "*"))
+                    if os.path.isdir(d)
                 ]
             case list() | np.array():
                 mat_path = _material_paths[0]
-                # self.base_path = "".join(mat_path.split("/")[:-1])
                 self.base_path = os.path.dirname(mat_path)
                 material_paths = _material_paths
             case _:
                 raise TypeError(
-                    "material_paths must be a directory name ora list of paths"
+                    "material_paths must be a directory name or a list of paths"
                 )
         # Sort the paths by name
         material_paths = sorted(material_paths)
         return material_paths
 
     def _get_material_name_from_path(self, material_path):
-        material_name = material_path.split("/")[-1]
+        material_name = os.path.basename(material_path)
         return material_name
 
     def _get_calculation_managers(self, material_path):
@@ -113,7 +119,7 @@ class VaspManager:
             match calc_type:
                 case "rlx-coarse":
                     manager = RlxCoarseCalculationManager(
-                        base_path=material_path,
+                        material_path=material_path,
                         to_rerun=self.to_rerun,
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
@@ -126,7 +132,7 @@ class VaspManager:
                     else:
                         from_coarse_relax = False
                     manager = RlxCalculationManager(
-                        base_path=material_path,
+                        material_path=material_path,
                         to_rerun=self.to_rerun,
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
@@ -141,7 +147,7 @@ class VaspManager:
                         )
                         raise Exception(msg)
                     manager = StaticCalculationManager(
-                        base_path=material_path,
+                        material_path=material_path,
                         to_rerun=self.to_rerun,
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
@@ -163,7 +169,7 @@ class VaspManager:
                             )
                             raise Exception()
                     manager = BulkmodCalculationManager(
-                        base_path=material_path,
+                        material_path=material_path,
                         to_rerun=self.to_rerun,
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
@@ -178,7 +184,7 @@ class VaspManager:
                         )
                         raise Exception(msg)
                     manager = ElasticCalculationManager(
-                        base_path=material_path,
+                        material_path=material_path,
                         to_rerun=self.to_rerun,
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,

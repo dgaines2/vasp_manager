@@ -30,12 +30,14 @@ class JobManager:
 
     @property
     def computing_config_dict(self):
-        fpath = "calculations/computing_config.json"
+        all_calcs_dir = os.path.dirname(os.path.dirname(self.calc_path))
+        fname = "computing_config.json"
+        fpath = os.path.join(all_calcs_dir, fname)
         if os.path.exists(fpath):
             with open(fpath) as fr:
                 computing_config = json.load(fr)
         else:
-            raise Exception(f"No {fpath} found in current path")
+            raise Exception(f"No {fname} found in path {os.path.abspath(all_calcs_dir)}")
         return computing_config
 
     @property
@@ -48,7 +50,7 @@ class JobManager:
 
     @property
     def mode(self):
-        return self.calc_path.split("/")[-1]
+        return os.path.basename(self.calc_path)
 
     @property
     def job_exists(self):
