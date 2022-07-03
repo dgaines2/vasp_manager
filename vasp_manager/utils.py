@@ -61,3 +61,70 @@ def get_pmg_structure_from_poscar(
             sg = sga.get_space_group_number()
             return structure, sg
     return structure
+
+
+def pcat(f_names):
+    """
+    Custom python-only replacement for cat
+
+    Args:
+        f_names (list): names of files to cat together
+    Returns:
+        catted (str)
+    """
+    f_contents = []
+    for f_name in f_names:
+        with open(f_name) as fr:
+            f_content = fr.read()
+        f_contents.append(f_content)
+    catted = "\n".join(f_content for f_content in f_contents)
+    return catted
+
+
+def pgrep(
+    f_name, str_to_grep, stop_after_first_match=False, after=None, as_string=False
+):
+    """
+    Custom python-only replacement for grep
+
+    Args:
+        f_name (str): path of file
+        str_to_grep (str): target string
+        stop_after_first_match (bool): if True, stop after first found instance of
+            str_to_grep
+        after (int): if not None, return {after} lines found after str_to_grep
+        as_str (bool): if as_string, return a single string, else return splitlines
+    Returns:
+        matches (str or list)
+    """
+    with open(f_name) as fr:
+        f_lines = [l.strip() for l in fr.readlines()]
+    matches = []
+    for i, line in enumerate(f_lines):
+        if str_to_grep in line:
+            matches.append(line)
+            if after is not None:
+                matches.extend(f_lines[(i + 1) : (i + after + 1)])
+            if stop_after_first_match:
+                break
+    if as_string:
+        matches = "\n".join([l for l in matches])
+    return matches
+
+
+def ptail(f_name, n_tail=1, as_string=False):
+    """
+    Custom python-only replacement for grep
+
+    Args:
+        f_name (str): path of file
+        n_tail (int): n lines to tail
+        as_str (bool): if as_string, return a single string, else return splitlines
+    Returns:
+        tail (str or list)
+    """
+    with open(f_name) as fr:
+        tail = [l.strip() for l in fr.readlines()[-n_tail:]]
+    if as_string:
+        tail = "\n".join([l for l in tail])
+    return tail
