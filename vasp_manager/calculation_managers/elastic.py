@@ -3,10 +3,10 @@
 
 import logging
 import os
-import subprocess
 
 from vasp_manager.calculation_managers.base import BaseCalculationManager
 from vasp_manager.elastic_analysis import analyze_elastic_file, make_elastic_constants
+from vasp_manager.utils import pgrep, ptail
 from vasp_manager.vasp_input_creator import VaspInputCreator
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ class ElasticCalculationManager(BaseCalculationManager):
 
     def __init__(
         self,
-        base_path,
+        material_path,
         to_rerun,
         to_submit,
         ignore_personal_errors=True,
@@ -27,7 +27,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         tail=5,
     ):
         """
-        For base_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
+        For material_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
         see BaseCalculationManager
 
         Args:
@@ -35,7 +35,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         """
         self.tail = tail
         super().__init__(
-            base_path=base_path,
+            material_path=material_path,
             to_rerun=to_rerun,
             to_submit=to_submit,
             ignore_personal_errors=ignore_personal_errors,
@@ -49,7 +49,7 @@ class ElasticCalculationManager(BaseCalculationManager):
 
     @property
     def poscar_source_path(self):
-        poscar_source_path = os.path.join(self.base_path, "rlx", "CONTCAR")
+        poscar_source_path = os.path.join(self.calc_path, "rlx", "CONTCAR")
         return poscar_source_path
 
     def setup_calc(self, increase_nodes=False):
@@ -87,12 +87,7 @@ class ElasticCalculationManager(BaseCalculationManager):
 
         stdout_path = os.path.join(self.calc_path, "stdout.txt")
         if os.path.exists(stdout_path):
-            grep_call = f"grep 'Total' {stdout_path}"
-            grep_output = (
-                subprocess.check_output(grep_call, shell=True)
-                .decode("utf-8")
-                .splitlines()
-            )
+            grep_output = pgrep(stdout_path, str_to_grep="Total")
             last_grep_line = grep_output[-1].strip().split()
             # last grep line looks something like 'Total: 36/ 36'
             finished_deformations = int(last_grep_line[-2].replace("/", ""))
@@ -102,12 +97,7 @@ class ElasticCalculationManager(BaseCalculationManager):
                 logger.info(f"{self.mode.upper()} Calculation: Success")
                 return True
             else:
-                tail_call = f"tail -n{self.tail} {stdout_path}"
-                tail_output = (
-                    subprocess.check_output(tail_call, shell=True)
-                    .decode("utf-8")
-                    .strip()
-                )
+                tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
                 logger.info(tail_output)
                 logger.info(f"{self.mode.upper()} Calculation: FAILED")
                 if self.to_rerun:

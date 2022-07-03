@@ -8,7 +8,7 @@ import subprocess
 
 import numpy as np
 
-from vasp_manager.utils import NumpyEncoder
+from vasp_manager.utils import NumpyEncoder, pgrep
 
 logger = logging.getLogger(__name__)
 
@@ -159,8 +159,15 @@ def make_elastic_constants(outcar_path):
     # need to get elastic dir
     outcar_parent_dir = os.path.dirname(outcar_path)
     elastic_file = os.path.join(outcar_parent_dir, "elastic_constants.txt")
-    elastic_call = f'grep -A8 "TOTAL ELASTIC MOD" {outcar_path} > {elastic_file}'
-    subprocess.call(elastic_call, shell=True)
+    elastic_table = pgrep(
+        outcar_path,
+        str_to_grep="TOTAL ELASTIC MOD",
+        stop_after_first_match=True,
+        after=8,
+        as_str=True,
+    )
+    with open(elastic_file, "w+") as fw:
+        fw.write(elastic_table)
 
 
 def analyze_elastic_file(elastic_file):

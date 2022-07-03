@@ -24,7 +24,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
     def __init__(
         self,
-        base_path,
+        material_path,
         to_rerun,
         to_submit,
         ignore_personal_errors=True,
@@ -32,7 +32,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
         from_scratch=False,
     ):
         """
-        For base_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
+        For material_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
         see BaseCalculationManager
 
         Args:
@@ -40,7 +40,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
         """
         self.from_relax = from_relax
         super().__init__(
-            base_path=base_path,
+            material_path=material_path,
             to_rerun=to_rerun,
             to_submit=to_submit,
             ignore_personal_errors=ignore_personal_errors,
@@ -58,9 +58,9 @@ class BulkmodCalculationManager(BaseCalculationManager):
     @property
     def poscar_source_path(self):
         if self.from_relax:
-            poscar_source_path = os.path.join(self.base_path, "rlx", "CONTCAR")
+            poscar_source_path = os.path.join(self.calc_path, "rlx", "CONTCAR")
         else:
-            poscar_source_path = os.path.join(self.base_path, "POSCAR")
+            poscar_source_path = os.path.join(self.calc_path, "POSCAR")
         return poscar_source_path
 
     def setup_calc(self):
@@ -140,9 +140,8 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
             with change_directory(strain_path):
                 for f in ["POTCAR", "INCAR"]:
-                    orig_path = "../" + f
-                    f_path = f
-                    os.symlink(orig_path, f_path, target_is_directory=False)
+                    orig_path = os.path.join(os.pardir, f)
+                    os.symlink(orig_path, f, target_is_directory=False)
 
     def _analyze_bulkmod(self):
         """
@@ -150,7 +149,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
         """
         strain_paths = [
             path
-            for path in glob.glob(self.calc_path + "/strain*")
+            for path in glob.glob(os.path.join(self.calc_path, "strain*"))
             if os.path.isdir(path)
         ]
         strain_paths = sorted(strain_paths, key=lambda d: int(d.split("_")[-1]))

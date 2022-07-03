@@ -11,7 +11,7 @@ import subprocess
 
 import pymatgen as pmg
 
-from vasp_manager.utils import change_directory, get_pmg_structure_from_poscar
+from vasp_manager.utils import change_directory, get_pmg_structure_from_poscar, pcat
 
 logger = logging.getLogger(__name__)
 
@@ -48,22 +48,30 @@ class VaspInputCreator:
 
     @property
     def calc_config_dict(self):
-        fpath = "calculations/calc_config.json"
+        # sits in calculation folder like calculations/material_name/mode
+        # first pardir is material_name/
+        # second pardir is calculations/
+        # config dict should sit in calculations/
+        all_calcs_dir = os.path.dirname(os.path.dirname(self.calc_path))
+        fname = "calc_config.json"
+        fpath = os.path.join(all_calcs_dir, fname)
         if os.path.exists(fpath):
             with open(fpath) as fr:
                 calc_config = json.load(fr)
         else:
-            raise Exception(f"No {fpath} found in current path")
+            raise Exception(f"No {fname} found in path {os.path.abspath(all_calcs_dir)}")
         return calc_config
 
     @property
     def computing_config_dict(self):
-        fpath = "calculations/computing_config.json"
+        all_calcs_dir = os.path.dirname(os.path.dirname(self.calc_path))
+        fname = "computing_config.json"
+        fpath = os.path.join(all_calcs_dir, fname)
         if os.path.exists(fpath):
             with open(fpath) as fr:
                 computing_config = json.load(fr)
         else:
-            raise Exception(f"No {fpath} found in current path")
+            raise Exception(f"No {fname} found in path {os.path.abspath(all_calcs_dir)}")
         return computing_config
 
     @property
@@ -81,25 +89,25 @@ class VaspInputCreator:
     @property
     def incar_template(self):
         incar_template = pkgutil.get_data(
-            "vasp_manager", "static_files/INCAR_template"
+            "vasp_manager", os.path.join("static_files", "INCAR_template")
         ).decode("utf-8")
         return incar_template
 
     @property
     def potcar_dict(self):
         potcar_dict = json.loads(
-            pkgutil.get_data("vasp_manager", "static_files/pot_dict.json").decode(
-                "utf-8"
-            )
+            pkgutil.get_data(
+                "vasp_manager", os.path.join("static_files", "pot_dict.json")
+            ).decode("utf-8")
         )
         return potcar_dict
 
     @property
     def q_mapper(self):
         q_mapper = json.loads(
-            pkgutil.get_data("vasp_manager", "static_files/q_handles.json").decode(
-                "utf-8"
-            )
+            pkgutil.get_data(
+                "vasp_manager", os.path.join("static_files", "q_handles.json")
+            ).decode("utf-8")
         )
         return q_mapper
 
@@ -140,8 +148,10 @@ class VaspInputCreator:
                 msg = "Unable to create POTCAR"
                 msg += f"\n\t POTCAR not found at path {pot_single}"
                 raise Exception(msg)
-        cmd = "cat " + " ".join(pot_singles) + " > " + potcar_path
-        subprocess.call(cmd, shell=True)
+
+        potcar = pcat(pot_singles)
+        with open(potcar_path, "w+") as fw:
+            fw.write(potcar)
 
     def make_incar(self):
         """
@@ -226,9 +236,9 @@ class VaspInputCreator:
         )
 
         q_name = self.q_mapper[self.computer][mode]
-        vaspq_tmp = pkgutil.get_data("vasp_manager", f"static_files/{q_name}").decode(
-            "utf-8"
-        )
+        vaspq_tmp = pkgutil.get_data(
+            "vasp_manager", os.path.join("static_files", q_name)
+        ).decode("utf-8")
         vaspq = vaspq_tmp.format(**computer_config, walltime=walltime)
         logger.debug(vaspq)
         with open(vaspq_path, "w+") as fw:

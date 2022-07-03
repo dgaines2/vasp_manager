@@ -4,9 +4,9 @@
 import glob
 import logging
 import os
-import subprocess
 
 from vasp_manager.calculation_managers.base import BaseCalculationManager
+from vasp_manager.utils import ptail
 from vasp_manager.vasp_input_creator import VaspInputCreator
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
 
     def __init__(
         self,
-        base_path,
+        material_path,
         to_rerun,
         to_submit,
         ignore_personal_errors=True,
@@ -27,7 +27,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
         tail=5,
     ):
         """
-        For base_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
+        For material_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
         see BaseCalculationManager
 
         Args:
@@ -35,7 +35,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
         """
         self.tail = tail
         super().__init__(
-            base_path=base_path,
+            material_path=material_path,
             to_rerun=to_rerun,
             to_submit=to_submit,
             ignore_personal_errors=ignore_personal_errors,
@@ -49,7 +49,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
 
     @property
     def poscar_source_path(self):
-        poscar_source_path = os.path.join(self.base_path, "POSCAR")
+        poscar_source_path = os.path.join(self.calc_path, "POSCAR")
         return poscar_source_path
 
     def setup_calc(self):
@@ -98,10 +98,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
                 logger.info(f"{self.mode.upper()} not finished")
                 return False
 
-            tail_call = f"tail -n{self.tail} {stdout_path}"
-            tail_output = (
-                subprocess.check_output(tail_call, shell=True).decode("utf-8").strip()
-            )
+            tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
             if "reached required accuracy" in tail_output:
                 logger.info(
                     f"{self.mode.upper()} Calculation: reached required accuracy"
@@ -110,7 +107,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
                 self.results = "done"
                 return True
             else:
-                archive_dirs = glob.glob(f"{self.calc_path}/archive*")
+                archive_dirs = glob.glob(os.path.join(self.calc_path, "archive*"))
                 if len(archive_dirs) >= 3:
                     logger.warning("Many archives exist, suggest force based relaxation")
                     if self.to_rerun:
