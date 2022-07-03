@@ -4,9 +4,9 @@
 import glob
 import logging
 import os
-import subprocess
 
 from vasp_manager.calculation_managers.base import BaseCalculationManager
+from vasp_manager.utils import ptail
 from vasp_manager.vasp_input_creator import VaspInputCreator
 
 logger = logging.getLogger(__name__)
@@ -98,10 +98,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
                 logger.info(f"{self.mode.upper()} not finished")
                 return False
 
-            tail_call = f"tail -n{self.tail} {stdout_path}"
-            tail_output = (
-                subprocess.check_output(tail_call, shell=True).decode("utf-8").strip()
-            )
+            tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
             if "reached required accuracy" in tail_output:
                 logger.info(
                     f"{self.mode.upper()} Calculation: reached required accuracy"

@@ -3,10 +3,10 @@
 
 import logging
 import os
-import subprocess
 
 from vasp_manager.calculation_managers.base import BaseCalculationManager
 from vasp_manager.elastic_analysis import analyze_elastic_file, make_elastic_constants
+from vasp_manager.utils import ptail
 from vasp_manager.vasp_input_creator import VaspInputCreator
 
 logger = logging.getLogger(__name__)
@@ -102,12 +102,7 @@ class ElasticCalculationManager(BaseCalculationManager):
                 logger.info(f"{self.mode.upper()} Calculation: Success")
                 return True
             else:
-                tail_call = f"tail -n{self.tail} {stdout_path}"
-                tail_output = (
-                    subprocess.check_output(tail_call, shell=True)
-                    .decode("utf-8")
-                    .strip()
-                )
+                tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
                 logger.info(tail_output)
                 logger.info(f"{self.mode.upper()} Calculation: FAILED")
                 if self.to_rerun:
