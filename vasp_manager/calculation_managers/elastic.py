@@ -6,7 +6,7 @@ import os
 
 from vasp_manager.calculation_managers.base import BaseCalculationManager
 from vasp_manager.elastic_analysis import analyze_elastic_file, make_elastic_constants
-from vasp_manager.utils import ptail
+from vasp_manager.utils import pgrep, ptail
 from vasp_manager.vasp_input_creator import VaspInputCreator
 
 logger = logging.getLogger(__name__)
@@ -87,12 +87,7 @@ class ElasticCalculationManager(BaseCalculationManager):
 
         stdout_path = os.path.join(self.calc_path, "stdout.txt")
         if os.path.exists(stdout_path):
-            grep_call = f"grep 'Total' {stdout_path}"
-            grep_output = (
-                subprocess.check_output(grep_call, shell=True)
-                .decode("utf-8")
-                .splitlines()
-            )
+            grep_output = pgrep(stdout_path, str_to_grep="Total")
             last_grep_line = grep_output[-1].strip().split()
             # last grep line looks something like 'Total: 36/ 36'
             finished_deformations = int(last_grep_line[-2].replace("/", ""))

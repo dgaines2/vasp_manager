@@ -82,7 +82,11 @@ def pcat(f_names):
 
 
 def pgrep(
-    f_name, str_to_grep, stop_after_first_match=False, after=None, as_string=False
+    f_name,
+    str_to_grep,
+    stop_after_first_match=False,
+    after=None,
+    as_string=False,
 ):
     """
     Custom python-only replacement for grep
