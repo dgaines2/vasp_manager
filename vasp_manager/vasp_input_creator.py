@@ -7,9 +7,8 @@ import logging
 import os
 import pkgutil
 import shutil
-import subprocess
 
-import pymatgen as pmg
+from pymatgen.io.vasp import Poscar
 
 from vasp_manager.utils import change_directory, get_pmg_structure_from_poscar, pcat
 
@@ -115,7 +114,7 @@ class VaspInputCreator:
         """
         Create and write a POSCAR
         """
-        poscar = pmg.io.vasp.Poscar(self.source_structure)
+        poscar = Poscar(self.source_structure)
         poscar_path = os.path.join(self.calc_path, "POSCAR")
         poscar.write_file(poscar_path)
 

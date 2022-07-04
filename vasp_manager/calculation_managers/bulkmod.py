@@ -7,8 +7,9 @@ import os
 import shutil
 
 import numpy as np
-import pymatgen as pmg
 from pymatgen.analysis.eos import BirchMurnaghan
+from pymatgen.core import Structure
+from pymatgen.io.vasp import Vasprun
 
 from vasp_manager.calculation_managers.base import BaseCalculationManager
 from vasp_manager.utils import change_directory
@@ -158,8 +159,8 @@ class BulkmodCalculationManager(BaseCalculationManager):
         for i, strain_path in enumerate(strain_paths):
             poscar_path = os.path.join(strain_path, "POSCAR")
             vasprun_path = os.path.join(strain_path, "vasprun.xml")
-            volume = pmg.core.Structure.from_file(poscar_path).volume
-            vasprun = pmg.io.vasp.outputs.Vasprun(
+            volume = Structure.from_file(poscar_path).volume
+            vasprun = Vasprun(
                 filename=vasprun_path,
                 parse_dos=False,
                 parse_eigen=False,

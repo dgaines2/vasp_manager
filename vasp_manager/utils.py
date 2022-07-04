@@ -6,7 +6,8 @@ import os
 from contextlib import contextmanager
 
 import numpy as np
-import pymatgen as pmg
+from pymatgen.core import Structure
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 
 @contextmanager
@@ -50,9 +51,9 @@ def get_pmg_structure_from_poscar(
     Returns:
         structure (pmg.Structure): structure from POSCAR
     """
-    structure = pmg.core.Structure.from_file(poscar_path)
+    structure = Structure.from_file(poscar_path)
     if to_process:
-        sga = pmg.symmetry.analyzer.SpacegroupAnalyzer(structure, symprec=symprec)
+        sga = SpacegroupAnalyzer(structure, symprec=symprec)
         if primitive:
             structure = sga.get_primitive_standard_structure()
         else:
