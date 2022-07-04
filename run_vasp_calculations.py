@@ -8,15 +8,17 @@ from pymatgen.io.vasp import Poscar
 from vasp_manager import VaspManager
 
 
-def make_calculations_folder(data_path="structure_df.pickle.gz"):
+def make_calculations_folder(
+    data_path="structure_df.pickle.gz", calcs_path="calculations"
+):
     """
     Make a calculations folder
         For each material, make a folder named {oqmd_id} that contains a
         POSCAR
     Args:
         data_path (str): path to a pandas DF with oqmd_ids and pmg structures
+        calcs_path (str): path of base calculations folder to create
     """
-    calcs_path = "calculations"
     if not os.path.exists(calcs_path):
         os.mkdir(calcs_path)
 
@@ -41,8 +43,9 @@ if __name__ == "__main__":
         logging.basicConfig()
         logging.getLogger("vasp_manager").setLevel(logging_level)
 
-    if not os.path.exists("calculations"):
-        make_calculations_folder()
+    calculation_folder = "calculations_test"
+    if not os.path.exists(calculation_folder):
+        make_calculations_folder(calc_path=calculation_folder)
     calculation_types = [
         "rlx-coarse",
         "rlx",
@@ -50,7 +53,7 @@ if __name__ == "__main__":
         # "bulkmod",
         "elastic",
     ]
-    calc_paths = os.path.join("calculations", "*")
+    calc_paths = os.path.join(calculation_folder, "*")
     material_paths = [p for p in sorted(glob.glob(calc_paths)) if os.path.isdir(p)]
 
     vmg = VaspManager(

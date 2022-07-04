@@ -227,14 +227,15 @@ class VaspManager:
             results[calc_manager.mode] = calc_manager.results
         return results
 
-    def _manage_calculations_wrapper(self, material_paths):
-        material_names = [self._get_material_name_from_path(p) for p in material_paths]
+    def _manage_calculations_wrapper(self):
+        material_names = [
+            self._get_material_name_from_path(p) for p in self.material_paths
+        ]
         with Pool(self.ncore) as pool:
             results = pool.map(self._manage_calculations, tqdm(material_names))
 
         results_dict = {}
-        for material_path, result in zip(material_paths, results):
-            material_name = self._get_material_name_from_path(material_path)
+        for material_name, result in zip(material_names, results):
             results_dict[material_name] = result
         return results_dict
 
@@ -242,7 +243,7 @@ class VaspManager:
         """
         Runs vasp job workflow for all materials
         """
-        all_results = self._manage_calculations_wrapper(self.material_paths)
+        all_results = self._manage_calculations_wrapper()
 
         json_str = json.dumps(all_results, indent=2, cls=NumpyEncoder)
         logger.info(json_str)
