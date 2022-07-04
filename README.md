@@ -61,8 +61,7 @@ be accessed through `logging.getLogger("vasp_manager")`.
 
 ## Notes
 
-*The current implementation has only been tested on Linux and Mac OS, and it relies
-on the unix utilities `cat` and `grep`.*
+*The current implementation has only been tested on Linux and Mac OS.*
 
 *At this point, KPOINT generation is handled through the KSPACING
 tag in the INCAR, but future versions will be able to specify KPPRA or a manual
