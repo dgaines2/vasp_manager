@@ -49,7 +49,7 @@ class StaticCalculationManager(BaseCalculationManager):
 
     @property
     def poscar_source_path(self):
-        poscar_source_path = os.path.join(self.calc_path, "rlx", "CONTCAR")
+        poscar_source_path = os.path.join(self.material_path, "rlx", "CONTCAR")
         return poscar_source_path
 
     def setup_calc(self):

@@ -49,7 +49,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
 
     @property
     def poscar_source_path(self):
-        poscar_source_path = os.path.join(self.calc_path, "POSCAR")
+        poscar_source_path = os.path.join(self.material_path, "POSCAR")
         return poscar_source_path
 
     def setup_calc(self):
