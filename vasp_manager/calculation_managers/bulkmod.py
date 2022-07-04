@@ -31,6 +31,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
         ignore_personal_errors=True,
         from_relax=True,
         from_scratch=False,
+        strains=None,
     ):
         """
         For material_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
@@ -38,6 +39,10 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
         Args:
             from_relax (bool): if True, use CONTCAR from relax
+            strains (array-like): optional, fractional strain along each axis for each deformation
+                if None, use default
+                default is np.linspace(start=0.8, stop=1.2, number=11)**(1/3)
+                len(strains) must be odd and strains must be centered around 0
         """
         self.from_relax = from_relax
         super().__init__(
@@ -48,6 +53,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
             from_scratch=from_scratch,
         )
         self._results = None
+        self._strains = None
 
     @property
     def mode(self):
@@ -63,6 +69,21 @@ class BulkmodCalculationManager(BaseCalculationManager):
         else:
             poscar_source_path = os.path.join(self.material_path, "POSCAR")
         return poscar_source_path
+
+    @property
+    def strains(self):
+        if self._strains is None:
+            self.strains = np.power(np.linspace(0.8, 1.2, 11), 1 / 3)
+        return self._strains
+
+    @strains.setter
+    def strains(self, values):
+        if np.any(values > 0.8) or np.any(values < 1.2):
+            raise ValueError("Strains not in expected bounds")
+        if values[len(values) // 2 + 1] != 0:
+            raise ValueError("Strains not centered around 0")
+        self._strains = values
+        return self._strains
 
     def setup_calc(self):
         """
@@ -81,8 +102,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
         )
         vasp_input_creator.create()
 
-        strains = np.power(np.linspace(0.8, 1.2, 11), 1 / 3)
-        self._make_bulkmod_strains(strains)
+        self._make_bulkmod_strains()
 
         if self.to_submit:
             job_submitted = self.submit_job()
@@ -110,7 +130,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
     def is_done(self):
         return self.check_calc()
 
-    def _make_bulkmod_strains(self, strains):
+    def _make_bulkmod_strains(self):
         """
         Creates a set of strain directory for fitting the E-V info
 
@@ -118,8 +138,8 @@ class BulkmodCalculationManager(BaseCalculationManager):
             strains (iterable of floats)
         """
         logger.info("Making strain directories")
-        for i, strain in enumerate(strains):
-            middle = int(len(strains) / 2)
+        for i, strain in enumerate(self.strains):
+            middle = int(len(self.strains) / 2)
             strain_index = i - middle
             strain_name = f"strain_{strain_index}"
             strain_path = os.path.join(self.calc_path, strain_name)
