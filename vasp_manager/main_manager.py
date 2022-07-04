@@ -41,8 +41,8 @@ class VaspManager:
     ):
         """
         Args:
-            calculation_types (list): list of calculation types
-            material_paths (list) or (str): list of material paths OR name of calculations dir
+            calculation_types (list[str]): list of calculation types
+            material_paths (list[str] | str): list of material paths OR name of calculations dir
             to_rerun (bool): if True, rerun failed calculations
             to_submit (bool): if True, submit calculations
             ignore_personal_errors (bool): if True, ignore job submission errors
@@ -51,7 +51,8 @@ class VaspManager:
                 DANGEROUS
             tail (int): number of last lines to log in debugging if job failed
             write_results (bool): if True, dump results to results.json
-            ncore (int): if int, use ncore for multiprocessing
+            ncore (int): if ncore, use {ncore} for multiprocessing
+                defaults to cpu_count()
         """
         self.calculation_types = calculation_types
         self.to_rerun = to_rerun
@@ -82,7 +83,7 @@ class VaspManager:
         Gets paths for all materials
 
         Args:
-            _material_paths (list) or (str): list of material paths OR name of calculations dir
+            _material_paths (list[str] | str): list of material paths OR name of calculations dir
                 if is list, use that list directly
                 if is string, find folders inside of that directory named {_material_paths}
         """
@@ -257,6 +258,9 @@ class VaspManager:
         return all_results
 
     def summary(self):
+        """
+        Create a string summary of all calculations
+        """
         n_materials = len(self.material_paths)
         summary_dict = {}
         for calc_type in self.calculation_types:

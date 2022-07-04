@@ -28,7 +28,7 @@ def change_elastic_constants_from_vasp(vasp_elastic_tensor):
     This function performs swapping to match expectations
 
     Args:
-        vasp_elastic_tensor  (6x6 np.array[float])
+        vasp_elastic_tensor (6x6 np.array[float])
     Returns:
         elastic_tensor (6x6 np.array[float]): reordered to match Voigt notation
     """

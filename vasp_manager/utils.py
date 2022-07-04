@@ -100,7 +100,7 @@ def pgrep(
         after (int): if not None, return {after} lines found after str_to_grep
         as_str (bool): if as_string, return a single string, else return splitlines
     Returns:
-        matches (str or list)
+        matches (str | list)
     """
     with open(f_name) as fr:
         f_lines = [l.strip() for l in fr.readlines()]
@@ -126,7 +126,7 @@ def ptail(f_name, n_tail=1, as_string=False):
         n_tail (int): n lines to tail
         as_str (bool): if as_string, return a single string, else return splitlines
     Returns:
-        tail (str or list)
+        tail (str | list)
     """
     with open(f_name) as fr:
         tail = [l.strip() for l in fr.readlines()[-n_tail:]]
