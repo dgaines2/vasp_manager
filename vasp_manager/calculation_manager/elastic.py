@@ -5,8 +5,8 @@ import logging
 import os
 from functools import cached_property
 
-from vasp_manager.calculation_managers.base import BaseCalculationManager
-from vasp_manager.elastic_analyzer import ElasticAnalyzer
+from vasp_manager.analyzer import ElasticAnalyzer
+from vasp_manager.calculation_manager.base import BaseCalculationManager
 from vasp_manager.utils import pgrep, ptail
 from vasp_manager.vasp_input_creator import VaspInputCreator
 

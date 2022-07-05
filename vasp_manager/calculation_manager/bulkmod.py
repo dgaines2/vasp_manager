@@ -1,18 +1,15 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
-import glob
 import logging
 import os
 import shutil
 from functools import cached_property
 
 import numpy as np
-from pymatgen.analysis.eos import BirchMurnaghan
-from pymatgen.core import Structure
-from pymatgen.io.vasp import Vasprun
 
-from vasp_manager.calculation_managers.base import BaseCalculationManager
+from vasp_manager.analyzer.bulkmod_analyzer import BulkmodAnalyzer
+from vasp_manager.calculation_manager.base import BaseCalculationManager
 from vasp_manager.utils import change_directory
 from vasp_manager.vasp_input_creator import VaspInputCreator
 
@@ -137,7 +134,8 @@ class BulkmodCalculationManager(BaseCalculationManager):
     @property
     def results(self):
         if self._results is None:
-            self._results = self._analyze_bulkmod()
+            ba = BulkmodAnalyzer(calc_path=self.calc_path)
+            self._results = ba.results
         return self._results
 
     def _make_bulkmod_strains(self):
@@ -173,40 +171,3 @@ class BulkmodCalculationManager(BaseCalculationManager):
                 for f in ["POTCAR", "INCAR"]:
                     orig_path = os.path.join(os.pardir, f)
                     os.symlink(orig_path, f, target_is_directory=False)
-
-    def _analyze_bulkmod(self):
-        """
-        Fit an EOS to calculate the bulk modulus from a finished bulkmod calculation
-        """
-        strain_paths = [
-            path
-            for path in glob.glob(os.path.join(self.calc_path, "strain*"))
-            if os.path.isdir(path)
-        ]
-        strain_paths = sorted(strain_paths, key=lambda d: int(d.split("_")[-1]))
-        volumes = []
-        final_energies = []
-        for i, strain_path in enumerate(strain_paths):
-            poscar_path = os.path.join(strain_path, "POSCAR")
-            vasprun_path = os.path.join(strain_path, "vasprun.xml")
-            volume = Structure.from_file(poscar_path).volume
-            vasprun = Vasprun(
-                filename=vasprun_path,
-                parse_dos=False,
-                parse_eigen=False,
-                parse_potcar_file=False,
-            )
-            final_energy = vasprun.final_energy
-            volumes.append(volume)
-            final_energies.append(final_energy)
-        logger.debug("Volumes")
-        logger.debug(f"{volumes}")
-        logger.debug("Final Energies")
-        logger.debug(f"{final_energies}")
-        eos_analyzer = BirchMurnaghan(volumes, final_energies)
-        eos_analyzer.fit()
-        bulk_modulus = np.round(eos_analyzer.b0_GPa, 3)
-        logger.info(f"{self.mode.upper()} Calculation: Successful")
-        logger.info(f"BULK MODULUS: {bulk_modulus}")
-        b_dict = {"B": bulk_modulus}
-        return b_dict

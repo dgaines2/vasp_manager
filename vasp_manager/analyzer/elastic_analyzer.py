@@ -32,14 +32,6 @@ class ElasticAnalyzer:
         self._calc_path = calc_path
         self.change_from_vasp = change_from_vasp
         self._rounding_precision = rounding_precision
-        # self._b_reuss = None
-        # self._b_voigt = None
-        # self._b_vrh = None
-        # self._g_reuss = None
-        # self._g_voigt = None
-        # self._g_vrh = None
-        # self._sij = None
-        # self._elastically_unstable = None
         self._results = None
 
     @property

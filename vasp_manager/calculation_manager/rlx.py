@@ -8,7 +8,7 @@ from functools import cached_property
 
 import numpy as np
 
-from vasp_manager.calculation_managers.base import BaseCalculationManager
+from vasp_manager.calculation_manager.base import BaseCalculationManager
 from vasp_manager.utils import get_pmg_structure_from_poscar, ptail
 from vasp_manager.vasp_input_creator import VaspInputCreator
 
