@@ -4,6 +4,7 @@
 import glob
 import logging
 import os
+from functools import cached_property
 
 from vasp_manager.calculation_managers.base import BaseCalculationManager
 from vasp_manager.utils import ptail
@@ -41,13 +42,14 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
-        self._results = "not complete"
+        self._is_done = None
+        self._results = None
 
-    @property
+    @cached_property
     def mode(self):
         return "rlx-coarse"
 
-    @property
+    @cached_property
     def poscar_source_path(self):
         poscar_source_path = os.path.join(self.material_path, "POSCAR")
         return poscar_source_path
@@ -104,7 +106,6 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
                     f"{self.mode.upper()} Calculation: reached required accuracy"
                 )
                 logger.debug(tail_output)
-                self.results = "done"
                 return True
             else:
                 archive_dirs = glob.glob(os.path.join(self.calc_path, "archive*"))
@@ -126,15 +127,15 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
 
     @property
     def is_done(self):
-        return self.check_calc()
+        if self._is_done is None:
+            self._is_done = self.check_calc()
+        return self._is_done
 
     @property
     def results(self):
-        return self._results
-
-    @results.setter
-    def results(self, value):
-        if not "done" in value:
-            raise Exception
-        self._results = value
+        if self._results is None:
+            if self.is_done:
+                self._results = "done"
+            else:
+                self._results = "not finished"
         return self._results

@@ -4,6 +4,7 @@
 import glob
 import logging
 import os
+from functools import cached_property
 
 import numpy as np
 
@@ -46,13 +47,14 @@ class RlxCalculationManager(BaseCalculationManager):
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
-        self._results = "not complete"
+        self._is_done = None
+        self._results = None
 
-    @property
+    @cached_property
     def mode(self):
         return "rlx"
 
-    @property
+    @cached_property
     def poscar_source_path(self):
         if self.from_coarse_relax:
             poscar_source_path = os.path.join(
@@ -175,22 +177,20 @@ class RlxCalculationManager(BaseCalculationManager):
 
     @property
     def is_done(self):
-        calc_done = self.check_calc()
-        if calc_done:
-            volume_converged = self.check_volume_difference()
-            if volume_converged:
-                self.results = "done"
-                return True
-        else:
-            return False
+        if self._is_done is None:
+            self._is_done = False
+            calc_done = self.check_calc()
+            if calc_done:
+                volume_converged = self.check_volume_difference()
+                if volume_converged:
+                    self._is_done = True
+        return self._is_done
 
     @property
     def results(self):
-        return self._results
-
-    @results.setter
-    def results(self, value):
-        if not "done" in value:
-            raise Exception
-        self._results = value
+        if self._results is None:
+            if self.is_done:
+                self._results = "done"
+            else:
+                self._results = "not finished"
         return self._results

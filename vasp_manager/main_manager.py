@@ -69,7 +69,7 @@ class VaspManager:
     @property
     def ncore(self):
         if self._ncore is None:
-            self._ncore = cpu_count()
+            self.ncore = cpu_count()
         return self._ncore
 
     @ncore.setter
@@ -293,5 +293,5 @@ class VaspManager:
         for calc_type in summary_dict:
             name = calc_type.upper()
             n_finished = summary_dict[calc_type]["n_finished"]
-            summary_str += f"{name} {n_finished}/{n_materials} completed\n"
+            summary_str += f"{name: <12} {n_finished}/{n_materials} completed\n"
         return summary_str

@@ -5,6 +5,7 @@ import glob
 import logging
 import os
 import shutil
+from functools import cached_property
 
 import numpy as np
 from pymatgen.analysis.eos import BirchMurnaghan
@@ -53,16 +54,16 @@ class BulkmodCalculationManager(BaseCalculationManager):
             from_scratch=from_scratch,
         )
         self._results = None
-        self._strains = None
+        self._strains = strains
 
-    @property
+    @cached_property
     def mode(self):
         mode_str = "bulkmod"
         if not self.from_relax:
             mode_str += "_standalone"
         return mode_str
 
-    @property
+    @cached_property
     def poscar_source_path(self):
         if self.from_relax:
             poscar_source_path = os.path.join(self.material_path, "rlx", "CONTCAR")
@@ -74,6 +75,8 @@ class BulkmodCalculationManager(BaseCalculationManager):
     def strains(self):
         if self._strains is None:
             self.strains = np.power(np.linspace(0.8, 1.2, 11), 1 / 3)
+        else:
+            self.strains = self._strains
         return self._strains
 
     @strains.setter
@@ -83,7 +86,6 @@ class BulkmodCalculationManager(BaseCalculationManager):
         if values[len(values) // 2 + 1] != 0:
             raise ValueError("Strains not centered around 0")
         self._strains = values
-        return self._strains
 
     def setup_calc(self):
         """
@@ -128,7 +130,15 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
     @property
     def is_done(self):
-        return self.check_calc()
+        if self._is_done is None:
+            self._is_done = self.check_calc()
+        return self._is_done
+
+    @property
+    def results(self):
+        if self._results is None:
+            self._results = self._analyze_bulkmod()
+        return self._results
 
     def _make_bulkmod_strains(self):
         """
@@ -200,9 +210,3 @@ class BulkmodCalculationManager(BaseCalculationManager):
         logger.info(f"BULK MODULUS: {bulk_modulus}")
         b_dict = {"B": bulk_modulus}
         return b_dict
-
-    @property
-    def results(self):
-        if self._results is None:
-            self._results = self._analyze_bulkmod()
-        return self._results

@@ -4,8 +4,8 @@
 import json
 import logging
 import os
-import pkgutil
 import subprocess
+from functools import cached_property
 
 from vasp_manager.utils import change_directory
 
@@ -27,6 +27,7 @@ class JobManager:
         self.calc_path = calc_path
         self.ignore_personal_errors = ignore_personal_errors
         self._jobid = None
+        self._job_complete = None
 
     @property
     def computing_config_dict(self):
@@ -40,19 +41,19 @@ class JobManager:
             raise Exception(f"No {fname} found in path {os.path.abspath(all_calcs_dir)}")
         return computing_config
 
-    @property
+    @cached_property
     def computer(self):
         return self.computing_config_dict["computer"]
 
-    @property
+    @cached_property
     def user_id(self):
         return self.computing_config_dict[self.computer]["user_id"]
 
-    @property
+    @cached_property
     def mode(self):
         return os.path.basename(self.calc_path)
 
-    @property
+    @cached_property
     def job_exists(self):
         jobid_path = os.path.join(self.calc_path, "jobid")
         if os.path.exists(jobid_path):
@@ -78,7 +79,6 @@ class JobManager:
         except Exception as e:
             raise Exception(f"{e}")
         self._jobid = jobid_int
-        return self._jobid
 
     def submit_job(self):
         """
@@ -109,6 +109,12 @@ class JobManager:
         self.jobid = jobid
         return True
 
+    @property
+    def job_complete(self):
+        if self._job_complete is None:
+            self._job_complete = self._check_job_complete()
+        return self._job_complete
+
     def _check_job_complete(self):
         """Returns True if job done"""
         if self.computer == "personal":
@@ -130,7 +136,3 @@ class JobManager:
                 if str(self.jobid) in line:
                     return False
             return True
-
-    @property
-    def job_complete(self):
-        return self._check_job_complete()

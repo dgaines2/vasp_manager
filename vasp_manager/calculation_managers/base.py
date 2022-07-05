@@ -4,6 +4,7 @@
 import os
 import shutil
 from abc import ABC, abstractmethod
+from functools import cached_property
 
 from vasp_manager.job_manager import JobManager
 
@@ -48,6 +49,19 @@ class BaseCalculationManager(ABC):
     def mode(self):
         pass
 
+    @property
+    @abstractmethod
+    def is_done(self):
+        pass
+
+    @cached_property
+    def calc_path(self):
+        return os.path.join(self.material_path, self.mode)
+
+    @cached_property
+    def material_name(self):
+        return os.path.basename(self.material_path)
+
     @abstractmethod
     def setup_calc(self):
         pass
@@ -55,19 +69,6 @@ class BaseCalculationManager(ABC):
     @abstractmethod
     def check_calc(self):
         pass
-
-    @property
-    @abstractmethod
-    def is_done(self):
-        pass
-
-    @property
-    def calc_path(self):
-        return os.path.join(self.material_path, self.mode)
-
-    @property
-    def material_name(self):
-        return os.path.basename(self.material_path)
 
     @property
     def job_exists(self):

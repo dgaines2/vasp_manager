@@ -7,6 +7,7 @@ import logging
 import os
 import pkgutil
 import shutil
+from functools import cached_property
 
 from pymatgen.io.vasp import Poscar
 
@@ -45,7 +46,7 @@ class VaspInputCreator:
             mode = "bulkmod"
         return mode
 
-    @property
+    @cached_property
     def calc_config_dict(self):
         # sits in calculation folder like calculations/material_name/mode
         # first pardir is material_name/
@@ -61,7 +62,7 @@ class VaspInputCreator:
             raise Exception(f"No {fname} found in path {os.path.abspath(all_calcs_dir)}")
         return calc_config
 
-    @property
+    @cached_property
     def computing_config_dict(self):
         all_calcs_dir = os.path.dirname(os.path.dirname(self.calc_path))
         fname = "computing_config.json"
@@ -73,11 +74,11 @@ class VaspInputCreator:
             raise Exception(f"No {fname} found in path {os.path.abspath(all_calcs_dir)}")
         return computing_config
 
-    @property
+    @cached_property
     def computer(self):
         return self.computing_config_dict["computer"]
 
-    @property
+    @cached_property
     def source_structure(self):
         try:
             structure = get_pmg_structure_from_poscar(self.poscar_source_path)
@@ -85,14 +86,14 @@ class VaspInputCreator:
             raise Exception(f"Cannot load POSCAR in {self.poscar_source_path}: {e}")
         return structure
 
-    @property
+    @cached_property
     def incar_template(self):
         incar_template = pkgutil.get_data(
             "vasp_manager", os.path.join("static_files", "INCAR_template")
         ).decode("utf-8")
         return incar_template
 
-    @property
+    @cached_property
     def potcar_dict(self):
         potcar_dict = json.loads(
             pkgutil.get_data(
@@ -101,7 +102,7 @@ class VaspInputCreator:
         )
         return potcar_dict
 
-    @property
+    @cached_property
     def q_mapper(self):
         q_mapper = json.loads(
             pkgutil.get_data(
