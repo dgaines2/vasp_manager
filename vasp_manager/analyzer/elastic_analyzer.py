@@ -93,7 +93,8 @@ class ElasticAnalyzer:
 
     @cached_property
     def sij(self):
-        return np.round(self.get_compliance_tensor(self.cij), self.rounding_precision)
+        # DO NOT ROUND
+        return self.get_compliance_tensor(self.cij)
 
     @cached_property
     def b_reuss(self):
@@ -111,7 +112,7 @@ class ElasticAnalyzer:
 
     @cached_property
     def g_reuss(self):
-        return np.round(self.get_G_Reuss(self.sij))
+        return np.round(self.get_G_Reuss(self.sij), self.rounding_precision)
 
     @cached_property
     def g_voigt(self):
@@ -262,7 +263,7 @@ class ElasticAnalyzer:
             str_to_grep="TOTAL ELASTIC MOD",
             stop_after_first_match=True,
             after=8,
-            as_str=True,
+            as_string=True,
         )
         with open(self.elastic_file, "w+") as fw:
             fw.write(elastic_table)
@@ -274,8 +275,7 @@ class ElasticAnalyzer:
         Returns:
             elastic_tensor (6x6 np.array[float]): stiffness tensor
         """
-        if not os.path.exists(self.elastic_file):
-            self._make_stiffness_tensor_file()
+        self._make_stiffness_tensor_file()
 
         with open(self.elastic_file, "r") as fr:
             raw_elastic_data = fr.readlines()
