@@ -49,7 +49,7 @@ if __name__ == "__main__":
     calculation_types = [
         "rlx-coarse",
         "rlx",
-        # "static",
+        "static",
         "bulkmod",
         "elastic",
     ]

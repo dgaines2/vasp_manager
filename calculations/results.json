@@ -2,13 +2,17 @@
   "AlAs": {
     "rlx-coarse": "done",
     "rlx": "done",
+    "static": "done",
+    "bulkmod": {
+      "B": 66.823
+    },
     "elastic": {
       "B_Reuss": 67.337,
       "B_Voigt": 67.337,
       "B_VRH": 67.337,
       "G_Reuss": 37.927,
       "G_Voigt": 41.548,
-      "G_VRH": 39.737,
+      "G_VRH": 39.738,
       "warning": false,
       "elastic_tensor": [
         [
@@ -65,10 +69,14 @@
   "AlSb": {
     "rlx-coarse": "done",
     "rlx": "done",
+    "static": "done",
+    "bulkmod": {
+      "B": 49.085
+    },
     "elastic": {
-      "B_Reuss": 49.53,
-      "B_Voigt": 49.53,
-      "B_VRH": 49.53,
+      "B_Reuss": 49.531,
+      "B_Voigt": 49.531,
+      "B_VRH": 49.531,
       "G_Reuss": 27.594,
       "G_Voigt": 29.896,
       "G_VRH": 28.745,
@@ -128,13 +136,17 @@
   "BAs": {
     "rlx-coarse": "done",
     "rlx": "done",
+    "static": "done",
+    "bulkmod": {
+      "B": 131.098
+    },
     "elastic": {
-      "B_Reuss": 132.107,
-      "B_Voigt": 132.107,
-      "B_VRH": 132.107,
-      "G_Reuss": 123.081,
-      "G_Voigt": 126.921,
-      "G_VRH": 125.001,
+      "B_Reuss": 132.108,
+      "B_Voigt": 132.108,
+      "B_VRH": 132.108,
+      "G_Reuss": 123.08,
+      "G_Voigt": 126.92,
+      "G_VRH": 125.0,
       "warning": false,
       "elastic_tensor": [
         [
