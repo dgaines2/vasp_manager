@@ -10,7 +10,7 @@ from multiprocessing import Pool, cpu_count
 import numpy as np
 from tqdm import tqdm
 
-from vasp_manager.calculation_managers import (
+from vasp_manager.calculation_manager import (
     BulkmodCalculationManager,
     ElasticCalculationManager,
     RlxCalculationManager,
