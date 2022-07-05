@@ -3,9 +3,10 @@
 
 import logging
 import os
+from functools import cached_property
 
 from vasp_manager.calculation_managers.base import BaseCalculationManager
-from vasp_manager.elastic_analysis import analyze_elastic_file, make_elastic_constants
+from vasp_manager.elastic_analyzer import ElasticAnalyzer
 from vasp_manager.utils import pgrep, ptail
 from vasp_manager.vasp_input_creator import VaspInputCreator
 
@@ -41,13 +42,14 @@ class ElasticCalculationManager(BaseCalculationManager):
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
+        self._is_done = None
         self._results = None
 
-    @property
+    @cached_property
     def mode(self):
         return "elastic"
 
-    @property
+    @cached_property
     def poscar_source_path(self):
         poscar_source_path = os.path.join(self.material_path, "rlx", "CONTCAR")
         return poscar_source_path
@@ -115,21 +117,19 @@ class ElasticCalculationManager(BaseCalculationManager):
 
     @property
     def is_done(self):
-        return self.check_calc()
-
-    def _analyze_elastic(self):
-        """
-        Gets results from elastic calculation
-        """
-        elastic_file = os.path.join(self.calc_path, "elastic_constants.txt")
-        if not os.path.exists(elastic_file):
-            outcar_file = os.path.join(self.calc_path, "OUTCAR")
-            make_elastic_constants(outcar_file)
-        results = analyze_elastic_file(elastic_file)
-        return results
+        if self._is_done is None:
+            self._is_done = self.check_calc()
+        return self._is_done
 
     @property
     def results(self):
         if self._results is None:
             self._results = self._analyze_elastic()
         return self._results
+
+    def _analyze_elastic(self):
+        """
+        Gets results from elastic calculation
+        """
+        ea = ElasticAnalyzer(calc_path=self.calc_path)
+        return ea.results
