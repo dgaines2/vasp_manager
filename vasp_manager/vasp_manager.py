@@ -220,10 +220,22 @@ class VaspManager:
                     f" {calc_manager.mode.upper()}"
                 )
                 calc_manager.setup_calc()
-                break
+                match calc_manager.mode:
+                    case "rlx-coarse" | "rlx":
+                        break
+                    case _:
+                        pass
 
             if not calc_manager.is_done:
-                break
+                match calc_manager.mode:
+                    case "rlx-coarse" | "rlx":
+                        # don't check further modes as they rely on rlx-coarse
+                        # or rlx to be done
+                        break
+                    case _:
+                        # go ahead and check the other modes as they are
+                        # independent of each other
+                        continue
 
             results[calc_manager.mode] = calc_manager.results
         return results

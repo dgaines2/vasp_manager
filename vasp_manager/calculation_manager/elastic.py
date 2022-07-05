@@ -124,7 +124,11 @@ class ElasticCalculationManager(BaseCalculationManager):
     @property
     def results(self):
         if self._results is None:
-            self._results = self._analyze_elastic()
+            try:
+                self._results = self._analyze_elastic()
+            except Exception as e:
+                logger.warning(e)
+                self._results = None
         return self._results
 
     def _analyze_elastic(self):
