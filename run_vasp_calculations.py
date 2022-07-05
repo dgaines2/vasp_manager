@@ -45,7 +45,7 @@ if __name__ == "__main__":
 
     calculation_folder = "calculations"
     if not os.path.exists(calculation_folder):
-        make_calculations_folder(calc_path=calculation_folder)
+        make_calculations_folder(calcs_path=calculation_folder)
     calculation_types = [
         "rlx-coarse",
         "rlx",
