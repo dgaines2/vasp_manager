@@ -50,8 +50,9 @@ class BulkmodCalculationManager(BaseCalculationManager):
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
-        self._results = None
         self._strains = strains
+        self._is_done = None
+        self._results = None
 
     @cached_property
     def mode(self):
@@ -78,10 +79,10 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
     @strains.setter
     def strains(self, values):
-        if np.any(values > 0.8) or np.any(values < 1.2):
+        if np.any(values < 0.8) or np.any(values > 1.2):
             raise ValueError("Strains not in expected bounds")
-        if values[len(values) // 2 + 1] != 0:
-            raise ValueError("Strains not centered around 0")
+        if (middle := values[int(len(values) / 2)]) != 1.0:
+            raise ValueError(f"Strains not centered around 1.0: middle is {middle}")
         self._strains = values
 
     def setup_calc(self):

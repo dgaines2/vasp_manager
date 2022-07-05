@@ -92,7 +92,5 @@ class BulkmodAnalyzer:
     @property
     def results(self):
         if self._results is None:
-            self._results = self._analyze_bulkmod(
-                self.calc_path, self.rounding_precision
-            )
+            self._results = self.analyze_bulkmod(self.calc_path, self.rounding_precision)
         return self._results

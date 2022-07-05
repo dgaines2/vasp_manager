@@ -43,14 +43,14 @@ if __name__ == "__main__":
         logging.basicConfig()
         logging.getLogger("vasp_manager").setLevel(logging_level)
 
-    calculation_folder = "calculations_test"
+    calculation_folder = "calculations"
     if not os.path.exists(calculation_folder):
         make_calculations_folder(calc_path=calculation_folder)
     calculation_types = [
         "rlx-coarse",
         "rlx",
         # "static",
-        # "bulkmod",
+        "bulkmod",
         "elastic",
     ]
     calc_paths = os.path.join(calculation_folder, "*")
