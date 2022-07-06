@@ -5,6 +5,7 @@ import glob
 import json
 import logging
 import os
+from functools import cached_property
 from multiprocessing import Pool, cpu_count
 
 import numpy as np
@@ -34,10 +35,10 @@ class VaspManager:
         to_rerun=True,
         to_submit=True,
         ignore_personal_errrors=True,
-        from_scratch=False,
         tail=5,
         write_results=True,
         ncore=None,
+        calculation_manager_kwargs=None,
     ):
         """
         Args:
@@ -47,23 +48,24 @@ class VaspManager:
             to_submit (bool): if True, submit calculations
             ignore_personal_errors (bool): if True, ignore job submission errors
                 if on personal computer
-            from_scratch (bool): if True, remove the first calculation's folder
-                DANGEROUS
             tail (int): number of last lines to log in debugging if job failed
             write_results (bool): if True, dump results to results.json
             ncore (int): if ncore, use {ncore} for multiprocessing
                 defaults to cpu_count()
+            calculation_manager_kwargs (dict): contains subdictionaries for each
+                calculation type. Eeach subdictorary can be filled with extra kwargs
+                to pass to its associated CalculationManager during instantiation
         """
         self.calculation_types = calculation_types
         self.to_rerun = to_rerun
         self.to_submit = to_submit
         self.ignore_personal_errors = ignore_personal_errrors
-        self.from_scratch = from_scratch
         self.tail = tail
         self.write_results = write_results
-        self._ncore = ncore
 
-        self.material_paths = self._get_material_paths(material_paths)
+        self._material_paths = material_paths
+        self._ncore = ncore
+        self._calculation_manager_kwargs = calculation_manager_kwargs
         self.calculation_managers = self._get_all_calculation_managers()
 
     @property
@@ -78,7 +80,30 @@ class VaspManager:
             raise Exception
         self._ncore = value
 
-    def _get_material_paths(self, _material_paths):
+    @property
+    def calculation_manager_kwargs(self):
+        if self._calculation_manager_kwargs is None:
+            self._calculation_manager_kwargs = dict.fromkeys(self.calculation_types, {})
+        else:
+            self.calculation_manager_kwargs = self._calculation_manager_kwargs
+        return self._calculation_manager_kwargs
+
+    @calculation_manager_kwargs.setter
+    def calculation_manager_kwargs(self, values):
+        supported_kwargs = ["from_scratch", "strains"]
+        for calc_type in self.calculation_types:
+            if calc_type not in values:
+                values[calc_type] = {}
+            else:
+                for kwarg in values[calc_type]:
+                    if kwarg not in supported_kwargs:
+                        raise ValueError(
+                            f"kwarg={kwarg} is not supported for mode={calc_type}"
+                        )
+        self._calculation_manager_kwargs = values
+
+    @cached_property
+    def material_paths(self):
         """
         Gets paths for all materials
 
@@ -87,25 +112,25 @@ class VaspManager:
                 if is list, use that list directly
                 if is string, find folders inside of that directory named {_material_paths}
         """
-        match _material_paths:
+        match self._material_paths:
             case str():
-                self.base_path = _material_paths
+                self.base_path = self._material_paths
                 material_paths = [
                     d
-                    for d in glob.glob(os.path.join(_material_paths, "*"))
+                    for d in glob.glob(os.path.join(self._material_paths, "*"))
                     if os.path.isdir(d)
                 ]
             case list() | np.array():
-                mat_path = _material_paths[0]
+                mat_path = self._material_paths[0]
                 self.base_path = os.path.dirname(mat_path)
-                material_paths = _material_paths
+                material_paths = self._material_paths
             case _:
                 raise TypeError(
                     "material_paths must be a directory name or a list of paths"
                 )
         # Sort the paths by name
-        material_paths = sorted(material_paths)
-        return material_paths
+        self._material_paths = sorted(material_paths)
+        return self._material_paths
 
     def _get_material_name_from_path(self, material_path):
         material_name = os.path.basename(material_path)
@@ -124,8 +149,8 @@ class VaspManager:
                         to_rerun=self.to_rerun,
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
-                        from_scratch=self.from_scratch,
                         tail=self.tail,
+                        **self.calculation_manager_kwargs[calc_type],
                     )
                 case "rlx":
                     if "rlx-coarse" in self.calculation_types:
@@ -138,8 +163,8 @@ class VaspManager:
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
                         from_coarse_relax=from_coarse_relax,
-                        from_scratch=self.from_scratch,
                         tail=self.tail,
+                        **self.calculation_manager_kwargs[calc_type],
                     )
                 case "static":
                     if "rlx" not in self.calculation_types:
@@ -152,8 +177,8 @@ class VaspManager:
                         to_rerun=self.to_rerun,
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
-                        from_scratch=self.from_scratch,
                         tail=self.tail,
+                        **self.calculation_manager_kwargs[calc_type],
                     )
                 case "bulkmod" | "bulkmod_standalone":
                     if calc_type == "bulkmod":
@@ -175,7 +200,7 @@ class VaspManager:
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
                         from_relax=from_relax,
-                        from_scratch=self.from_scratch,
+                        **self.calculation_manager_kwargs[calc_type],
                     )
                 case "elastic":
                     if "rlx" not in self.calculation_types:
@@ -189,8 +214,8 @@ class VaspManager:
                         to_rerun=self.to_rerun,
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
-                        from_scratch=self.from_scratch,
                         tail=self.tail,
+                        **self.calculation_manager_kwargs[calc_type],
                     )
                 case _:
                     raise Exception(f"Calc type {calc_type} not supported")
