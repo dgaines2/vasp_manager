@@ -15,11 +15,11 @@ logger = logging.getLogger(__name__)
 
 class ElasticAnalyzer:
     def __init__(
-        self, cij=None, calc_path=None, change_from_vasp=True, rounding_precision=3
+        self, calc_path=None, cij=None, change_from_vasp=True, rounding_precision=3
     ):
         """
-        If cij is specified, use it directly
         If calc_path is specified, read cij from the OUTCAR in calc path
+        If cij is specified, use it directly
         Args:
             cij (6x6 array-like[float]): stiffness tensor in Voigt notation
                 -- careful! VASP does not output stiffness tensors in this notation
@@ -256,7 +256,9 @@ class ElasticAnalyzer:
         Writes to elastic_constants.txt
         """
         if not os.path.exists(self.outcar_file):
-            raise Exception("No OUTCAR available to make stiffness tensor file")
+            raise Exception(
+                "No OUTCAR available at {self.outcar_file} to make stiffness tensor file"
+            )
         # need to get elastic dir
         elastic_table = pgrep(
             self.outcar_file,
