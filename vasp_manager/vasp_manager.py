@@ -37,8 +37,8 @@ class VaspManager:
         ignore_personal_errrors=True,
         tail=5,
         write_results=True,
-        ncore=None,
-        calculation_manager_kwargs=None,
+        ncore=cpu_count(),
+        calculation_manager_kwargs={},
     ):
         """
         Args:
@@ -57,21 +57,29 @@ class VaspManager:
                 to pass to its associated CalculationManager during instantiation
         """
         self.calculation_types = calculation_types
+        self.material_paths = material_paths
         self.to_rerun = to_rerun
         self.to_submit = to_submit
         self.ignore_personal_errors = ignore_personal_errrors
         self.tail = tail
         self.write_results = write_results
+        self.ncore = ncore
+        self.calculation_manager_kwargs = calculation_manager_kwargs
 
-        self._material_paths = material_paths
-        self._ncore = ncore
-        self._calculation_manager_kwargs = calculation_manager_kwargs
         self.calculation_managers = self._get_all_calculation_managers()
 
     @property
+    def calculation_types(self):
+        return self._calculation_types
+
+    @calculation_types.setter
+    def calculation_types(self, values):
+        if not isinstance(values, list):
+            raise TypeError(f"calculation_types must be a list")
+        self._calculation_types = values
+
+    @property
     def ncore(self):
-        if self._ncore is None:
-            self.ncore = cpu_count()
         return self._ncore
 
     @ncore.setter
@@ -82,14 +90,13 @@ class VaspManager:
 
     @property
     def calculation_manager_kwargs(self):
-        if self._calculation_manager_kwargs is None:
-            self._calculation_manager_kwargs = dict.fromkeys(self.calculation_types, {})
-        else:
-            self.calculation_manager_kwargs = self._calculation_manager_kwargs
         return self._calculation_manager_kwargs
 
     @calculation_manager_kwargs.setter
     def calculation_manager_kwargs(self, values):
+        if not isinstance(values, dict):
+            raise TypeError("calculation_manager_kwargs must be a dictionary")
+
         supported_kwargs = ["from_scratch", "strains"]
         for calc_type in self.calculation_types:
             if calc_type not in values:
@@ -102,35 +109,36 @@ class VaspManager:
                         )
         self._calculation_manager_kwargs = values
 
-    @cached_property
+    @property
     def material_paths(self):
+        return self._material_paths
+
+    @material_paths.setter
+    def material_paths(self, values):
         """
-        Gets paths for all materials
+        Sets paths for all materials
 
         Args:
-            _material_paths (list[str] | str): list of material paths OR name of calculations dir
+            values (list[str] | str): list of material paths OR name of calculations dir
                 if is list, use that list directly
                 if is string, find folders inside of that directory named {_material_paths}
         """
-        match self._material_paths:
+        match values:
             case str():
-                self.base_path = self._material_paths
+                self.base_path = values
                 material_paths = [
-                    d
-                    for d in glob.glob(os.path.join(self._material_paths, "*"))
-                    if os.path.isdir(d)
+                    d for d in glob.glob(os.path.join(values, "*")) if os.path.isdir(d)
                 ]
             case list() | np.array():
-                mat_path = self._material_paths[0]
+                mat_path = values[0]
                 self.base_path = os.path.dirname(mat_path)
-                material_paths = self._material_paths
+                material_paths = values
             case _:
                 raise TypeError(
                     "material_paths must be a directory name or a list of paths"
                 )
         # Sort the paths by name
         self._material_paths = sorted(material_paths)
-        return self._material_paths
 
     def _get_material_name_from_path(self, material_path):
         material_name = os.path.basename(material_path)
