@@ -5,7 +5,6 @@ import glob
 import json
 import logging
 import os
-from functools import cached_property
 from multiprocessing import Pool, cpu_count
 
 import numpy as np
@@ -37,7 +36,8 @@ class VaspManager:
         ignore_personal_errrors=True,
         tail=5,
         write_results=True,
-        ncore=cpu_count(),
+        ncore=None,
+        use_multiprocessing=True,
         calculation_manager_kwargs={},
     ):
         """
@@ -51,7 +51,9 @@ class VaspManager:
             tail (int): number of last lines to log in debugging if job failed
             write_results (bool): if True, dump results to results.json
             ncore (int): if ncore, use {ncore} for multiprocessing
-                defaults to cpu_count()
+                if None, defaults to minimum(number of materials, cpu_count)
+            use_multiprocessing (bool): if True, use pool.map()
+                Can be useful to set to false for debugging
             calculation_manager_kwargs (dict): contains subdictionaries for each
                 calculation type. Eeach subdictorary can be filled with extra kwargs
                 to pass to its associated CalculationManager during instantiation
@@ -63,7 +65,12 @@ class VaspManager:
         self.ignore_personal_errors = ignore_personal_errrors
         self.tail = tail
         self.write_results = write_results
-        self.ncore = ncore
+        self.ncore = (
+            ncore
+            if ncore is not None
+            else int(np.min([len(self.material_paths), cpu_count()]))
+        )
+        self.use_multiprocessing = use_multiprocessing
         self.calculation_manager_kwargs = calculation_manager_kwargs
 
         self.calculation_managers = self._get_all_calculation_managers()
@@ -268,7 +275,7 @@ class VaspManager:
                     case _:
                         # go ahead and check the other modes as they are
                         # independent of each other
-                        continue
+                        pass
 
             results[calc_manager.mode] = calc_manager.results
         return results
@@ -277,8 +284,13 @@ class VaspManager:
         material_names = [
             self._get_material_name_from_path(p) for p in self.material_paths
         ]
-        with Pool(self.ncore) as pool:
-            results = pool.map(self._manage_calculations, tqdm(material_names))
+        if self.use_multiprocessing:
+            with Pool(self.ncore) as pool:
+                results = pool.map(self._manage_calculations, tqdm(material_names))
+        else:
+            results = []
+            for material_name in tqdm(material_names):
+                results.append(self._manage_calculations(material_name))
 
         results_dict = {}
         for material_name, result in zip(material_names, results):
@@ -302,12 +314,18 @@ class VaspManager:
         self.results = all_results
         return all_results
 
-    def summary(self):
+    def summary(self, as_string=True):
         """
         Create a string summary of all calculations
+
+        Args:
+            as_string (bool):
+                if as_string, return string summary
+                else, return dict summary
         """
         n_materials = len(self.material_paths)
         summary_dict = {}
+        summary_dict["n_total"] = n_materials
         for calc_type in self.calculation_types:
             summary_dict[calc_type] = {}
             summary_dict[calc_type]["n_finished"] = 0
@@ -332,11 +350,14 @@ class VaspManager:
                 else:
                     summary_dict[calc_type]["unfinished"].append(material)
 
-        summary_str = ""
-        summary_str += f"Total Materials = {n_materials}\n"
-        summary_str += "-" * 30 + "\n"
-        for calc_type in summary_dict:
-            name = calc_type.upper()
-            n_finished = summary_dict[calc_type]["n_finished"]
-            summary_str += f"{name: <12} {n_finished}/{n_materials} completed\n"
-        return summary_str
+        if as_string:
+            summary_str = ""
+            summary_str += f"Total Materials = {n_materials}\n"
+            summary_str += "-" * 30 + "\n"
+            for calc_type in self.calculation_types:
+                name = calc_type.upper()
+                n_finished = summary_dict[calc_type]["n_finished"]
+                summary_str += f"{name: <12} {n_finished}/{n_materials} completed\n"
+            return summary_str
+        else:
+            return summary_dict
