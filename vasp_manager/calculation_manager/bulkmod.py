@@ -10,7 +10,7 @@ import numpy as np
 
 from vasp_manager.analyzer.bulkmod_analyzer import BulkmodAnalyzer
 from vasp_manager.calculation_manager.base import BaseCalculationManager
-from vasp_manager.utils import change_directory
+from vasp_manager.utils import change_directory, ptail
 from vasp_manager.vasp_input_creator import VaspInputCreator
 
 logger = logging.getLogger(__name__)
@@ -30,6 +30,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
         from_relax=True,
         from_scratch=False,
         strains=None,
+        tail=5,
     ):
         """
         For material_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
@@ -43,6 +44,12 @@ class BulkmodCalculationManager(BaseCalculationManager):
                 len(strains) must be odd and strains must be centered around 0
         """
         self.from_relax = from_relax
+        self.strains = (
+            strains
+            if strains is not None
+            else np.power(np.linspace(0.8, 1.2, 11), 1 / 3)
+        )
+        self.tail = tail
         super().__init__(
             material_path=material_path,
             to_rerun=to_rerun,
@@ -50,7 +57,6 @@ class BulkmodCalculationManager(BaseCalculationManager):
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
-        self._strains = strains
         self._is_done = None
         self._results = None
 
@@ -71,10 +77,6 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
     @property
     def strains(self):
-        if self._strains is None:
-            self.strains = np.power(np.linspace(0.8, 1.2, 11), 1 / 3)
-        else:
-            self.strains = self._strains
         return self._strains
 
     @strains.setter
@@ -117,14 +119,24 @@ class BulkmodCalculationManager(BaseCalculationManager):
         Returns:
             bulkmod_sucessful (bool): if True, bulkmod calculation completed successfully
         """
-        # //TODO: make sure results look reasonable here
-        # perhaps call self.bulk_modulus to make sure
-        # everything parses correctly
         if not self.job_complete:
             logger.info(f"{self.mode.upper()} job not finished")
             return False
-        else:
-            return True
+
+        for i, strain in enumerate(self.strains):
+            middle = int(len(self.strains) / 2)
+            strain_index = i - middle
+            strain_name = f"strain_{strain_index}"
+            strain_path = os.path.join(self.calc_path, strain_name)
+            stdout_path = os.path.join(strain_path, "stdout.txt")
+            if not os.path.exists(stdout_path):
+                return False
+            tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
+            if not "1 F=" in tail_output:
+                if self.to_rerun:
+                    self.setup_calc()
+                return False
+        return True
 
     @property
     def is_done(self):
