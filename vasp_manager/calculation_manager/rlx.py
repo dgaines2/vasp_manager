@@ -170,7 +170,7 @@ class RlxCalculationManager(BaseCalculationManager):
             if self.to_rerun:
                 self.setup_calc()
         else:
-            logger.info(f"  RLX volume converged")
+            logger.info("  RLX volume converged")
             logger.info(f"  dV = {volume_diff:.4f}")
             volume_converged = True
         return volume_converged

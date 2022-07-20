@@ -178,7 +178,7 @@ class VaspInputCreator:
                     incar_tmp.insert(i + 1, nfree_line)
                 if "NCORE" in line:
                     # elastic calculation won't run unless NCORE=1
-                    incar_tmp[i] = f"NCORE = 1"
+                    incar_tmp[i] = "NCORE = 1"
             incar_tmp = "\n".join([line for line in incar_tmp])
         incar = incar_tmp.format(**calc_config, ncore=ncore)
         logger.debug(incar)

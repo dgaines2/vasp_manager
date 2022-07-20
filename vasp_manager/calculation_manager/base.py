@@ -20,7 +20,7 @@ class BaseCalculationManager(ABC):
         to_rerun,
         to_submit,
         ignore_personal_errors=True,
-        from_scratch=False,  ## DANGEROUS, WILL DELETE PREVIOUS CALCULATION
+        from_scratch=False,  # DANGEROUS, WILL DELETE PREVIOUS CALCULATION
     ):
         """
         Args:

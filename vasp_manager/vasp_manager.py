@@ -24,7 +24,8 @@ logger = logging.getLogger(__name__)
 
 class VaspManager:
     """
-    Handles set up and execution of each CalculationManager (rlx-coarse, rlx, bulkmod, elastic)
+    Handles set up and execution of each CalculationManager
+        (rlx-coarse, rlx, bulkmod, elastic)
     """
 
     def __init__(
@@ -43,7 +44,8 @@ class VaspManager:
         """
         Args:
             calculation_types (list[str]): list of calculation types
-            material_paths (list[str] | str): list of material paths OR name of calculations dir
+            material_paths (list[str] | str): list of material paths OR
+                name of calculations dir
             to_rerun (bool): if True, rerun failed calculations
             to_submit (bool): if True, submit calculations
             ignore_personal_errors (bool): if True, ignore job submission errors
@@ -82,7 +84,7 @@ class VaspManager:
     @calculation_types.setter
     def calculation_types(self, values):
         if not isinstance(values, list):
-            raise TypeError(f"calculation_types must be a list")
+            raise TypeError("calculation_types must be a list")
         self._calculation_types = values
 
     @property
@@ -126,9 +128,12 @@ class VaspManager:
         Sets paths for all materials
 
         Args:
-            values (list[str] | str): list of material paths OR name of calculations dir
+            values (list[str] | str): list of material paths OR name
+                of calculations dir
+
                 if is list, use that list directly
-                if is string, find folders inside of that directory named {_material_paths}
+                if is string, find folders inside of that directory named
+                    {_material_paths}
         """
         match values:
             case str():

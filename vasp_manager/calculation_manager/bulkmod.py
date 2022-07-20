@@ -38,7 +38,8 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
         Args:
             from_relax (bool): if True, use CONTCAR from relax
-            strains (array-like): optional, fractional strain along each axis for each deformation
+            strains (array-like): optional, fractional strain along each axis for
+                each deformation
                 if None, use default
                 default is np.linspace(start=0.8, stop=1.2, number=11)**(1/3)
                 len(strains) must be odd and strains must be centered around 0
@@ -132,7 +133,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
             if not os.path.exists(stdout_path):
                 return False
             tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
-            if not "1 F=" in tail_output:
+            if "1 F=" not in tail_output:
                 if self.to_rerun:
                     self.setup_calc()
                 return False

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 
 [tool.black]
-target-version= ['py310']
-line-length=89
+target-version = ['py310']
+line-length = 89
 include = '\.pyi?$'
 exclude = '''
 /(
@@ -25,6 +25,19 @@ exclude = '''
 )/
 '''
 
+
 [tool.isort]
-profile='black'
-multi_line_output=3
+profile = 'black'
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+line_length = 89
+
+
+[tool.flake8]
+max-line-length = 89
+exclude = 'vasp_manager/tests/ | **/*.pyc | .git | __pycache__'
+per-file-ignores = '__init__.py:F401'
+select = 'E, F, W, B9'
+ignore = 'E203, W503'

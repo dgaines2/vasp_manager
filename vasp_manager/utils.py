@@ -103,7 +103,7 @@ def pgrep(
         matches (str | list)
     """
     with open(f_name) as fr:
-        f_lines = [l.strip() for l in fr.readlines()]
+        f_lines = [line.strip() for line in fr.readlines()]
     matches = []
     for i, line in enumerate(f_lines):
         if str_to_grep in line:
@@ -113,7 +113,7 @@ def pgrep(
             if stop_after_first_match:
                 break
     if as_string:
-        matches = "\n".join([l for l in matches])
+        matches = "\n".join([line for line in matches])
     return matches
 
 
@@ -129,7 +129,7 @@ def ptail(f_name, n_tail=1, as_string=False):
         tail (str | list)
     """
     with open(f_name) as fr:
-        tail = [l.strip() for l in fr.readlines()[-n_tail:]]
+        tail = [line.strip() for line in fr.readlines()[-n_tail:]]
     if as_string:
-        tail = "\n".join([l for l in tail])
+        tail = "\n".join([line for line in tail])
     return tail

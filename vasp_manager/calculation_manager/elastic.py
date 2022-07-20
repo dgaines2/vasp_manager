@@ -81,7 +81,8 @@ class ElasticCalculationManager(BaseCalculationManager):
         Checks result of elastic calculation
 
         Returns:
-            elastic_successful (bool): if True, elastic calculation completed successfully
+            elastic_successful (bool): if True, elastic calculation completed
+                successfully
         """
         if not self.job_complete:
             logger.info(f"{self.mode.upper()} job not finished")
