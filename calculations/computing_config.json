@@ -14,7 +14,7 @@
     "potcar_dir": "/projects/b1004/potpaw_PBE_OQMD",
     "queuetype": "short",
     "allocation": "p31151",
-    "vasp_module": "vasp/5.4.4-openmpi-4.0.5-intel-19.0.5.281",
+    "vasp_module": "mpi/intel-mpi-5.1.3.258\nmodule swap intel/2016.0 intel/2013.2\nvasp_std='/projects/b1004/bin/vasp_544_std__intel_mpi_5_1_3_258'",
     "ncore": 12,
     "ncore_per_node": 28
   },
