@@ -76,6 +76,7 @@ class VaspManager:
         self.calculation_manager_kwargs = calculation_manager_kwargs
 
         self.calculation_managers = self._get_all_calculation_managers()
+        self.results_path = os.path.join(self.base_path, "results.json")
 
     @property
     def calculation_types(self):
@@ -314,15 +315,14 @@ class VaspManager:
         json_str = json.dumps(all_results, indent=2, cls=NumpyEncoder)
         logger.info(json_str)
         if self.write_results:
-            results_path = os.path.join(self.base_path, "results.json")
-            with open(results_path, "w+") as fw:
+            with open(self.results_path, "w+") as fw:
                 fw.write(json_str)
-            print("Dumped to results.json")
+            print(f"Dumped to {self.results_path}")
 
         self.results = all_results
         return all_results
 
-    def summary(self, as_string=True):
+    def summary(self, as_string=True, from_file=False):
         """
         Create a string summary of all calculations
 
@@ -331,22 +331,30 @@ class VaspManager:
                 if as_string, return string summary
                 else, return dict summary
         """
-        n_materials = len(self.material_paths)
+        if from_file:
+            if os.path.exists(self.results_path):
+                with open(self.results_path) as fr:
+                    results = json.load(fr)
+            else:
+                raise ValueError(f"Can't find results in {self.results_path}")
+        else:
+            results = self.results
+
         summary_dict = {}
-        summary_dict["n_total"] = n_materials
+        summary_dict["n_total"] = len(self.material_paths)
         for calc_type in self.calculation_types:
             summary_dict[calc_type] = {}
             summary_dict[calc_type]["n_finished"] = 0
             summary_dict[calc_type]["finished"] = []
             summary_dict[calc_type]["unfinished"] = []
 
-            for material, mat_results in self.results.items():
+            for material, mat_results in results.items():
                 # need to account for case key doesn't yet exist
                 if calc_type in mat_results:
                     match calc_type:
-                        case "rlx-coarse" | "rlx" | "static":
+                        case "rlx-coarse" | "rlx":
                             case_condition = mat_results[calc_type] == "done"
-                        case "bulkmod" | "bulkmod_standalone" | "elastic":
+                        case "bulkmod" | "static" | "bulkmod_standalone" | "elastic":
                             case_condition = mat_results[calc_type] is not None
                         case _:
                             raise ValueError(f"Unexpected calc_type: {calc_type}")
@@ -359,6 +367,7 @@ class VaspManager:
                     summary_dict[calc_type]["unfinished"].append(material)
 
         if as_string:
+            n_materials = summary_dict["n_total"]
             summary_str = ""
             summary_str += f"Total Materials = {n_materials}\n"
             summary_str += "-" * 30 + "\n"
