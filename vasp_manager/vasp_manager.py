@@ -257,7 +257,6 @@ class VaspManager:
         """
         Runs vasp job workflow for a single material
         """
-        logger.info(material_name)
         results = {}
         for calc_manager in self.calculation_managers[material_name]:
             if not calc_manager.job_exists:
@@ -296,8 +295,12 @@ class VaspManager:
                 results = pool.map(self._manage_calculations, tqdm(material_names))
         else:
             results = []
-            for material_name in tqdm(material_names):
+            for i, material_name in enumerate(material_names):
+                print(f"{i+1}/{len(material_names)} -- {material_name}")
                 results.append(self._manage_calculations(material_name))
+                logger.info("")
+                logger.info("")
+                logger.info("")
 
         results_dict = {}
         for material_name, result in zip(material_names, results):
@@ -316,7 +319,7 @@ class VaspManager:
             results_path = os.path.join(self.base_path, "results.json")
             with open(results_path, "w+") as fw:
                 fw.write(json_str)
-            logger.info("Dumping to results.json")
+            print("Dumped to results.json")
 
         self.results = all_results
         return all_results
