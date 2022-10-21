@@ -102,9 +102,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
 
             tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
             if "reached required accuracy" in tail_output:
-                logger.info(
-                    f"{self.mode.upper()} Calculation: reached required accuracy"
-                )
+                logger.info(f"{self.mode.upper()} Calculation: reached required accuracy")
                 logger.debug(tail_output)
                 return True
             else:

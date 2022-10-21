@@ -57,9 +57,7 @@ class RlxCalculationManager(BaseCalculationManager):
     @cached_property
     def poscar_source_path(self):
         if self.from_coarse_relax:
-            poscar_source_path = os.path.join(
-                self.material_path, "rlx-coarse", "CONTCAR"
-            )
+            poscar_source_path = os.path.join(self.material_path, "rlx-coarse", "CONTCAR")
         else:
             poscar_source_path = os.path.join(self.material_path, "POSCAR")
         return poscar_source_path
@@ -110,9 +108,7 @@ class RlxCalculationManager(BaseCalculationManager):
 
             tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
             if "reached required accuracy" in tail_output:
-                logger.info(
-                    f"{self.mode.upper()} Calculation: reached required accuracy"
-                )
+                logger.info(f"{self.mode.upper()} Calculation: reached required accuracy")
                 logger.debug(tail_output)
                 return True
             else:

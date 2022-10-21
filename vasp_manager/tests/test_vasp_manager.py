@@ -51,7 +51,9 @@ def test_vmg_in_order(tmpdir):
                         case "rlx-coarse" | "rlx" | "static":
                             assert results[material][pc] == "done"
                         case "static":
-                            assert isinstance(results[material][pc]["final_energy"], float)
+                            assert isinstance(
+                                results[material][pc]["final_energy"], float
+                            )
                         case "bulkmod":
                             assert isinstance(results[material][pc]["B"], float)
                         case _:

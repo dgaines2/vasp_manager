@@ -126,5 +126,5 @@ class StaticCalculationManager(BaseCalculationManager):
     @property
     def results(self):
         if not self.is_done:
-           self._results = "not finished" 
+            self._results = "not finished"
         return self._results

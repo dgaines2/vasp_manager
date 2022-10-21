@@ -46,9 +46,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
         """
         self.from_relax = from_relax
         self.strains = (
-            strains
-            if strains is not None
-            else np.power(np.linspace(0.8, 1.2, 11), 1 / 3)
+            strains if strains is not None else np.power(np.linspace(0.8, 1.2, 11), 1 / 3)
         )
         self.tail = tail
         super().__init__(

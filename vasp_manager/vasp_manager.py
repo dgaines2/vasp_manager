@@ -188,9 +188,7 @@ class VaspManager:
                     )
                 case "static":
                     if "rlx" not in self.calculation_types:
-                        msg = (
-                            "Cannot perform static calculation without mode='rlx' first"
-                        )
+                        msg = "Cannot perform static calculation without mode='rlx' first"
                         raise Exception(msg)
                     manager = StaticCalculationManager(
                         material_path=material_path,

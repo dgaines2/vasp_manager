@@ -130,7 +130,7 @@ class VaspInputCreator:
         if self.increase_nodes:
             num_nodes *= 2
         return num_nodes
-    
+
     @property
     def n_procs(self):
         # typically request all processors on each node, and then
@@ -141,11 +141,13 @@ class VaspInputCreator:
         if self.increase_nodes:
             n_procs *= 2
         return n_procs
-    
+
     @property
     def n_procs_used(self):
-        return self.n_nodes * (self.computing_config_dict[self.computer]["ncore_per_node"] - 4)
-    
+        return self.n_nodes * (
+            self.computing_config_dict[self.computer]["ncore_per_node"] - 4
+        )
+
     def make_potcar(self):
         """
         Create and write a POTCAR
@@ -187,9 +189,11 @@ class VaspInputCreator:
         composition_dict = self.source_structure.composition.as_dict()
         n_electrons = 0
         for potcar_single in potcar:
-            n_electrons += potcar_single.nelectrons * composition_dict[potcar_single.element]
+            n_electrons += (
+                potcar_single.nelectrons * composition_dict[potcar_single.element]
+            )
         # make n_bands divisible by NCORE (VASP INCAR tag)
-        nbands = int(np.ceil(0.75*n_electrons / ncore) * ncore)
+        nbands = int(np.ceil(0.75 * n_electrons / ncore) * ncore)
 
         # Add lines to the vaspq file for only elastic calculations
         incar_tmp = self.incar_template
@@ -256,9 +260,9 @@ class VaspInputCreator:
         ncore_per_node = self.n_procs_used // self.n_nodes
         computer_config.update(
             {
-                "n_nodes": self.n_nodes, 
-                "n_procs": self.n_procs, 
-                "ncore_per_node": ncore_per_node, 
+                "n_nodes": self.n_nodes,
+                "n_procs": self.n_procs,
+                "ncore_per_node": ncore_per_node,
                 "jobname": jobname,
             }
         )
