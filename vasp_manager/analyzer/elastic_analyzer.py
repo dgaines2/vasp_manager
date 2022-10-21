@@ -257,7 +257,7 @@ class ElasticAnalyzer:
         """
         if not os.path.exists(self.outcar_file):
             raise Exception(
-                "No OUTCAR available at {self.outcar_file} to make stiffness tensor file"
+                f"No OUTCAR available at {self.outcar_file} to make stiffness tensor file"
             )
         # need to get elastic dir
         elastic_table = pgrep(
