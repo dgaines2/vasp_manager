@@ -7,6 +7,8 @@ import os
 from functools import cached_property
 
 import numpy as np
+from pymatgen.core import Structure
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 from vasp_manager.utils import NumpyEncoder, pgrep
 
@@ -33,6 +35,8 @@ class ElasticAnalyzer:
         self.change_from_vasp = change_from_vasp
         self._rounding_precision = rounding_precision
         self._results = None
+        self._structure = None
+        self._crystal_system = None
 
     @property
     def calc_path(self):
@@ -43,11 +47,24 @@ class ElasticAnalyzer:
     @calc_path.setter
     def calc_path(self, value):
         # make sure cij wasn't already defined
-        if self._cij is not None:
-            raise Exception("Could not set calc_path as cij was already specified")
+        # if self._cij is not None:
+        #     raise Exception("Could not set calc_path as cij was already specified")
         if not os.path.exists(value):
             raise ValueError(f"Could not set calc_path to {value} as it does not exist")
         self._calc_path = value
+
+    @property
+    def structure(self):
+        if self._structure is None:
+            self._structure = Structure.from_file(os.path.join(self.calc_path, "POSCAR"))
+        return self._structure
+
+    @property
+    def crystal_system(self):
+        if self._crystal_system is None:
+            sga = SpacegroupAnalyzer(self.structure, symprec=1e-3)
+            self._crystal_system = sga.get_crystal_system()
+        return self._crystal_system
 
     @property
     def rounding_precision(self):
@@ -126,7 +143,7 @@ class ElasticAnalyzer:
 
     @cached_property
     def elastically_unstable(self):
-        return self.check_elastic_stability(self.cij)
+        return self.check_elastically_unstable(self.cij, self.crystal_system)
 
     @staticmethod
     def change_elastic_constants_from_vasp(vasp_elastic_tensor):
@@ -242,13 +259,34 @@ class ElasticAnalyzer:
         return G_Voigt
 
     @staticmethod
-    def check_elastic_stability(cij):
+    def check_elastically_unstable(cij, crystal_system):
+        "returns True if compound is elastically unstable"
         c11 = cij[0, 0]
         c12 = cij[0, 1]
-        if c11 < 0 or c12 < 0 or c11 <= 1.1 * c12:
+        c13 = cij[0, 2]
+        c33 = cij[2, 2]
+        c44 = cij[3, 3]
+        c66 = cij[5, 5]
+        # must meet these criteria to be elastically stable
+        if crystal_system == "cubic":
+            condition_1 = c11 > c12
+            condition_2 = c11 + 2 * c12 > 0
+            condition_3 = c44 > 0
+            conditions = [condition_1, condition_2, condition_3]
+        elif crystal_system == "hexagonal":
+            condition_1 = c11 > np.abs(c12)
+            condition_2 = 2 * c13**2 < c33 * (c11 + c12)
+            condition_3 = c44 > 0
+            condition_4 = c66 > 0
+            conditions = [condition_1, condition_2, condition_3, condition_4]
+        else:
+            raise NotImplementedError
+
+        if not np.all(conditions):
             logger.warning("-" * 10 + " WARNING: Elastically Unstable " + "-" * 10)
             return True
-        return False
+        else:
+            return False
 
     def _make_stiffness_tensor_file(self):
         """
