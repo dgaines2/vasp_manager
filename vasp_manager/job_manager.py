@@ -67,7 +67,7 @@ class JobManager:
     @property
     def jobid(self):
         if not self.job_exists:
-            raise Exception("jobid has not been set")
+            raise Exception(f"jobid has not been set in {self.calc_path}")
         return self._jobid
 
     @jobid.setter
@@ -111,7 +111,7 @@ class JobManager:
 
     @property
     def job_complete(self):
-        if self._job_complete is None:
+        if self._job_complete is None and self.job_exists:
             self._job_complete = self._check_job_complete()
         return self._job_complete
 
