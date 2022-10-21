@@ -50,6 +50,8 @@ def test_vmg_in_order(tmpdir):
                     match pc:
                         case "rlx-coarse" | "rlx" | "static":
                             assert results[material][pc] == "done"
+                        case "static":
+                            assert isinstance(results[material][pc]["final_energy"], float)
                         case "bulkmod":
                             assert isinstance(results[material][pc]["B"], float)
                         case _:
@@ -79,7 +81,7 @@ def test_vmg_in_order(tmpdir):
     for material in results:
         assert results[material]["rlx-coarse"] == "done"
         assert results[material]["rlx"] == "done"
-        assert results[material]["static"] == "done"
+        assert isinstance(results[material]["static"]["final_energy"], float)
         assert isinstance(results[material]["bulkmod"]["B"], float)
         assert isinstance(results[material]["elastic"]["B_VRH"], float)
 

@@ -101,6 +101,8 @@ class StaticCalculationManager(BaseCalculationManager):
 
             tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
             if "1 F=" in tail_output:
+                self._results = {}
+                self._results["final_energy"] = float(tail_output.split()[2])
                 logger.info(f"{self.mode.upper()} Calculation: SCF converged")
                 logger.debug(tail_output)
                 return True
@@ -123,9 +125,6 @@ class StaticCalculationManager(BaseCalculationManager):
 
     @property
     def results(self):
-        if self._results is None:
-            if self.is_done:
-                self._results = "done"
-            else:
-                self._results = "not finished"
+        if not self.is_done:
+           self._results = "not finished" 
         return self._results

@@ -147,13 +147,14 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
     @property
     def results(self):
-        if self._results is None:
-            try:
-                ba = BulkmodAnalyzer(calc_path=self.calc_path)
-                self._results = ba.results
-            except Exception as e:
-                logger.warning(e)
-                self._results = None
+        if not self.is_done:
+            return None
+        try:
+            ba = BulkmodAnalyzer(calc_path=self.calc_path)
+            self._results = ba.results
+        except Exception as e:
+            logger.warning(e)
+            self._results = None
         return self._results
 
     def _make_bulkmod_strains(self):
