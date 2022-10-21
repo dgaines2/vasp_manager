@@ -9,7 +9,8 @@ import pkgutil
 import shutil
 from functools import cached_property
 
-from pymatgen.io.vasp import Poscar
+import numpy as np
+from pymatgen.io.vasp import Poscar, Potcar
 
 from vasp_manager.utils import change_directory, get_pmg_structure_from_poscar, pcat
 
@@ -129,7 +130,22 @@ class VaspInputCreator:
         if self.increase_nodes:
             num_nodes *= 2
         return num_nodes
-
+    
+    @property
+    def n_procs(self):
+        # typically request all processors on each node, and then
+        # leave some ~4/node empty for memory
+        n_procs = (
+            self.n_nodes * self.computing_config_dict[self.computer]["ncore_per_node"]
+        )
+        if self.increase_nodes:
+            n_procs *= 2
+        return n_procs
+    
+    @property
+    def n_procs_used(self):
+        return self.n_nodes * (self.computing_config_dict[self.computer]["ncore_per_node"] - 4)
+    
     def make_potcar(self):
         """
         Create and write a POTCAR
@@ -165,6 +181,16 @@ class VaspInputCreator:
         ncore = self.computing_config_dict[self.computer]["ncore"]
         calc_config = self.calc_config_dict[self.mode]
 
+        # read POTCAR
+        potcar_path = os.path.join(self.calc_path, "POTCAR")
+        potcar = Potcar.from_file(potcar_path)
+        composition_dict = self.source_structure.composition.as_dict()
+        n_electrons = 0
+        for potcar_single in potcar:
+            n_electrons += potcar_single.nelectrons * composition_dict[potcar_single.element]
+        # make n_bands divisible by NCORE (VASP INCAR tag)
+        nbands = int(np.ceil(0.75*n_electrons / ncore) * ncore)
+
         # Add lines to the vaspq file for only elastic calculations
         incar_tmp = self.incar_template
         if self.mode == "elastic":
@@ -180,7 +206,7 @@ class VaspInputCreator:
                     # elastic calculation won't run unless NCORE=1
                     incar_tmp[i] = "NCORE = 1"
             incar_tmp = "\n".join([line for line in incar_tmp])
-        incar = incar_tmp.format(**calc_config, ncore=ncore)
+        incar = incar_tmp.format(**calc_config, ncore=ncore, nbands=nbands)
         logger.debug(incar)
         with open(incar_path, "w+") as fw:
             fw.write(incar)
@@ -215,9 +241,6 @@ class VaspInputCreator:
                     "Calculation type {self.mode} not in supported calculation types"
                     "of VaspInputCreator"
                 )
-        n_procs = (
-            self.n_nodes * self.computing_config_dict[self.computer]["ncore_per_node"]
-        )
 
         if self.name is None:
             jobname = pad_string + self.source_structure.composition.reduced_formula
@@ -225,14 +248,19 @@ class VaspInputCreator:
             jobname = pad_string + self.name
 
         if self.increase_nodes:
-            n_procs *= 2
             hours, minutes, seconds = walltime.split(":")
             hours = str(int(hours) * 2)
             walltime = ":".join([hours, minutes, seconds])
 
         computer_config = self.computing_config_dict[self.computer].copy()
+        ncore_per_node = self.n_procs_used // self.n_nodes
         computer_config.update(
-            {"n_nodes": self.n_nodes, "n_procs": n_procs, "jobname": jobname}
+            {
+                "n_nodes": self.n_nodes, 
+                "n_procs": self.n_procs, 
+                "ncore_per_node": ncore_per_node, 
+                "jobname": jobname,
+            }
         )
 
         q_name = self.q_mapper[self.computer][mode]
@@ -293,6 +321,9 @@ class VaspInputCreator:
     def create(self):
         """
         Make VASP input files
+
+        Don't touch the order! make_incar and make_vaspq rely on the poscar and
+        potcar existing already
         """
         if not os.path.exists(self.calc_path):
             os.mkdir(self.calc_path)
