@@ -38,7 +38,7 @@ class VaspManager:
         tail=5,
         write_results=True,
         ncore=None,
-        use_multiprocessing=True,
+        use_multiprocessing=False,
         calculation_manager_kwargs={},
     ):
         """
@@ -56,6 +56,11 @@ class VaspManager:
                 if None, defaults to minimum(number of materials, cpu_count)
             use_multiprocessing (bool): if True, use pool.map()
                 Can be useful to set to false for debugging
+                WARNING
+                I've had issues with job submission using multiprocessing, so consider
+                it an experimental feature for now
+                \\TODO: use a multiprocessing queue manager to handle the jobs
+                to ensure concurrency isn't an issue
             calculation_manager_kwargs (dict): contains subdictionaries for each
                 calculation type. Eeach subdictorary can be filled with extra kwargs
                 to pass to its associated CalculationManager during instantiation
