@@ -257,6 +257,7 @@ class VaspManager:
         """
         Runs vasp job workflow for a single material
         """
+        logger.info(material_name)
         results = {}
         for calc_manager in self.calculation_managers[material_name]:
             if not calc_manager.job_exists:
@@ -273,9 +274,10 @@ class VaspManager:
 
             if not calc_manager.is_done:
                 match calc_manager.mode:
-                    case "rlx-coarse" | "rlx":
+                    case "rlx-coarse" | "rlx" | "elastic":
                         # don't check further modes as they rely on rlx-coarse
                         # or rlx to be done
+                        # break if elastic not done to avoid analysis
                         break
                     case _:
                         # go ahead and check the other modes as they are
