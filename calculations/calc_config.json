@@ -14,7 +14,7 @@
     "ediff": "1e-05",
     "algo": "FAST",
     "ismear": 0,
-    "sigma": 0.1,
+    "sigma": 0.05,
     "kpar": 4,
     "gga": "PS",
     "walltime": "02:00:00"
@@ -34,7 +34,7 @@
     "ediff": "1e-06",
     "algo": "FAST",
     "ismear": 0,
-    "sigma": 0.1,
+    "sigma": 0.05,
     "kpar": 4,
     "gga": "PS",
     "walltime": "02:00:00"
