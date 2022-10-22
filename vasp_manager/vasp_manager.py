@@ -353,7 +353,9 @@ class VaspManager:
 
             for material, mat_results in results.items():
                 # need to account for case key doesn't yet exist
-                if calc_type in mat_results:
+                if calc_type not in mat_results:
+                    summary_dict[calc_type]["unfinished"].append(material)
+                else:
                     match calc_type:
                         case "rlx-coarse" | "rlx":
                             case_condition = mat_results[calc_type] == "done"
@@ -366,8 +368,6 @@ class VaspManager:
                         summary_dict[calc_type]["finished"].append(material)
                     else:
                         summary_dict[calc_type]["unfinished"].append(material)
-                else:
-                    summary_dict[calc_type]["unfinished"].append(material)
 
         if as_string:
             n_materials = summary_dict["n_total"]

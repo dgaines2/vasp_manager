@@ -48,7 +48,7 @@ def test_vmg_in_order(tmpdir):
             for material in results:
                 for pc in previous_calc_types:
                     match pc:
-                        case "rlx-coarse" | "rlx" | "static":
+                        case "rlx-coarse" | "rlx":
                             assert results[material][pc] == "done"
                         case "static":
                             assert isinstance(
@@ -139,9 +139,7 @@ def test_vmg_with_skipping(tmpdir):
             match calc_type:
                 case "rlx-coarse" | "rlx":
                     assert results[material][calc_type] == "done"
-                case "static":
-                    assert results[material][calc_type] == "not finished"
-                case "bulkmod":
+                case "static" | "bulkmod":
                     assert results[material][calc_type] is None
                 case "elastic":
                     assert isinstance(results[material][calc_type]["B_VRH"], float)
