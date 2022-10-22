@@ -153,7 +153,7 @@ class RlxCalculationManager(BaseCalculationManager):
             return False
 
         if p_spacegroup == c_spacegroup:
-            logger.info(f"  Spacegroups match {p_spacegroup}=={c_spacegroup}")
+            logger.debug(f"  Spacegroups match {p_spacegroup}=={c_spacegroup}")
         else:
             logger.warning(
                 f"   Warning: spacegroups do not match {p_spacegroup} != {c_spacegroup}"
@@ -167,7 +167,7 @@ class RlxCalculationManager(BaseCalculationManager):
                 self.setup_calc()
         else:
             logger.info("  RLX volume converged")
-            logger.info(f"  dV = {volume_diff:.4f}")
+            logger.debug(f"  dV = {volume_diff:.4f}")
             volume_converged = True
         return volume_converged
 
