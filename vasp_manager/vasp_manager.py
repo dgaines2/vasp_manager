@@ -265,10 +265,7 @@ class VaspManager:
         for calc_manager in self.calculation_managers[material_name]:
             logger.info(f"{material_name} -- {calc_manager.mode.upper()}")
             if not calc_manager.job_exists:
-                logger.info(
-                    f"{material_name} Setting up"
-                    f" {calc_manager.mode.upper()}"
-                )
+                logger.info(f"{material_name} Setting up" f" {calc_manager.mode.upper()}")
                 calc_manager.setup_calc()
                 match calc_manager.mode:
                     case "rlx-coarse" | "rlx":

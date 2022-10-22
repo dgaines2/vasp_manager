@@ -276,7 +276,7 @@ class VaspInputCreator:
         with open(vaspq_path, "w+") as fw:
             fw.write(vaspq)
 
-    def make_archive(self):
+    def make_archive_and_repopulate(self):
         """
         Make an archive of a VASP calculation and copy back over relevant files
 

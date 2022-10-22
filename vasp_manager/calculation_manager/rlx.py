@@ -73,7 +73,7 @@ class RlxCalculationManager(BaseCalculationManager):
             name=self.material_name,
         )
         if self.to_rerun:
-            archive_made = vasp_input_creator.make_archive()
+            archive_made = vasp_input_creator.make_archive_and_repopulate()
             if not archive_made:
                 # set rerun to not make an achive and instead
                 # continue to make the input files
@@ -101,32 +101,32 @@ class RlxCalculationManager(BaseCalculationManager):
             return False
 
         stdout_path = os.path.join(self.calc_path, "stdout.txt")
-        if os.path.exists(stdout_path):
-            if not self.job_complete:
-                logger.info(f"{self.mode.upper()} not finished")
-                return False
-
-            tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
-            if "reached required accuracy" in tail_output:
-                logger.info(f"{self.mode.upper()} Calculation: reached required accuracy")
-                logger.debug(tail_output)
-                return True
-            else:
-                archive_dirs = glob.glob(os.path.join(self.calc_path, "archive*"))
-                if len(archive_dirs) >= 3:
-                    logger.warning("Many archives exist, suggest force based relaxation")
-                    if self.to_rerun:
-                        self.setup_calc()
-                    return True
-
-                logger.warning(f"{self.mode.upper()} FAILED")
-                logger.debug(tail_output)
-                if self.to_rerun:
-                    logger.info(f"Rerunning {self.calc_path}")
-                    self.setup_calc()
-                return False
-        else:
+        if not os.path.exists(stdout_path):
             logger.info(f"{self.mode.upper()} not started")
+            return False
+
+        if not self.job_complete:
+            logger.info(f"{self.mode.upper()} not finished")
+            return False
+
+        tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
+        if "reached required accuracy" in tail_output:
+            logger.info(f"{self.mode.upper()} Calculation: reached required accuracy")
+            logger.debug(tail_output)
+            return True
+        else:
+            archive_dirs = glob.glob(os.path.join(self.calc_path, "archive*"))
+            if len(archive_dirs) >= 3:
+                logger.warning("Many archives exist, suggest force based relaxation")
+                if self.to_rerun:
+                    self.setup_calc()
+                return True
+
+            logger.warning(f"{self.mode.upper()} FAILED")
+            logger.debug(tail_output)
+            if self.to_rerun:
+                logger.info(f"Rerunning {self.calc_path}")
+                self.setup_calc()
             return False
 
     def check_volume_difference(self):

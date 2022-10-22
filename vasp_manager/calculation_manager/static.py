@@ -64,9 +64,8 @@ class StaticCalculationManager(BaseCalculationManager):
             poscar_source_path=self.poscar_source_path,
             name=self.material_name,
         )
-        vasp_input_creator.create()
         if self.to_rerun:
-            archive_made = vasp_input_creator.make_archive()
+            archive_made = vasp_input_creator.make_archive_and_repopulate()
             if not archive_made:
                 # set rerun to not make an achive and instead
                 # continue to make the input files

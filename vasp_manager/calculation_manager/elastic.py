@@ -89,32 +89,32 @@ class ElasticCalculationManager(BaseCalculationManager):
             return False
 
         stdout_path = os.path.join(self.calc_path, "stdout.txt")
-        if os.path.exists(stdout_path):
-            grep_output = pgrep(stdout_path, str_to_grep="Total")
-            last_grep_line = grep_output[-1].strip().split()
-            # last grep line looks something like 'Total: 36/ 36'
-            finished_deformations = int(last_grep_line[-2].replace("/", ""))
-            total_deformations = int(last_grep_line[-1])
-            logger.debug(last_grep_line)
-            if finished_deformations == total_deformations:
-                logger.info(f"{self.mode.upper()} Calculation: Success")
-                return True
-            else:
-                tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
-                logger.info(tail_output)
-                logger.info(f"{self.mode.upper()} Calculation: FAILED")
-                if self.to_rerun:
-                    # increase nodes as its likely the calculation failed
-                    # setup_elastic(elastic_path, submit=submit, increase_nodes=True)
-                    self.setup_calc(increase_nodes=True)
-                return False
-        else:
+        if not os.path.exists(stdout_path):
             # shouldn't get here unless function was called with submit=False
             logger.info(f"{self.mode.upper()} Calculation: No stdout.txt available")
             if self.to_rerun:
                 # setup_elastic(elastic_path, submit=submit, increase_nodes=False)
                 self.setup_calc(increase_nodes=False)
             return False
+
+        grep_output = pgrep(stdout_path, str_to_grep="Total")
+        last_grep_line = grep_output[-1].strip().split()
+        # last grep line looks something like 'Total: 36/ 36'
+        finished_deformations = int(last_grep_line[-2].replace("/", ""))
+        total_deformations = int(last_grep_line[-1])
+        logger.debug(last_grep_line)
+        if not finished_deformations == total_deformations:
+            tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
+            logger.info(tail_output)
+            logger.info(f"{self.mode.upper()} Calculation: FAILED")
+            if self.to_rerun:
+                # increase nodes as its likely the calculation failed
+                # setup_elastic(elastic_path, submit=submit, increase_nodes=True)
+                self.setup_calc(increase_nodes=True)
+            return False
+
+        logger.info(f"{self.mode.upper()} Calculation: Success")
+        return True
 
     @property
     def is_done(self):

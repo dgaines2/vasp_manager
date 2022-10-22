@@ -90,11 +90,12 @@ class BulkmodCalculationManager(BaseCalculationManager):
         """
         Sets up an EOS bulkmod calculation
         """
-        msg = (
-            "Running bulk modulus calculation without previous relaxation"
-            "\n\t starting structure must be fairly close to equilibrium volume!"
-        )
-        logger.warning(msg)
+        if not self.from_relax:
+            msg = (
+                "Running bulk modulus calculation without previous relaxation"
+                "\n\t starting structure must be fairly close to equilibrium volume!"
+            )
+            logger.warning(msg)
         vasp_input_creator = VaspInputCreator(
             self.calc_path,
             mode=self.mode,
@@ -130,6 +131,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
             stdout_path = os.path.join(strain_path, "stdout.txt")
             if not os.path.exists(stdout_path):
                 return False
+
             tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
             if "1 F=" not in tail_output:
                 if self.to_rerun:
