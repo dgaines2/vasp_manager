@@ -2,7 +2,9 @@
   "AlAs": {
     "rlx-coarse": "done",
     "rlx": "done",
-    "static": "done",
+    "static": {
+      "final_energy": -9.37328124862
+    },
     "bulkmod": {
       "B": 66.823
     },
@@ -69,7 +71,9 @@
   "AlSb": {
     "rlx-coarse": "done",
     "rlx": "done",
-    "static": "done",
+    "static": {
+      "final_energy": -8.19879090596
+    },
     "bulkmod": {
       "B": 49.085
     },
@@ -136,7 +140,9 @@
   "BAs": {
     "rlx-coarse": "done",
     "rlx": "done",
-    "static": "done",
+    "static": {
+      "final_energy": -11.3747889339
+    },
     "bulkmod": {
       "B": 131.098
     },

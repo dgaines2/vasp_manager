@@ -5,6 +5,7 @@ import glob
 import json
 import logging
 import os
+from functools import cached_property
 from multiprocessing import Pool, cpu_count
 
 import numpy as np
@@ -82,6 +83,7 @@ class VaspManager:
 
         self.calculation_managers = self._get_all_calculation_managers()
         self.results_path = os.path.join(self.base_path, "results.json")
+        self.results = None
 
     @property
     def calculation_types(self):
@@ -161,6 +163,42 @@ class VaspManager:
     def _get_material_name_from_path(self, material_path):
         material_name = os.path.basename(material_path)
         return material_name
+
+    @cached_property
+    def material_names(self):
+        return [self._get_material_name_from_path(mpath) for mpath in self.material_paths]
+
+    @property
+    def results(self):
+        return self._results
+
+    @results.setter
+    def results(self, value):
+        if value is None:
+            if os.path.exists(self.results_path):
+                with open(self.results_path, "r") as fr:
+                    self._results = json.load(fr)
+            else:
+                self._results = {mat_name: {} for mat_name in self.material_names}
+
+    def _check_calc_by_result(self, material_name, calc_type):
+        """
+        Checks if job has been completed and analyzed
+
+        Args:
+            material_name (str): name of material to check
+            calc_type (str): calculation type to check
+        Returns:
+            is_done (bool)
+        """
+        match calc_type:
+            case "rlx-coarse" | "rlx":
+                is_done = self.results[material_name][calc_type] == "done"
+            case "static" | "bulkmod" | "elastic":
+                is_done = self.results[material_name][calc_type] is not None
+            case _:
+                raise ValueError("Can't find mode {mode} in result")
+        return is_done
 
     def _get_calculation_managers(self, material_path):
         """
@@ -252,8 +290,7 @@ class VaspManager:
         Gets calculation managers for all materials
         """
         calc_managers = {}
-        for material_path in self.material_paths:
-            material_name = self._get_material_name_from_path(material_path)
+        for material_name, material_path in zip(self.material_names, self.material_paths):
             calc_managers[material_name] = self._get_calculation_managers(material_path)
         return calc_managers
 
@@ -261,9 +298,19 @@ class VaspManager:
         """
         Runs vasp job workflow for a single material
         """
-        results = {}
         for calc_manager in self.calculation_managers[material_name]:
             logger.info(f"{material_name} -- {calc_manager.mode.upper()}")
+
+            if calc_manager.mode in self.results[material_name].keys():
+                calc_is_done = self._check_calc_by_result(
+                    material_name, calc_manager.mode
+                )
+                if calc_is_done:
+                    logger.info(
+                        f"{material_name} -- {calc_manager.mode.upper()} Successful"
+                    )
+                    continue
+
             if not calc_manager.job_exists:
                 logger.info(f"{material_name} Setting up" f" {calc_manager.mode.upper()}")
                 calc_manager.setup_calc()
@@ -285,47 +332,34 @@ class VaspManager:
                         # independent of each other
                         pass
 
-            results[calc_manager.mode] = calc_manager.results
-        return results
+            self.results[material_name][calc_manager.mode] = calc_manager.results
 
     def _manage_calculations_wrapper(self):
-        material_names = [
-            self._get_material_name_from_path(p) for p in self.material_paths
-        ]
         if self.use_multiprocessing:
             with Pool(self.ncore) as pool:
-                results = pool.map(self._manage_calculations, tqdm(material_names))
+                pool.map(self._manage_calculations, tqdm(self.material_names))
         else:
-            results = []
-            for i, material_name in enumerate(material_names):
-                print(f"{i+1}/{len(material_names)} -- {material_name}")
-                results.append(self._manage_calculations(material_name))
+            for i, material_name in enumerate(self.material_names):
+                print(f"{i+1}/{len(self.material_names)} -- {material_name}")
+                self._manage_calculations(material_name)
                 logger.info("")
                 logger.info("")
                 logger.info("")
-
-        results_dict = {}
-        for material_name, result in zip(material_names, results):
-            results_dict[material_name] = result
-        return results_dict
 
     def run_calculations(self):
         """
         Runs vasp job workflow for all materials
         """
-        all_results = self._manage_calculations_wrapper()
+        self._manage_calculations_wrapper()
 
-        json_str = json.dumps(all_results, indent=2, cls=NumpyEncoder)
-        logger.info(json_str)
-        if self.write_results:
-            with open(self.results_path, "w+") as fw:
-                fw.write(json_str)
-            print(f"Dumped to {self.results_path}")
+        json_str = json.dumps(self.results, indent=2, cls=NumpyEncoder)
+        logger.debug(json_str)
+        with open(self.results_path, "w+") as fw:
+            fw.write(json_str)
+        print(f"Dumped to {self.results_path}")
+        return self.results
 
-        self.results = all_results
-        return all_results
-
-    def summary(self, as_string=True, from_file=False):
+    def summary(self, as_string=True):
         """
         Create a string summary of all calculations
 
@@ -334,14 +368,10 @@ class VaspManager:
                 if as_string, return string summary
                 else, return dict summary
         """
-        if from_file:
-            if os.path.exists(self.results_path):
-                with open(self.results_path) as fr:
-                    results = json.load(fr)
-            else:
-                raise ValueError(f"Can't find results in {self.results_path}")
-        else:
-            results = self.results
+        if not os.path.exists(self.results_path):
+            raise ValueError(f"Can't find results in {self.results_path}")
+        with open(self.results_path) as fr:
+            results = json.load(fr)
 
         summary_dict = {}
         summary_dict["n_total"] = len(self.material_paths)
@@ -356,14 +386,8 @@ class VaspManager:
                 if calc_type not in mat_results:
                     summary_dict[calc_type]["unfinished"].append(material)
                 else:
-                    match calc_type:
-                        case "rlx-coarse" | "rlx":
-                            case_condition = mat_results[calc_type] == "done"
-                        case "bulkmod" | "static" | "bulkmod_standalone" | "elastic":
-                            case_condition = mat_results[calc_type] is not None
-                        case _:
-                            raise ValueError(f"Unexpected calc_type: {calc_type}")
-                    if case_condition:
+                    is_done = self._check_calc_by_result(material, calc_type)
+                    if is_done:
                         summary_dict[calc_type]["n_finished"] += 1
                         summary_dict[calc_type]["finished"].append(material)
                     else:
