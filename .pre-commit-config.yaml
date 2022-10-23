@@ -12,17 +12,17 @@ repos:
       - id: check-toml
       - id: check-merge-conflict
 
+  - repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+      - id: black
+
   - repo: https://github.com/john-hen/Flake8-pyproject
     rev: 1.1.0
     hooks:
       - id: Flake8-pyproject
         name: flake8
         exclude: ^vasp_manager/tests
-
-  - repo: https://github.com/psf/black
-    rev: 22.3.0
-    hooks:
-      - id: black
 
   - repo: https://github.com/timothycrosley/isort
     rev: 5.10.1
