@@ -280,7 +280,9 @@ class ElasticAnalyzer:
             condition_4 = c66 > 0
             conditions = [condition_1, condition_2, condition_3, condition_4]
         else:
-            raise NotImplementedError
+            raise NotImplementedError(
+                f"Crystal system {crystal_system} not yet implemented"
+            )
 
         if not np.all(conditions):
             logger.warning("-" * 10 + " WARNING: Elastically Unstable " + "-" * 10)
