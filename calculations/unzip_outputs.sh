@@ -1,2 +1,4 @@
-find * -name OUTCAR.gz -exec gunzip {} \;
-find * -name vasprun.xml.gz -exec gunzip {} \;
+#!/bin/bash
+
+find * -name OUTCAR.zst -exec zstd --rm -d {} \;
+find * -name vasprun.xml.zst -exec zstd --rm -d {} \;
