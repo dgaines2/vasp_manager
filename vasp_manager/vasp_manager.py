@@ -37,7 +37,6 @@ class VaspManager:
         to_submit=True,
         ignore_personal_errrors=True,
         tail=5,
-        write_results=True,
         ncore=None,
         use_multiprocessing=False,
         calculation_manager_kwargs={},
@@ -52,7 +51,6 @@ class VaspManager:
             ignore_personal_errors (bool): if True, ignore job submission errors
                 if on personal computer
             tail (int): number of last lines to log in debugging if job failed
-            write_results (bool): if True, dump results to results.json
             ncore (int): if ncore, use {ncore} for multiprocessing
                 if None, defaults to minimum(number of materials, cpu_count)
             use_multiprocessing (bool): if True, use pool.map()
@@ -72,7 +70,6 @@ class VaspManager:
         self.to_submit = to_submit
         self.ignore_personal_errors = ignore_personal_errrors
         self.tail = tail
-        self.write_results = write_results
         self.ncore = (
             ncore
             if ncore is not None
@@ -178,6 +175,10 @@ class VaspManager:
             if os.path.exists(self.results_path):
                 with open(self.results_path, "r") as fr:
                     self._results = json.load(fr)
+                for mat_name in self.material_names:
+                    if mat_name not in self._results:
+                        self._results[mat_name] = {}
+                self._results = dict(sorted(self._results.items()))
             else:
                 self._results = {mat_name: {} for mat_name in self.material_names}
 
@@ -350,7 +351,7 @@ class VaspManager:
         """
         self._manage_calculations_wrapper()
 
-        json_str = json.dumps(self.results, indent=2, cls=NumpyEncoder)
+        json_str = json.dumps(self.results, indent=2, cls=NumpyEncoder, sort_keys=True)
         logger.debug(json_str)
         with open(self.results_path, "w+") as fw:
             fw.write(json_str)
@@ -372,7 +373,7 @@ class VaspManager:
             results = json.load(fr)
 
         summary_dict = {}
-        summary_dict["n_total"] = len(self.material_paths)
+        summary_dict["n_total"] = len(results)
         for calc_type in self.calculation_types:
             summary_dict[calc_type] = {}
             summary_dict[calc_type]["n_finished"] = 0
