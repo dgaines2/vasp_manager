@@ -104,11 +104,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             return False
 
         tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
-        if "reached required accuracy" in tail_output:
-            logger.info(f"{self.mode.upper()} Calculation: reached required accuracy")
-            logger.debug(tail_output)
-            return True
-        else:
+        if "reached required accuracy" not in tail_output:
             archive_dirs = glob.glob(os.path.join(self.calc_path, "archive*"))
             if len(archive_dirs) >= 3:
                 logger.warning("Many archives exist, suggest force based relaxation")
@@ -122,6 +118,10 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
                 logger.info(f"Rerunning {self.calc_path}")
                 self.setup_calc()
             return False
+
+        logger.info(f"{self.mode.upper()} Calculation: reached required accuracy")
+        logger.debug(tail_output)
+        return True
 
     @property
     def is_done(self):

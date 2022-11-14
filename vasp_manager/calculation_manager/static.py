@@ -93,28 +93,28 @@ class StaticCalculationManager(BaseCalculationManager):
             return False
 
         stdout_path = os.path.join(self.calc_path, "stdout.txt")
-        if os.path.exists(stdout_path):
-            if not self.job_complete:
-                logger.info(f"{self.mode.upper()} not finished")
-                return False
-
-            tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
-            if "1 F=" in tail_output:
-                self._results = {}
-                self._results["final_energy"] = float(tail_output.split()[2])
-                logger.info(f"{self.mode.upper()} Calculation: SCF converged")
-                logger.debug(tail_output)
-                return True
-            else:
-                logger.warning(f"{self.mode.upper()} FAILED")
-                logger.debug(tail_output)
-                if self.to_rerun:
-                    logger.info(f"Rerunning {self.calc_path}")
-                    self.setup_calc()
-                    return False
-        else:
+        if not os.path.exists(stdout_path):
             logger.info(f"{self.mode.upper()} not started")
             return False
+
+        if not self.job_complete:
+            logger.info(f"{self.mode.upper()} not finished")
+            return False
+
+        tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
+        if "1 F=" not in tail_output:
+            logger.warning(f"{self.mode.upper()} FAILED")
+            logger.debug(tail_output)
+            if self.to_rerun:
+                logger.info(f"Rerunning {self.calc_path}")
+                self.setup_calc()
+                return False
+
+        self._results = {}
+        self._results["final_energy"] = float(tail_output.split()[2])
+        logger.info(f"{self.mode.upper()} Calculation: SCF converged")
+        logger.debug(tail_output)
+        return True
 
     @property
     def is_done(self):
