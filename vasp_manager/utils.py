@@ -78,7 +78,7 @@ def pcat(f_names):
         with open(f_name) as fr:
             f_content = fr.read()
         f_contents.append(f_content)
-    catted = "\n".join(f_content for f_content in f_contents)
+    catted = "".join(f_content for f_content in f_contents)
     return catted
 
 
