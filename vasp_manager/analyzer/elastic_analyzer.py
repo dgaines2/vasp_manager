@@ -261,34 +261,14 @@ class ElasticAnalyzer:
     @staticmethod
     def check_elastically_unstable(cij, crystal_system):
         "returns True if compound is elastically unstable"
-        c11 = cij[0, 0]
-        c12 = cij[0, 1]
-        c13 = cij[0, 2]
-        c33 = cij[2, 2]
-        c44 = cij[3, 3]
-        c66 = cij[5, 5]
-        # must meet these criteria to be elastically stable
-        if crystal_system == "cubic":
-            condition_1 = c11 > c12
-            condition_2 = c11 + 2 * c12 > 0
-            condition_3 = c44 > 0
-            conditions = [condition_1, condition_2, condition_3]
-        elif crystal_system == "hexagonal":
-            condition_1 = c11 > np.abs(c12)
-            condition_2 = 2 * c13**2 < c33 * (c11 + c12)
-            condition_3 = c44 > 0
-            condition_4 = c66 > 0
-            conditions = [condition_1, condition_2, condition_3, condition_4]
-        else:
-            raise NotImplementedError(
-                f"Crystal system {crystal_system} not yet implemented"
-            )
+        eigenvalues, eigenvectors = np.linalg.eig(cij)
+        born_critera_satisfied = np.all(eigenvalues > 0)
 
-        if not np.all(conditions):
+        if not born_critera_satisfied:
             logger.warning("-" * 10 + " WARNING: Elastically Unstable " + "-" * 10)
             return True
-        else:
-            return False
+
+        return False
 
     def _make_stiffness_tensor_file(self):
         """
