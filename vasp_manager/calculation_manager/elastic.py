@@ -23,6 +23,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         material_path,
         to_rerun,
         to_submit,
+        primitive=False,
         ignore_personal_errors=True,
         from_scratch=False,
         tail=5,
@@ -33,12 +34,16 @@ class ElasticCalculationManager(BaseCalculationManager):
 
         Args:
             tail (int): number of last lines to log in debugging if job failed
+
+        Note: primitive is set to False for elastic calculations as sometimes elongated or
+            distorted cells lead to erroneous results
         """
         self.tail = tail
         super().__init__(
             material_path=material_path,
             to_rerun=to_rerun,
             to_submit=to_submit,
+            primitive=primitive,
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
@@ -65,6 +70,7 @@ class ElasticCalculationManager(BaseCalculationManager):
             self.calc_path,
             mode=self.mode,
             poscar_source_path=self.poscar_source_path,
+            primitive=self.primitive,
             name=self.material_name,
             increase_nodes=increase_nodes,
         )

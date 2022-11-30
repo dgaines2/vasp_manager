@@ -19,6 +19,7 @@ class BaseCalculationManager(ABC):
         material_path,
         to_rerun,
         to_submit,
+        primitive=True,
         ignore_personal_errors=True,
         from_scratch=False,  # DANGEROUS, WILL DELETE PREVIOUS CALCULATION
     ):
@@ -28,6 +29,7 @@ class BaseCalculationManager(ABC):
                 ex. calculations/AlAs
             to_rerun (bool): if True, rerun failed calculations
             to_submit (bool): if True, submit calculations to job manager
+            primitive (bool): if True, find primitive cell, else find conventional cell
             ignore_personal_errors (bool): if True, ignore job submission errors
                 if on personal computer
             from_scratch (bool): if True, remove the calculation's folder and
@@ -37,6 +39,7 @@ class BaseCalculationManager(ABC):
         self.material_path = material_path
         self.to_rerun = to_rerun
         self.to_submit = to_submit
+        self.primitive = primitive
         self.job_manager = JobManager(
             calc_path=self.calc_path, ignore_personal_errors=ignore_personal_errors
         )

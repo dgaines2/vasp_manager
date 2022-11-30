@@ -23,7 +23,13 @@ class VaspInputCreator:
     """
 
     def __init__(
-        self, calc_path, mode, poscar_source_path, name=None, increase_nodes=False
+        self,
+        calc_path,
+        mode,
+        poscar_source_path,
+        primitive=True,
+        name=None,
+        increase_nodes=False,
     ):
         """
         Args:
@@ -35,6 +41,7 @@ class VaspInputCreator:
         """
         self.calc_path = calc_path
         self.poscar_source_path = poscar_source_path
+        self.primitive = primitive
         self.increase_nodes = increase_nodes
         self.name = name
         self.mode = self._get_mode(mode)
@@ -82,7 +89,9 @@ class VaspInputCreator:
     @cached_property
     def source_structure(self):
         try:
-            structure = get_pmg_structure_from_poscar(self.poscar_source_path)
+            structure = get_pmg_structure_from_poscar(
+                self.poscar_source_path, primitive=self.primitive
+            )
         except Exception as e:
             raise Exception(f"Cannot load POSCAR in {self.poscar_source_path}: {e}")
         return structure

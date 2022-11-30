@@ -26,6 +26,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
         material_path,
         to_rerun,
         to_submit,
+        primitive=True,
         ignore_personal_errors=True,
         from_relax=True,
         from_scratch=False,
@@ -53,6 +54,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
             material_path=material_path,
             to_rerun=to_rerun,
             to_submit=to_submit,
+            primitive=primitive,
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
@@ -100,6 +102,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
             self.calc_path,
             mode=self.mode,
             poscar_source_path=self.poscar_source_path,
+            primitive=self.primitive,
             name=self.material_name,
         )
         vasp_input_creator.create()

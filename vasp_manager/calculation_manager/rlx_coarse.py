@@ -23,6 +23,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
         material_path,
         to_rerun,
         to_submit,
+        primitive=True,
         ignore_personal_errors=True,
         from_scratch=False,
         tail=5,
@@ -39,6 +40,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             material_path=material_path,
             to_rerun=to_rerun,
             to_submit=to_submit,
+            primitive=primitive,
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
@@ -62,6 +64,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             self.calc_path,
             mode=self.mode,
             poscar_source_path=self.poscar_source_path,
+            primitive=self.primitive,
             name=self.material_name,
         )
         if self.to_rerun:
