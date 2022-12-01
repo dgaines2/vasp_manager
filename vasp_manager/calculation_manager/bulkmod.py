@@ -88,7 +88,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
             raise ValueError(f"Strains not centered around 1.0: middle is {middle}")
         self._strains = values
 
-    def setup_calc(self):
+    def setup_calc(self, increase_nodes_by_factor=1):
         """
         Sets up an EOS bulkmod calculation
         """
@@ -98,12 +98,14 @@ class BulkmodCalculationManager(BaseCalculationManager):
                 "\n\t starting structure must be fairly close to equilibrium volume!"
             )
             logger.warning(msg)
+
         vasp_input_creator = VaspInputCreator(
             self.calc_path,
             mode=self.mode,
             poscar_source_path=self.poscar_source_path,
             primitive=self.primitive,
             name=self.material_name,
+            increase_nodes_by_factor=increase_nodes_by_factor,
         )
         vasp_input_creator.create()
 
@@ -138,7 +140,9 @@ class BulkmodCalculationManager(BaseCalculationManager):
             tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
             if "1 F=" not in tail_output:
                 if self.to_rerun:
-                    self.setup_calc()
+                    logger.info(f"Rerunning {self.calc_path}")
+                    # increase nodes as its likely the calculation failed
+                    self.setup_calc(increase_nodes_by_factor=2)
                 return False
         return True
 

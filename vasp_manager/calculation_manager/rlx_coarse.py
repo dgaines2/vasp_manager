@@ -56,7 +56,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
         poscar_source_path = os.path.join(self.material_path, "POSCAR")
         return poscar_source_path
 
-    def setup_calc(self):
+    def setup_calc(self, increase_nodes_by_factor=1):
         """
         Sets up a coarse relaxation
         """
@@ -66,6 +66,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             poscar_source_path=self.poscar_source_path,
             primitive=self.primitive,
             name=self.material_name,
+            increase_nodes_by_factor=increase_nodes_by_factor,
         )
         if self.to_rerun:
             archive_made = vasp_input_creator.make_archive_and_repopulate()
@@ -115,7 +116,8 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             logger.debug(tail_output)
             if self.to_rerun:
                 logger.info(f"Rerunning {self.calc_path}")
-                self.setup_calc()
+                # increase nodes as its likely the calculation failed
+                self.setup_calc(increase_nodes_by_factor=2)
             return False
 
         logger.info(f"{self.mode.upper()} Calculation: reached required accuracy")

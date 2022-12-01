@@ -90,6 +90,11 @@ class ElasticCalculationManager(BaseCalculationManager):
             elastic_successful (bool): if True, elastic calculation completed
                 successfully
         """
+        stdout_path = os.path.join(self.calc_path, "stdout.txt")
+        if not os.path.exists(stdout_path):
+            logger.info(f"{self.mode.upper()} not started")
+            return False
+
         if not self.job_complete:
             logger.info(f"{self.mode.upper()} job not finished")
             return False
@@ -113,6 +118,7 @@ class ElasticCalculationManager(BaseCalculationManager):
             logger.info(tail_output)
             logger.info(f"{self.mode.upper()} Calculation: FAILED")
             if self.to_rerun:
+                logger.info(f"Rerunning {self.calc_path}")
                 # increase nodes as its likely the calculation failed
                 self.setup_calc(increase_nodes_by_factor=4)
             return False
