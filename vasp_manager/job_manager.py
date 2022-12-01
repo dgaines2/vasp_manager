@@ -56,13 +56,15 @@ class JobManager:
     @cached_property
     def job_exists(self):
         jobid_path = os.path.join(self.calc_path, "jobid")
-        if os.path.exists(jobid_path):
-            with open(jobid_path) as fr:
-                jobid = fr.read().strip()
-            self.jobid = jobid
-            return True
-        else:
+        if not os.path.exists(jobid_path):
             return False
+        if os.path.getsize(jobid_path) == 0:
+            return False
+
+        with open(jobid_path) as fr:
+            jobid = fr.read().strip()
+        self.jobid = jobid
+        return True
 
     @property
     def jobid(self):
