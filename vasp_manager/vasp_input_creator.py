@@ -29,7 +29,7 @@ class VaspInputCreator:
         poscar_source_path,
         primitive=True,
         name=None,
-        increase_nodes=False,
+        increase_nodes_by_factor=1,
     ):
         """
         Args:
@@ -37,12 +37,12 @@ class VaspInputCreator:
             mode
             poscar_source_path
             name
-            increase_nodes
+            increase_nodes_by_factor
         """
         self.calc_path = calc_path
         self.poscar_source_path = poscar_source_path
         self.primitive = primitive
-        self.increase_nodes = increase_nodes
+        self.increase_nodes_by_factor = int(increase_nodes_by_factor)
         self.name = name
         self.mode = self._get_mode(mode)
 
@@ -136,8 +136,7 @@ class VaspInputCreator:
         if self.computer == "quest":
             # quest has small nodes
             num_nodes *= 2
-        if self.increase_nodes:
-            num_nodes *= 2
+        num_nodes *= self.increase_nodes_by_factor
         return num_nodes
 
     @property
@@ -147,8 +146,7 @@ class VaspInputCreator:
         n_procs = (
             self.n_nodes * self.computing_config_dict[self.computer]["ncore_per_node"]
         )
-        if self.increase_nodes:
-            n_procs *= 2
+        n_procs *= self.increase_nodes_by_factor
         return n_procs
 
     @property
@@ -260,10 +258,13 @@ class VaspInputCreator:
         else:
             jobname = pad_string + self.name
 
-        if self.increase_nodes:
-            hours, minutes, seconds = walltime.split(":")
-            hours = str(int(hours) * 2)
-            walltime = ":".join([hours, minutes, seconds])
+        # Deprecated code to increase walltime
+        # Instead, prefer to increase nodes such that job finishes within
+        #   original walltime
+        # if self.increase_nodes_by_factor != 1:
+        #     hours, minutes, seconds = walltime.split(":")
+        #     hours = str(int(hours) * self.increase_nodes_by_factor)
+        #     walltime = ":".join([hours, minutes, seconds])
 
         computer_config = self.computing_config_dict[self.computer].copy()
         ncore_per_node = self.n_procs_used // self.n_nodes

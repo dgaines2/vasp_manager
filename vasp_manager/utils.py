@@ -45,7 +45,7 @@ def get_pmg_structure_from_poscar(
         poscar_path (str)
         to_process (bool): if True, get standard reduced structure
         primitive (bool): if True, get primitive structure, else get
-        conventional structure
+            conventional structure
         symprec (float): symprec for SpacegroupAnalyzer
         return_sg (bool): if True, return spacegroup number
     Returns:
