@@ -23,8 +23,8 @@
     "potcar_dir": "/global/homes/d/dwg4898/vasp_potentials/54/potpaw_pbe",
     "queuetype": "regular",
     "allocation": "m1673",
-    "vasp_module": "vasp/20181030-knl",
+    "vasp_module": "vasp/5.4.4-knl",
     "ncore": 16,
-    "ncore_per_node": 64
+    "ncore_per_node": 68
   }
 }
