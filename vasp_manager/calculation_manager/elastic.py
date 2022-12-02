@@ -23,7 +23,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         material_path,
         to_rerun,
         to_submit,
-        primitive=False,
+        primitive=True,
         ignore_personal_errors=True,
         from_scratch=False,
         tail=5,

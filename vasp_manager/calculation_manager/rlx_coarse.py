@@ -99,6 +99,13 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             return False
 
         stdout_path = os.path.join(self.calc_path, "stdout.txt")
+        if not os.path.exists(stdout_path):
+            # shouldn't get here unless function was called with submit=False
+            logger.info(f"{self.mode.upper()} Calculation: No stdout.txt available")
+            if self.to_rerun:
+                self.setup_calc()
+            return False
+
         tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
         if "reached required accuracy" not in tail_output:
             archive_dirs = glob.glob(os.path.join(self.calc_path, "archive*"))
