@@ -53,7 +53,7 @@ class JobManager:
     def mode(self):
         return os.path.basename(self.calc_path)
 
-    @cached_property
+    @property
     def job_exists(self):
         jobid_path = os.path.join(self.calc_path, "jobid")
         if not os.path.exists(jobid_path):
