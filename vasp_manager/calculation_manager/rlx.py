@@ -100,15 +100,11 @@ class RlxCalculationManager(BaseCalculationManager):
         Returns:
             relaxation_successful (bool): if True, relaxation completed successfully
         """
-        stdout_path = os.path.join(self.calc_path, "stdout.txt")
-        if not os.path.exists(stdout_path):
-            logger.info(f"{self.mode.upper()} not started")
-            return False
-
         if not self.job_complete:
             logger.info(f"{self.mode.upper()} not finished")
             return False
 
+        stdout_path = os.path.join(self.calc_path, "stdout.txt")
         tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
         if "reached required accuracy" not in tail_output:
             archive_dirs = glob.glob(os.path.join(self.calc_path, "archive*"))
