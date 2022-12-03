@@ -115,6 +115,7 @@ class ElasticCalculationManager(BaseCalculationManager):
             if self.to_rerun:
                 logger.info(f"Rerunning {self.calc_path}")
                 # increase nodes as its likely the calculation failed
+                self._from_scratch()
                 self.setup_calc(increase_nodes_by_factor=4)
             return False
 
