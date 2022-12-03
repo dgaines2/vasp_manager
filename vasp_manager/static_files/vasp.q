@@ -7,6 +7,7 @@
 #SBATCH -t {walltime}
 #SBATCH -L SCRATCH
 #SBATCH -C knl,quad,cache
+#SBATCH --mem=0
 
 #OpenMP settings:
 ulimit -s unlimited
