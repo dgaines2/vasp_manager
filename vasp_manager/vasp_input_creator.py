@@ -151,9 +151,14 @@ class VaspInputCreator:
 
     @property
     def n_procs_used(self):
-        return self.n_nodes * (
-            self.computing_config_dict[self.computer]["ncore_per_node"] - 4
-        )
+        ncore_per_node = self.computing_config_dict[self.computer]["ncore_per_node"]
+        ncore_per_node_for_memory = 4
+        if self.mode == "elastic":
+            if self.computer == "quest":
+                ncore_per_node_for_memory *= 2
+            else:
+                ncore_per_node_for_memory *= 5
+        return self.n_nodes * (ncore_per_node - ncore_per_node_for_memory)
 
     def make_potcar(self):
         """
