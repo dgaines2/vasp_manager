@@ -103,6 +103,14 @@ class ElasticCalculationManager(BaseCalculationManager):
             return False
 
         grep_output = pgrep(stdout_path, str_to_grep="Total")
+        if len(grep_output) == 0:
+            if self.to_rerun:
+                logger.info(f"Rerunning {self.calc_path}")
+                # calculation failed before end of first SCF cycle
+                self._from_scratch()
+                self.setup_calc(increase_nodes_by_factor=2)
+            return False
+
         last_grep_line = grep_output[-1].strip().split()
         # last grep line looks something like 'Total: 36/ 36'
         finished_deformations = int(last_grep_line[-2].replace("/", ""))

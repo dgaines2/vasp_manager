@@ -113,7 +113,7 @@ class StaticCalculationManager(BaseCalculationManager):
                 # increase nodes as its likely the calculation failed
                 self._from_scratch()
                 self.setup_calc(increase_nodes_by_factor=2)
-                return False
+            return False
 
         self._results = {}
         self._results["final_energy"] = float(tail_output.split()[2])
