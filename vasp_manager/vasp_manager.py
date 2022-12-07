@@ -358,7 +358,7 @@ class VaspManager:
         print(f"Dumped to {self.results_path}")
         return self.results
 
-    def summary(self, as_string=True):
+    def summary(self, as_string=True, print_unfinished=False):
         """
         Create a string summary of all calculations
 
@@ -401,6 +401,11 @@ class VaspManager:
                 name = calc_type.upper()
                 n_finished = summary_dict[calc_type]["n_finished"]
                 summary_str += f"{name: <12} {n_finished}/{n_materials} completed\n"
+                if print_unfinished:
+                    summary_str += (
+                        f"Unfinished {calc_type.upper()}: "
+                        + f"{summary_dict[calc_type]['unfinished']}\n"
+                    )
             return summary_str
         else:
             return summary_dict
