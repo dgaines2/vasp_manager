@@ -60,6 +60,10 @@ class ElasticAnalyzer:
         return self._structure
 
     @property
+    def density(self):
+        return self.structure.density
+
+    @property
     def crystal_system(self):
         if self._crystal_system is None:
             sga = SpacegroupAnalyzer(self.structure, symprec=1e-3)
@@ -144,6 +148,22 @@ class ElasticAnalyzer:
     @cached_property
     def elastically_unstable(self):
         return self.check_elastically_unstable(self.cij, self.crystal_system)
+
+    @cached_property
+    def vt(self):
+        return np.round(self.get_vt(self.g_vrh, self.density), self.rounding_precision)
+
+    @cached_property
+    def vl(self):
+        return np.round(
+            self.get_vl(self.b_vrh, self.g_vrh, self.density), self.rounding_precision
+        )
+
+    @cached_property
+    def vs(self):
+        return np.round(
+            self.get_vs(self.b_vrh, self.g_vrh, self.density), self.rounding_precision
+        )
 
     @staticmethod
     def change_elastic_constants_from_vasp(vasp_elastic_tensor):
@@ -259,6 +279,23 @@ class ElasticAnalyzer:
         return G_Voigt
 
     @staticmethod
+    def get_vl(bulkmod, shearmod, density):
+        vl = np.sqrt((bulkmod + 4 / 3 * shearmod) / density)
+        return vl
+
+    @staticmethod
+    def get_vt(shearmod, density):
+        vt = np.sqrt(shearmod / density)
+        return vt
+
+    @staticmethod
+    def get_vs(bulkmod, shearmod, density):
+        vl = np.sqrt((bulkmod + 4 / 3 * shearmod) / density)
+        vt = np.sqrt(shearmod / density)
+        vs = (1 / 3 * (1 / vl**3 + 2 / vt**3)) ** (-1 / 3)
+        return vs
+
+    @staticmethod
     def check_elastically_unstable(cij, crystal_system):
         "returns True if compound is elastically unstable"
         eigenvalues, eigenvectors = np.linalg.eig(cij)
@@ -327,8 +364,11 @@ class ElasticAnalyzer:
         elastic_dict["G_Reuss"] = self.g_reuss
         elastic_dict["G_Voigt"] = self.g_voigt
         elastic_dict["G_VRH"] = self.g_vrh
-        elastic_dict["warning"] = self.elastically_unstable
+        elastic_dict["unstable"] = self.elastically_unstable
         elastic_dict["elastic_tensor"] = self.cij
+        elastic_dict["vl"] = self.vl
+        elastic_dict["vt"] = self.vt
+        elastic_dict["vs"] = self.vs
 
         logger.debug(json.dumps(elastic_dict, cls=NumpyEncoder, indent=2))
 
