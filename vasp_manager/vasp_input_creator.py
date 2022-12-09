@@ -157,7 +157,7 @@ class VaspInputCreator:
             if self.computer == "quest":
                 ncore_per_node_for_memory *= 2
             else:
-                ncore_per_node_for_memory *= 5
+                ncore_per_node_for_memory *= 9
         return self.n_nodes * (ncore_per_node - ncore_per_node_for_memory)
 
     def make_potcar(self):

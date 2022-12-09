@@ -59,7 +59,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         poscar_source_path = os.path.join(self.material_path, "rlx", "CONTCAR")
         return poscar_source_path
 
-    def setup_calc(self, increase_nodes_by_factor=2):
+    def setup_calc(self, increase_nodes_by_factor=4):
         """
         Runs elastic constants routine through VASP
 
@@ -108,7 +108,7 @@ class ElasticCalculationManager(BaseCalculationManager):
                 logger.info(f"Rerunning {self.calc_path}")
                 # calculation failed before end of first SCF cycle
                 self._from_scratch()
-                self.setup_calc(increase_nodes_by_factor=2)
+                self.setup_calc()
             return False
 
         last_grep_line = grep_output[-1].strip().split()
@@ -124,7 +124,7 @@ class ElasticCalculationManager(BaseCalculationManager):
                 logger.info(f"Rerunning {self.calc_path}")
                 # increase nodes as its likely the calculation failed
                 self._from_scratch()
-                self.setup_calc(increase_nodes_by_factor=4)
+                self.setup_calc(increase_nodes_by_factor=8)
             return False
 
         logger.info(f"{self.mode.upper()} Calculation: Success")
