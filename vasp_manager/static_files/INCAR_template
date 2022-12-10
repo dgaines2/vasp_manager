@@ -15,6 +15,7 @@ POTIM = {potim}
 EDIFFG = {ediffg}
 
 #= Electronic Relxation Settings =#
+NELM = {nelm}
 NBANDS = {nbands}
 ENCUT = {encut}
 NELMIN = 5
