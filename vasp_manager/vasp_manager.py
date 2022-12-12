@@ -402,10 +402,11 @@ class VaspManager:
                 n_finished = summary_dict[calc_type]["n_finished"]
                 summary_str += f"{name: <12} {n_finished}/{n_materials} completed\n"
                 if print_unfinished:
-                    summary_str += (
-                        f"Unfinished {calc_type.upper()}: "
-                        + f"{summary_dict[calc_type]['unfinished']}\n"
-                    )
+                    unfinished = summary_dict[calc_type]["unfinished"]
+                    if len(unfinished) != 0:
+                        summary_str += (
+                            f"Unfinished {calc_type.upper()}: " + f"{unfinished}\n"
+                        )
             return summary_str
         else:
             return summary_dict
