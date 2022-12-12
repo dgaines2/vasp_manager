@@ -84,11 +84,14 @@ class BaseCalculationManager(ABC):
     def submit_job(self):
         return self.job_manager.submit_job()
 
-    def _from_scratch(self):
+    def _cancel_previous_job(self):
         jobid_path = os.path.join(self.calc_path, "jobid")
         if os.path.exists(jobid_path):
             with open(jobid_path) as fr:
                 jobid = fr.read().strip()
             cancel_job_call = f"scancel {jobid}"
             os.system(cancel_job_call)
+
+    def _from_scratch(self):
+        self._cancel_previous_job()
         shutil.rmtree(self.calc_path)

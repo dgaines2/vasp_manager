@@ -99,6 +99,7 @@ class ElasticCalculationManager(BaseCalculationManager):
             # shouldn't get here unless function was called with submit=False
             logger.info(f"{self.mode.upper()} Calculation: No stdout.txt available")
             if self.to_rerun:
+                self._cancel_previous_job()
                 self.setup_calc()
             return False
 
