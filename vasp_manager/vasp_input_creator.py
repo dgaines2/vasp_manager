@@ -30,6 +30,7 @@ class VaspInputCreator:
         primitive=True,
         name=None,
         increase_nodes_by_factor=1,
+        poscar_significant_figures=8,
     ):
         """
         Args:
@@ -38,6 +39,7 @@ class VaspInputCreator:
             poscar_source_path
             name
             increase_nodes_by_factor
+            poscar_significant_figures
         """
         self.calc_path = calc_path
         self.poscar_source_path = poscar_source_path
@@ -45,6 +47,7 @@ class VaspInputCreator:
         self.increase_nodes_by_factor = int(increase_nodes_by_factor)
         self.name = name
         self.mode = self._get_mode(mode)
+        self.poscar_significant_figures = poscar_significant_figures
 
     def _get_mode(self, mode):
         # rlx-coarse, rlx, bulkmod, stc, or elastic
@@ -127,7 +130,9 @@ class VaspInputCreator:
         """
         poscar = Poscar(self.source_structure)
         poscar_path = os.path.join(self.calc_path, "POSCAR")
-        poscar.write_file(poscar_path)
+        poscar.write_file(
+            poscar_path, significant_figures=self.poscar_significant_figures
+        )
 
     @property
     def n_nodes(self):
