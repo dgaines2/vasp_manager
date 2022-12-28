@@ -139,8 +139,8 @@ class VaspInputCreator:
         # start with 1 node per 32 atoms
         num_nodes = (len(self.source_structure) // 32) + 1
         if self.computer == "quest":
-            # quest has small nodes
-            num_nodes *= 2
+            # quest has 4x smaller nodes than perlmutter
+            num_nodes *= 4
         num_nodes *= self.increase_nodes_by_factor
         return num_nodes
 
@@ -157,12 +157,10 @@ class VaspInputCreator:
     @property
     def n_procs_used(self):
         ncore_per_node = self.computing_config_dict[self.computer]["ncore_per_node"]
-        ncore_per_node_for_memory = 4
+        ncore_per_node_for_memory = 0
         if self.mode == "elastic":
             if self.computer == "quest":
-                ncore_per_node_for_memory *= 2
-            else:
-                ncore_per_node_for_memory *= 9
+                ncore_per_node_for_memory = 8
         return self.n_nodes * (ncore_per_node - ncore_per_node_for_memory)
 
     def make_potcar(self):

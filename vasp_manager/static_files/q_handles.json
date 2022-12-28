@@ -11,7 +11,7 @@
     "bulkmod": "vasp-bulkmod-quest.q",
     "elastic": "vasp-quest.q"
   },
-  "cori": {
+  "perlmutter": {
     "rlx": "vasp.q",
     "static": "vasp.q",
     "bulkmod": "vasp-bulkmod.q",

@@ -17,8 +17,8 @@
     "ismear": 0,
     "sigma": 0.05,
     "kpar": 4,
-    "gga": "PS",
-    "walltime": "02:00:00"
+    "gga": "PE",
+    "walltime": "01:00:00"
   },
   "rlx": {
     "prec": "ACC",
@@ -30,16 +30,16 @@
     "isif": 3,
     "lreal": ".FALSE.",
     "potim": 0.1,
-    "ediffg": "-1e-02",
+    "ediffg": "-1e-03",
     "nelm": 60,
     "encut": 520,
-    "ediff": "1e-06",
+    "ediff": "1e-07",
     "algo": "Normal",
     "ismear": 0,
     "sigma": 0.05,
     "kpar": 4,
-    "gga": "PS",
-    "walltime": "02:00:00"
+    "gga": "PE",
+    "walltime": "01:00:00"
   },
   "static": {
     "prec": "ACC",
@@ -51,16 +51,16 @@
     "isif": 3,
     "lreal": ".FALSE.",
     "potim": 0,
-    "ediffg": 0,
+    "ediffg": "-1e-03",
     "nelm": 60,
     "encut": 520,
-    "ediff": "1e-06",
+    "ediff": "1e-07",
     "algo": "Normal",
     "ismear": -5,
-    "sigma": 0,
+    "sigma": 0.05,
     "kpar": 4,
-    "gga": "PS",
-    "walltime": "02:00:00"
+    "gga": "PE",
+    "walltime": "01:00:00"
   },
   "bulkmod": {
     "prec": "ACC",
@@ -72,15 +72,15 @@
     "isif": 3,
     "lreal": ".FALSE.",
     "potim": 0,
-    "ediffg": "-1e-02",
+    "ediffg": "-1e-03",
     "nelm": 60,
     "encut": 520,
-    "ediff": "1e-06",
+    "ediff": "1e-07",
     "algo": "Normal",
     "ismear": -5,
-    "sigma": 0,
+    "sigma": 0.05,
     "kpar": 4,
-    "gga": "PS",
+    "gga": "PE",
     "walltime": "02:00:00"
   },
   "elastic": {
@@ -95,15 +95,15 @@
     "isif": 3,
     "lreal": ".FALSE.",
     "potim": 0.01,
-    "ediffg": "-1e-02",
+    "ediffg": "-1e-03",
     "nelm": 60,
     "encut": 520,
     "ediff": "1e-07",
     "algo": "Normal",
     "ismear": 0,
-    "sigma": 0.01,
+    "sigma": 0.05,
     "kpar": 4,
-    "gga": "PS",
+    "gga": "PE",
     "walltime": "04:00:00"
   }
 }

@@ -59,7 +59,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         poscar_source_path = os.path.join(self.material_path, "rlx", "CONTCAR")
         return poscar_source_path
 
-    def setup_calc(self, increase_nodes_by_factor=4):
+    def setup_calc(self, increase_nodes_by_factor=2):
         """
         Runs elastic constants routine through VASP
 
@@ -99,7 +99,7 @@ class ElasticCalculationManager(BaseCalculationManager):
             # shouldn't get here unless function was called with submit=False
             logger.info(f"{self.mode.upper()} Calculation: No stdout.txt available")
             if self.to_rerun:
-                self._cancel_previous_job()
+                self._from_scratch()
                 self.setup_calc()
             return False
 
@@ -125,7 +125,7 @@ class ElasticCalculationManager(BaseCalculationManager):
                 logger.info(f"Rerunning {self.calc_path}")
                 # increase nodes as its likely the calculation failed
                 self._from_scratch()
-                self.setup_calc(increase_nodes_by_factor=8)
+                self.setup_calc(increase_nodes_by_factor=4)
             return False
 
         logger.info(f"{self.mode.upper()} Calculation: Success")

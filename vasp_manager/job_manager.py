@@ -130,15 +130,15 @@ class JobManager:
             # This enables job resubmission by letting the calling function
             # continue anyways
             return True
-        else:
-            check_queue_call = f"squeue -u {self.user_id}"
-            queue_call = (
-                subprocess.check_output(check_queue_call, shell=True)
-                .decode("utf-8")
-                .splitlines()
-            )
-            for line in queue_call:
-                line = line.strip().split()
-                if str(self.jobid) in line:
-                    return False
-            return True
+
+        check_queue_call = f"squeue -u {self.user_id}"
+        queue_call = (
+            subprocess.check_output(check_queue_call, shell=True)
+            .decode("utf-8")
+            .splitlines()
+        )
+        for line in queue_call:
+            line = line.strip().split()
+            if str(self.jobid) in line:
+                return False
+        return True

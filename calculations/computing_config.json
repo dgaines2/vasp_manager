@@ -18,13 +18,13 @@
     "ncore": 12,
     "ncore_per_node": 28
   },
-  "cori": {
+  "perlmutter": {
     "user_id": "dwg4898",
     "potcar_dir": "/global/homes/d/dwg4898/vasp_potentials/54/potpaw_pbe",
     "queuetype": "regular",
     "allocation": "m1673",
-    "vasp_module": "vasp/5.4.4-knl",
+    "vasp_module": "vasp/6.3.2-cpu",
     "ncore": 16,
-    "ncore_per_node": 68
+    "ncore_per_node": 128
   }
 }
