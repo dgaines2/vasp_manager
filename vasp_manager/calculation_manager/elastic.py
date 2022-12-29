@@ -59,7 +59,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         poscar_source_path = os.path.join(self.material_path, "rlx", "CONTCAR")
         return poscar_source_path
 
-    def setup_calc(self, increase_nodes_by_factor=2):
+    def setup_calc(self, increase_nodes_by_factor=2, increase_walltime_by_factor=1):
         """
         Runs elastic constants routine through VASP
 
@@ -73,6 +73,7 @@ class ElasticCalculationManager(BaseCalculationManager):
             primitive=self.primitive,
             name=self.material_name,
             increase_nodes_by_factor=increase_nodes_by_factor,
+            increase_walltime_by_factor=increase_walltime_by_factor,
         )
         vasp_input_creator.create()
 
@@ -123,9 +124,9 @@ class ElasticCalculationManager(BaseCalculationManager):
             logger.info(f"{self.mode.upper()} Calculation: FAILED")
             if self.to_rerun:
                 logger.info(f"Rerunning {self.calc_path}")
-                # increase nodes as its likely the calculation failed
+                # increase walltime as its likely the calculation failed
                 self._from_scratch()
-                self.setup_calc(increase_nodes_by_factor=4)
+                self.setup_calc(increase_walltime_by_factor=2)
             return False
 
         logger.info(f"{self.mode.upper()} Calculation: Success")

@@ -30,6 +30,7 @@ class VaspInputCreator:
         primitive=True,
         name=None,
         increase_nodes_by_factor=1,
+        increase_walltime_by_factor=1,
         poscar_significant_figures=8,
     ):
         """
@@ -45,6 +46,7 @@ class VaspInputCreator:
         self.poscar_source_path = poscar_source_path
         self.primitive = primitive
         self.increase_nodes_by_factor = int(increase_nodes_by_factor)
+        self.increase_walltime_by_factor = int(increase_walltime_by_factor)
         self.name = name
         self.mode = self._get_mode(mode)
         self.poscar_significant_figures = poscar_significant_figures
@@ -266,13 +268,10 @@ class VaspInputCreator:
         else:
             jobname = pad_string + self.name
 
-        # Deprecated code to increase walltime
-        # Instead, prefer to increase nodes such that job finishes within
-        #   original walltime
-        # if self.increase_nodes_by_factor != 1:
-        #     hours, minutes, seconds = walltime.split(":")
-        #     hours = str(int(hours) * self.increase_nodes_by_factor)
-        #     walltime = ":".join([hours, minutes, seconds])
+        if self.increase_walltime_by_factor != 1:
+            hours, minutes, seconds = walltime.split(":")
+            hours = str(int(hours) * self.increase_walltime_by_factor)
+            walltime = ":".join([hours, minutes, seconds])
 
         computer_config = self.computing_config_dict[self.computer].copy()
         ncore_per_node = self.n_procs_used // self.n_nodes
