@@ -64,20 +64,24 @@ class RlxCalculationManager(BaseCalculationManager):
             poscar_source_path = os.path.join(self.material_path, "POSCAR")
         return poscar_source_path
 
-    def setup_calc(self, increase_nodes_by_factor=1):
-        """
-        Sets up a fine relaxation
-        """
-        vasp_input_creator = VaspInputCreator(
+    @cached_property
+    def vasp_input_creator(self):
+        return VaspInputCreator(
             self.calc_path,
             mode=self.mode,
             poscar_source_path=self.poscar_source_path,
             primitive=self.primitive,
             name=self.material_name,
-            increase_nodes_by_factor=increase_nodes_by_factor,
         )
+
+    def setup_calc(self, increase_nodes_by_factor=1):
+        """
+        Sets up a fine relaxation
+        """
+        self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
+
         if self.to_rerun:
-            archive_made = vasp_input_creator.make_archive_and_repopulate()
+            archive_made = self.vasp_input_creator.make_archive_and_repopulate()
             if not archive_made:
                 # set rerun to not make an achive and instead
                 # continue to make the input files
@@ -85,7 +89,7 @@ class RlxCalculationManager(BaseCalculationManager):
                 self.setup_calc()
                 return
         else:
-            vasp_input_creator.create()
+            self.vasp_input_creator.create()
 
         if self.to_submit:
             job_submitted = self.submit_job()

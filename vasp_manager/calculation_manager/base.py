@@ -57,6 +57,11 @@ class BaseCalculationManager(ABC):
     def is_done(self):
         pass
 
+    @property
+    @abstractmethod
+    def vasp_input_creator(self):
+        pass
+
     @cached_property
     def calc_path(self):
         return os.path.join(self.material_path, self.mode)

@@ -59,6 +59,16 @@ class ElasticCalculationManager(BaseCalculationManager):
         poscar_source_path = os.path.join(self.material_path, "rlx", "CONTCAR")
         return poscar_source_path
 
+    @cached_property
+    def vasp_input_creator(self):
+        return VaspInputCreator(
+            self.calc_path,
+            mode=self.mode,
+            poscar_source_path=self.poscar_source_path,
+            primitive=self.primitive,
+            name=self.material_name,
+        )
+
     def setup_calc(self, increase_nodes_by_factor=2, increase_walltime_by_factor=1):
         """
         Runs elastic constants routine through VASP
@@ -66,16 +76,9 @@ class ElasticCalculationManager(BaseCalculationManager):
         By default, requires relaxation (as the elastic constants routine needs
             the cell to be nearly at equilibrium)
         """
-        vasp_input_creator = VaspInputCreator(
-            self.calc_path,
-            mode=self.mode,
-            poscar_source_path=self.poscar_source_path,
-            primitive=self.primitive,
-            name=self.material_name,
-            increase_nodes_by_factor=increase_nodes_by_factor,
-            increase_walltime_by_factor=increase_walltime_by_factor,
-        )
-        vasp_input_creator.create()
+        self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
+        self.vasp_input_creator.increase_walltime_by_factor = increase_walltime_by_factor
+        self.vasp_input_creator.create()
 
         if self.to_submit:
             job_submitted = self.submit_job()

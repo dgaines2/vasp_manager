@@ -76,6 +76,16 @@ class BulkmodCalculationManager(BaseCalculationManager):
             poscar_source_path = os.path.join(self.material_path, "POSCAR")
         return poscar_source_path
 
+    @cached_property
+    def vasp_input_creator(self):
+        return VaspInputCreator(
+            self.calc_path,
+            mode=self.mode,
+            poscar_source_path=self.poscar_source_path,
+            primitive=self.primitive,
+            name=self.material_name,
+        )
+
     @property
     def strains(self):
         return self._strains
@@ -99,15 +109,8 @@ class BulkmodCalculationManager(BaseCalculationManager):
             )
             logger.warning(msg)
 
-        vasp_input_creator = VaspInputCreator(
-            self.calc_path,
-            mode=self.mode,
-            poscar_source_path=self.poscar_source_path,
-            primitive=self.primitive,
-            name=self.material_name,
-            increase_nodes_by_factor=increase_nodes_by_factor,
-        )
-        vasp_input_creator.create()
+        self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
+        self.vasp_input_creator.create()
 
         self._make_bulkmod_strains()
 
