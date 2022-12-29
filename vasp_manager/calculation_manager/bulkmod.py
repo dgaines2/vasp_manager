@@ -10,7 +10,7 @@ import numpy as np
 
 from vasp_manager.analyzer.bulkmod_analyzer import BulkmodAnalyzer
 from vasp_manager.calculation_manager.base import BaseCalculationManager
-from vasp_manager.utils import change_directory, ptail
+from vasp_manager.utils import change_directory, pgrep
 from vasp_manager.vasp_input_creator import VaspInputCreator
 
 logger = logging.getLogger(__name__)
@@ -137,8 +137,8 @@ class BulkmodCalculationManager(BaseCalculationManager):
             if not os.path.exists(stdout_path):
                 return False
 
-            tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
-            if "1 F=" not in tail_output:
+            grep_output = pgrep(stdout_path, "1 F=", stop_after_first_match=True)
+            if len(grep_output) == 0:
                 if self.to_rerun:
                     logger.info(f"Rerunning {self.calc_path}")
                     # increase nodes as its likely the calculation failed

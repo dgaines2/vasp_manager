@@ -6,7 +6,7 @@ import os
 from functools import cached_property
 
 from vasp_manager.calculation_manager.base import BaseCalculationManager
-from vasp_manager.utils import ptail
+from vasp_manager.utils import pgrep, ptail
 from vasp_manager.vasp_input_creator import VaspInputCreator
 
 logger = logging.getLogger(__name__)
@@ -106,7 +106,8 @@ class StaticCalculationManager(BaseCalculationManager):
             return False
 
         tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
-        if "1 F=" not in tail_output:
+        grep_output = pgrep(stdout_path, "1 F=", stop_after_first_match=True)
+        if len(grep_output) == 0:
             logger.warning(f"{self.mode.upper()} FAILED")
             logger.debug(tail_output)
             if self.to_rerun:
