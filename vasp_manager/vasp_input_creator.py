@@ -32,6 +32,7 @@ class VaspInputCreator:
         increase_nodes_by_factor=1,
         increase_walltime_by_factor=1,
         poscar_significant_figures=8,
+        ncore_per_node_for_memory=0,
     ):
         """
         Args:
@@ -50,6 +51,7 @@ class VaspInputCreator:
         self.name = name
         self.mode = self._get_mode(mode)
         self.poscar_significant_figures = poscar_significant_figures
+        self.ncore_per_node_for_memory = ncore_per_node_for_memory
 
     def _get_mode(self, mode):
         # rlx-coarse, rlx, bulkmod, stc, or elastic
@@ -159,11 +161,10 @@ class VaspInputCreator:
     @property
     def n_procs_used(self):
         ncore_per_node = self.computing_config_dict[self.computer]["ncore_per_node"]
-        ncore_per_node_for_memory = 0
         if self.mode == "elastic":
             if self.computer == "quest":
-                ncore_per_node_for_memory = 8
-        return self.n_nodes * (ncore_per_node - ncore_per_node_for_memory)
+                self.ncore_per_node_for_memory += 8
+        return self.n_nodes * (ncore_per_node - self.ncore_per_node_for_memory)
 
     def make_potcar(self):
         """
