@@ -137,8 +137,6 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
                 logger.warning(
                     "Many archives exist, continuing to force based relaxation..."
                 )
-                if self.to_rerun:
-                    self.setup_calc()
                 return True
 
             logger.warning(f"{self.mode.upper()} FAILED")
