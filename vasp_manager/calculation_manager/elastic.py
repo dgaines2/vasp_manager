@@ -107,6 +107,23 @@ class ElasticCalculationManager(BaseCalculationManager):
                 self.setup_calc()
             return False
 
+        vasp_errors = self._check_vasp_errors()
+        if len(vasp_errors) > 0:
+            all_errors_addressed = self._address_vasp_errors(vasp_errors)
+            if not all_errors_addressed:
+                msg = (
+                    f"{self.mode.upper()} Calculation: ",
+                    "Couldn't address all VASP Errors\n",
+                    "\tRefusing to continue...\n",
+                    f"\tVasp Errors: {vasp_errors}\n",
+                )
+                raise RuntimeError(msg)
+            if self.to_rerun:
+                logger.info(f"Rerunning {self.calc_path}")
+                self._from_scratch()
+                self.setup_calc()
+            return False
+
         grep_output = pgrep(stdout_path, str_to_grep="Total")
         if len(grep_output) == 0:
             if self.to_rerun:

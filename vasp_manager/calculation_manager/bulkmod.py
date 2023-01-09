@@ -111,7 +111,6 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
         self.vasp_input_creator.create()
-
         self._make_bulkmod_strains()
 
         if self.to_submit:
@@ -137,7 +136,27 @@ class BulkmodCalculationManager(BaseCalculationManager):
             strain_name = f"strain_{strain_index}"
             strain_path = os.path.join(self.calc_path, strain_name)
             stdout_path = os.path.join(strain_path, "stdout.txt")
+            stderr_path = os.path.join(strain_path, "stderr.txt")
             if not os.path.exists(stdout_path):
+                return False
+
+            vasp_errors = self._check_vasp_errors(
+                stdout_path=stdout_path, stderr_path=stderr_path
+            )
+            if len(vasp_errors) > 0:
+                all_errors_addressed = self._address_vasp_errors(vasp_errors)
+                if not all_errors_addressed:
+                    msg = (
+                        f"{self.mode.upper()} Calculation: ",
+                        "Couldn't address all VASP Errors\n",
+                        "\tRefusing to continue...\n",
+                        f"\tVasp Errors: {vasp_errors}\n",
+                    )
+                    raise RuntimeError(msg)
+                if self.to_rerun:
+                    logger.info(f"Rerunning {self.calc_path}")
+                    self._from_scratch()
+                    self.setup_calc()
                 return False
 
             grep_output = pgrep(stdout_path, "1 F=", stop_after_first_match=True)

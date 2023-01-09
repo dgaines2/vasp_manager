@@ -117,6 +117,22 @@ class RlxCalculationManager(BaseCalculationManager):
                 self.setup_calc()
             return False
 
+        vasp_errors = self._check_vasp_errors()
+        if len(vasp_errors) > 0:
+            all_errors_addressed = self._address_vasp_errors(vasp_errors)
+            if not all_errors_addressed:
+                msg = (
+                    f"{self.mode.upper()} Calculation: ",
+                    "Couldn't address all VASP Errors\n",
+                    "\tRefusing to continue...\n",
+                    f"\tVasp Errors: {vasp_errors}\n",
+                )
+                raise RuntimeError(msg)
+            if self.to_rerun:
+                logger.info(f"Rerunning {self.calc_path}")
+                self.setup_calc()
+            return False
+
         tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
         grep_output = pgrep(
             stdout_path, "reached required accuracy", stop_after_first_match=True
@@ -124,7 +140,9 @@ class RlxCalculationManager(BaseCalculationManager):
         if len(grep_output) == 0:
             archive_dirs = glob.glob(os.path.join(self.calc_path, "archive*"))
             if len(archive_dirs) >= 3:
-                logger.warning("Many archives exist, suggest force based relaxation")
+                logger.warning(
+                    "Many archives exist, continuing to force based relaxation..."
+                )
                 if self.to_rerun:
                     self.setup_calc()
                 return True

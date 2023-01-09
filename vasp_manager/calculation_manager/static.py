@@ -71,17 +71,7 @@ class StaticCalculationManager(BaseCalculationManager):
         By default, requires previous relaxation run
         """
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
-
-        if self.to_rerun:
-            archive_made = self.vasp_input_creator.make_archive_and_repopulate()
-            if not archive_made:
-                # set rerun to not make an achive and instead
-                # continue to make the input files
-                self.to_rerun = False
-                self.setup_calc()
-                return
-        else:
-            self.vasp_input_creator.create()
+        self.vasp_input_creator.create()
 
         if self.to_submit:
             job_submitted = self.submit_job()
@@ -109,6 +99,23 @@ class StaticCalculationManager(BaseCalculationManager):
                 self.setup_calc()
             return False
 
+        vasp_errors = self._check_vasp_errors()
+        if len(vasp_errors) > 0:
+            all_errors_addressed = self._address_vasp_errors(vasp_errors)
+            if not all_errors_addressed:
+                msg = (
+                    f"{self.mode.upper()} Calculation: ",
+                    "Couldn't address all VASP Errors\n",
+                    "\tRefusing to continue...\n",
+                    f"\tVasp Errors: {vasp_errors}\n",
+                )
+                raise RuntimeError(msg)
+            if self.to_rerun:
+                logger.info(f"Rerunning {self.calc_path}")
+                self._from_scratch()
+                self.setup_calc()
+            return False
+
         tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
         grep_output = pgrep(stdout_path, "1 F=", stop_after_first_match=True)
         if len(grep_output) == 0:
@@ -116,8 +123,8 @@ class StaticCalculationManager(BaseCalculationManager):
             logger.debug(tail_output)
             if self.to_rerun:
                 logger.info(f"Rerunning {self.calc_path}")
-                # increase nodes as its likely the calculation failed
                 self._from_scratch()
+                # increase nodes as its likely the calculation failed
                 self.setup_calc(increase_nodes_by_factor=2)
             return False
 
