@@ -3,8 +3,9 @@ PREC = {prec}
 ISTART = 0
 ISPIN = {ispin}
 {magmom}
-ADDGRID = .TRUE.
 KSPACING = {kspacing}
+KGAMMA = .TRUE.
+ADDGRID = .TRUE.
 
 #= Ionic Relaxation Settings =#
 NSW = {nsw}
@@ -21,6 +22,7 @@ ENCUT = {encut}
 NELMIN = 5
 EDIFF = {ediff}
 ALGO = {algo}
+LASPH = .TRUE.
 
 #= Write flags =#
 LCHARG = .FALSE.
