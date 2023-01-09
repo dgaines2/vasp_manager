@@ -7,7 +7,7 @@ import os
 from functools import cached_property
 
 from vasp_manager.calculation_manager.base import BaseCalculationManager
-from vasp_manager.utils import ptail
+from vasp_manager.utils import pgrep, ptail
 from vasp_manager.vasp_input_creator import VaspInputCreator
 
 logger = logging.getLogger(__name__)
@@ -112,7 +112,10 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             return False
 
         tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
-        if "reached required accuracy" not in tail_output:
+        grep_output = pgrep(
+            stdout_path, "reached required accuracy", stop_after_first_match=True
+        )
+        if len(grep_output) == 0:
             archive_dirs = glob.glob(os.path.join(self.calc_path, "archive*"))
             if len(archive_dirs) >= 3:
                 logger.warning("Many archives exist, suggest force based relaxation")
