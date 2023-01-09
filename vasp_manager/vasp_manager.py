@@ -256,7 +256,7 @@ class VaspManager:
                                 "bulkmod_standalone must be run alone -- remove other"
                                 " calculation types to fix"
                             )
-                            raise Exception()
+                            raise Exception(msg)
                     manager = BulkmodCalculationManager(
                         material_path=material_path,
                         to_rerun=self.to_rerun,
@@ -268,7 +268,7 @@ class VaspManager:
                 case "elastic":
                     if "rlx" not in self.calculation_types:
                         msg = (
-                            "Cannot perform elastic calculation without mode='rlx-fine'"
+                            "Cannot perform elastic calculation without mode='rlx'"
                             " first"
                         )
                         raise Exception(msg)
