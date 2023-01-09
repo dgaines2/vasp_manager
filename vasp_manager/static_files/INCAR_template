@@ -2,7 +2,6 @@
 PREC = {prec}
 ISTART = 0
 ISPIN = {ispin}
-{magmom}
 KSPACING = {kspacing}
 KGAMMA = .TRUE.
 ADDGRID = .TRUE.

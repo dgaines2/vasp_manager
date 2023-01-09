@@ -201,6 +201,9 @@ class VaspInputCreator:
         ncore = self.computing_config_dict[self.computer]["ncore"]
         calc_config = self.calc_config_dict[self.mode]
 
+        if calc_config["ispin"] != 1:
+            raise NotImplementedError("ISPIN = 2 not yet supported")
+
         # read POTCAR
         potcar_path = os.path.join(self.calc_path, "POTCAR")
         potcar = Potcar.from_file(potcar_path)
