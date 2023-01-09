@@ -133,7 +133,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
         )
         if len(grep_output) == 0:
             archive_dirs = glob.glob(os.path.join(self.calc_path, "archive*"))
-            if len(archive_dirs) >= 3:
+            if len(archive_dirs) >= 2:
                 logger.warning(
                     "Many archives exist, continuing to force based relaxation..."
                 )

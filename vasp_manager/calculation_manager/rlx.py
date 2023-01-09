@@ -139,13 +139,11 @@ class RlxCalculationManager(BaseCalculationManager):
         )
         if len(grep_output) == 0:
             archive_dirs = glob.glob(os.path.join(self.calc_path, "archive*"))
-            if len(archive_dirs) >= 3:
-                logger.warning(
-                    "Many archives exist, continuing to force based relaxation..."
-                )
+            if len(archive_dirs) >= 2:
+                logger.warning("Many archives exist, calculations may not be converging")
                 if self.to_rerun:
                     self.setup_calc()
-                return True
+                return False
 
             logger.warning(f"{self.mode.upper()} FAILED")
             logger.debug(tail_output)
