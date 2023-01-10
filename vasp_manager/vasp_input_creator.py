@@ -95,6 +95,12 @@ class VaspInputCreator:
 
     @cached_property
     def source_structure(self):
+        num_archives = len(glob.glob(os.path.join(self.calc_path, "archive*")))
+        if num_archives > 0:
+            archive_name = f"archive_{num_archives-1}"
+            self.poscar_source_path = os.path.join(
+                self.calc_path, archive_name, "CONTCAR"
+            )
         try:
             structure = get_pmg_structure_from_poscar(
                 self.poscar_source_path, primitive=self.primitive
@@ -300,48 +306,17 @@ class VaspInputCreator:
     def make_archive_and_repopulate(self):
         """
         Make an archive of a VASP calculation and copy back over relevant files
-
-        Returns:
-            archive_made (bool): if job was never submitted or failed immediately,
-                return False
         """
-        # if job was never submitted, don't make an archive
-        jobid_path = os.path.join(self.calc_path, "jobid")
-        if not os.path.exists(jobid_path):
-            return False
-        # check if CONTCAR is empty -- calculation failed almost immediately
-        # if it is empty, don't make an archive, just recreate the files
-        # by returning False
-        contcar_path = os.path.join(self.calc_path, "CONTCAR")
-        if not os.path.exists(contcar_path):
-            logger.error(
-                f"CONTCAR in {contcar_path} did not exist.\nAttempting to rerun but it's"
-                " likely there was an immediate job failure!"
-            )
-            shutil.rmtree(self.calc_path)
-            return False
-        else:
-            if os.stat(contcar_path).st_size == 0:
-                logger.error(
-                    f"CONTCAR in {contcar_path} was empty.\nAttempting to rerun but it's"
-                    " likely there was an immediate job failure!"
-                )
-                shutil.rmtree(self.calc_path)
-                return False
-
         with change_directory(self.calc_path):
-            num_archives = len(glob.glob("archive*"))
-            all_files = [d for d in glob.glob("*") if os.path.isfile(d)]
-            archive_name = f"archive_{num_archives}"
+            num_previous_archives = len(glob.glob("archive*"))
+            archive_name = f"archive_{num_previous_archives}"
             logger.info(f"Making {archive_name}...")
             os.mkdir(archive_name)
+            all_files = [d for d in glob.glob("*") if os.path.isfile(d)]
             for f in all_files:
                 shutil.move(f, archive_name)
 
-        contcar_path = os.path.join(self.calc_path, archive_name, "CONTCAR")
-        self.poscar_source_path = contcar_path
         self.create()
-        return True
 
     def create(self):
         """

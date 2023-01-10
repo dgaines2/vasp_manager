@@ -66,20 +66,14 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             name=self.material_name,
         )
 
-    def setup_calc(self, increase_nodes_by_factor=1):
+    def setup_calc(self, increase_nodes_by_factor=1, make_archive=False):
         """
         Sets up a coarse relaxation
         """
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
 
-        if self.to_rerun:
-            archive_made = self.vasp_input_creator.make_archive_and_repopulate()
-            if not archive_made:
-                # set rerun to False to not make an achive and instead
-                # continue to make the input files
-                self.to_rerun = False
-                self.setup_calc()
-                return
+        if make_archive:
+            self.vasp_input_creator.make_archive_and_repopulate()
         else:
             self.vasp_input_creator.create()
 
@@ -88,7 +82,6 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             # job status returns True if sucessfully submitted, else False
             if not job_submitted:
                 # if job didn't submit, try rerunning setup
-                self.to_rerun = False
                 self.setup_calc()
 
     def check_calc(self):
@@ -104,7 +97,9 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
 
         stdout_path = os.path.join(self.calc_path, "stdout.txt")
         if not os.path.exists(stdout_path):
+            # calculation never actually ran
             # shouldn't get here unless function was called with submit=False
+            # or job was manually cancelled
             logger.info(f"{self.mode.upper()} Calculation: No stdout.txt available")
             if self.to_rerun:
                 self._cancel_previous_job()
@@ -124,7 +119,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
                 raise RuntimeError(msg)
             if self.to_rerun:
                 logger.info(f"Rerunning {self.calc_path}")
-                self.setup_calc()
+                self.setup_calc(make_archive=True)
             return False
 
         tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
@@ -144,7 +139,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             if self.to_rerun:
                 logger.info(f"Rerunning {self.calc_path}")
                 # increase nodes as its likely the calculation failed
-                self.setup_calc(increase_nodes_by_factor=2)
+                self.setup_calc(increase_nodes_by_factor=2, make_archive=True)
             return False
 
         logger.info(f"{self.mode.upper()} Calculation: reached required accuracy")
