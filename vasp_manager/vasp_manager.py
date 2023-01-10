@@ -40,6 +40,7 @@ class VaspManager:
         ncore=None,
         use_multiprocessing=False,
         calculation_manager_kwargs={},
+        max_reruns=3,
     ):
         """
         Args:
@@ -50,7 +51,8 @@ class VaspManager:
             to_submit (bool): if True, submit calculations
             ignore_personal_errors (bool): if True, ignore job submission errors
                 if on personal computer
-            tail (int): number of last lines to log in debugging if job failed
+            tail (int): number of last lines from stdout.txt to log in debugging
+                if job failed
             ncore (int): if ncore, use {ncore} for multiprocessing
                 if None, defaults to minimum(number of materials, cpu_count)
             use_multiprocessing (bool): if True, use pool.map()
@@ -63,6 +65,8 @@ class VaspManager:
             calculation_manager_kwargs (dict): contains subdictionaries for each
                 calculation type. Eeach subdictorary can be filled with extra kwargs
                 to pass to its associated CalculationManager during instantiation
+            max_reruns (int): the maximum number of times a rlx-coarse or rlx
+                calculation can run before refusing to continue
         """
         self.calculation_types = calculation_types
         self.material_paths = material_paths
@@ -77,6 +81,7 @@ class VaspManager:
         )
         self.use_multiprocessing = use_multiprocessing
         self.calculation_manager_kwargs = calculation_manager_kwargs
+        self.max_reruns = max_reruns
 
         self.calculation_managers = self._get_all_calculation_managers()
         self.results_path = os.path.join(self.base_path, "results.json")
@@ -215,6 +220,7 @@ class VaspManager:
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
                         tail=self.tail,
+                        max_reruns=self.max_reruns,
                         **self.calculation_manager_kwargs[calc_type],
                     )
                 case "rlx":
@@ -229,6 +235,7 @@ class VaspManager:
                         ignore_personal_errors=self.ignore_personal_errors,
                         from_coarse_relax=from_coarse_relax,
                         tail=self.tail,
+                        max_reruns=self.max_reruns,
                         **self.calculation_manager_kwargs[calc_type],
                     )
                 case "static":

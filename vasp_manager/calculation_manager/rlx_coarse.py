@@ -27,6 +27,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
         ignore_personal_errors=True,
         from_scratch=False,
         tail=5,
+        max_reruns=3,
     ):
         """
         For material_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
@@ -36,6 +37,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             tail (int): number of last lines to log in debugging if job failed
         """
         self.tail = tail
+        self.max_reruns = max_reruns
         super().__init__(
             material_path=material_path,
             to_rerun=to_rerun,
@@ -128,7 +130,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
         )
         if len(grep_output) == 0:
             archive_dirs = glob.glob(os.path.join(self.calc_path, "archive*"))
-            if len(archive_dirs) >= 2:
+            if len(archive_dirs) >= self.max_reruns - 1:
                 logger.warning(
                     "Many archives exist, continuing to force based relaxation..."
                 )

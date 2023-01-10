@@ -30,6 +30,7 @@ class RlxCalculationManager(BaseCalculationManager):
         from_coarse_relax=True,
         from_scratch=False,
         tail=5,
+        max_reruns=3,
     ):
         """
         For material_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
@@ -41,6 +42,7 @@ class RlxCalculationManager(BaseCalculationManager):
         """
         self.from_coarse_relax = from_coarse_relax
         self.tail = tail
+        self.max_reruns = max_reruns
         super().__init__(
             material_path=material_path,
             to_rerun=to_rerun,
@@ -134,10 +136,12 @@ class RlxCalculationManager(BaseCalculationManager):
         )
         if len(grep_output) == 0:
             archive_dirs = glob.glob(os.path.join(self.calc_path, "archive*"))
-            if len(archive_dirs) >= 2:
-                logger.warning("Many archives exist, calculations may not be converging")
-                if self.to_rerun:
-                    self.setup_calc(make_archive=True)
+            if len(archive_dirs) >= self.max_reruns - 1:
+                msg = (
+                    "Many archives exist, calculations may not be converging\n"
+                    "\t Refusing to continue..."
+                )
+                logger.error(msg)
                 return False
 
             logger.warning(f"{self.mode.upper()} FAILED")
