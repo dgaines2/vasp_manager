@@ -187,7 +187,7 @@ class RlxCalculationManager(BaseCalculationManager):
             logger.warning(f"  NEED TO RE-RELAX: dV = {volume_diff:.4f}")
             volume_converged = False
             if self.to_rerun:
-                self.setup_calc()
+                self.setup_calc(make_archive=True)
         else:
             logger.info("  RLX volume converged")
             logger.debug(f"  dV = {volume_diff:.4f}")

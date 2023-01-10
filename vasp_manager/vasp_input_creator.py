@@ -308,13 +308,28 @@ class VaspInputCreator:
         Make an archive of a VASP calculation and copy back over relevant files
         """
         with change_directory(self.calc_path):
-            num_previous_archives = len(glob.glob("archive*"))
-            archive_name = f"archive_{num_previous_archives}"
-            logger.info(f"Making {archive_name}...")
-            os.mkdir(archive_name)
-            all_files = [d for d in glob.glob("*") if os.path.isfile(d)]
-            for f in all_files:
-                shutil.move(f, archive_name)
+            contcar_path = "CONTCAR"
+            contcar_exists = os.path.exists(contcar_path)
+            if contcar_exists:
+                contcar_is_empty = os.stat(contcar_path).st_size == 0
+            else:
+                contcar_is_empty = True
+
+            if contcar_is_empty:
+                # if CONTCAR is empty, don't make an archive and clean up
+                all_files = [d for d in glob.glob("*") if os.path.isfile(d)]
+                for f in all_files:
+                    os.remove(f)
+            else:
+                # make the archive
+                num_previous_archives = len(glob.glob("archive*"))
+                archive_name = f"archive_{num_previous_archives}"
+                logger.info(f"Making {archive_name}...")
+                os.mkdir(archive_name)
+
+                all_files = [d for d in glob.glob("*") if os.path.isfile(d)]
+                for f in all_files:
+                    shutil.move(f, archive_name)
 
         self.create()
 
