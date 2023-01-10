@@ -129,7 +129,7 @@ class StaticCalculationManager(BaseCalculationManager):
             return False
 
         self._results = {}
-        self._results["final_energy"] = float(tail_output.split()[2])
+        self._results["final_energy"] = float(grep_output[0].split()[2])
         logger.info(f"{self.mode.upper()} Calculation: SCF converged")
         logger.debug(tail_output)
         return True
