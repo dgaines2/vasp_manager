@@ -129,7 +129,10 @@ class StaticCalculationManager(BaseCalculationManager):
             return False
 
         self._results = {}
-        self._results["final_energy"] = float(grep_output[0].split()[2])
+        final_energy = float(grep_output[0].split()[2])
+        num_atoms = len(self.vasp_input_creator.source_structure)
+        self._results["final_energy"] = final_energy
+        self._results["final_energy_pa"] = final_energy / num_atoms
         logger.info(f"{self.mode.upper()} Calculation: SCF converged")
         logger.debug(tail_output)
         return True
