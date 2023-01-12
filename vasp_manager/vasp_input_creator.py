@@ -210,6 +210,9 @@ class VaspInputCreator:
         if calc_config["ispin"] != 1:
             raise NotImplementedError("ISPIN = 2 not yet supported")
 
+        if calc_config["iopt"] != 0 and calc_config["potim"] != 0:
+            raise RuntimeError("To use IOPT != 0, POTIM must be set to 0")
+
         # read POTCAR
         potcar_path = os.path.join(self.calc_path, "POTCAR")
         potcar = Potcar.from_file(potcar_path)

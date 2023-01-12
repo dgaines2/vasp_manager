@@ -13,6 +13,7 @@ ISIF = {isif}
 LREAL = {lreal}
 POTIM = {potim}
 EDIFFG = {ediffg}
+IOPT = {iopt}
 
 #= Electronic Relxation Settings =#
 NELM = {nelm}
