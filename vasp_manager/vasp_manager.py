@@ -198,9 +198,9 @@ class VaspManager:
             is_done (bool)
         """
         match calc_type:
-            case "rlx-coarse" | "rlx":
+            case "rlx-coarse":
                 is_done = self.results[material_name][calc_type] == "done"
-            case "static" | "bulkmod" | "elastic":
+            case "rlx" | "static" | "bulkmod" | "elastic":
                 is_done = self.results[material_name][calc_type] is not None
             case _:
                 raise ValueError("Can't find mode {mode} in result")
@@ -358,7 +358,7 @@ class VaspManager:
         """
         self._manage_calculations_wrapper()
 
-        json_str = json.dumps(self.results, indent=2, cls=NumpyEncoder, sort_keys=True)
+        json_str = json.dumps(self.results, indent=2, cls=NumpyEncoder)
         logger.debug(json_str)
         with open(self.results_path, "w+") as fw:
             fw.write(json_str)

@@ -166,9 +166,13 @@ class RlxCalculationManager(BaseCalculationManager):
         Returns:
             volume_converged (bool): if True, relaxation completed successfully
         """
+        original_poscar_path = os.path.join(self.material_path, "POSCAR")
         poscar_path = os.path.join(self.calc_path, "POSCAR")
         contcar_path = os.path.join(self.calc_path, "CONTCAR")
         try:
+            orig_structure, orig_spacegroup = get_pmg_structure_from_poscar(
+                original_poscar_path, return_sg=True
+            )
             p_structure, p_spacegroup = get_pmg_structure_from_poscar(
                 poscar_path, return_sg=True
             )
@@ -179,11 +183,14 @@ class RlxCalculationManager(BaseCalculationManager):
             logger.error(f"  RLX CONTCAR doesn't exist or is empty: {e}")
             return False
 
-        if p_spacegroup == c_spacegroup:
-            logger.debug(f"  Spacegroups match {p_spacegroup}=={c_spacegroup}")
+        if orig_spacegroup == c_spacegroup:
+            logger.debug(
+                f"  Spacegroups match orig-{orig_spacegroup} == rlx-{c_spacegroup}"
+            )
         else:
             logger.warning(
-                f"   Warning: spacegroups do not match {p_spacegroup} != {c_spacegroup}"
+                "   Warning: spacegroups do not match "
+                + f"orig-{orig_spacegroup} != rlx-{c_spacegroup}"
             )
 
         volume_diff = (c_structure.volume - p_structure.volume) / p_structure.volume
@@ -196,6 +203,13 @@ class RlxCalculationManager(BaseCalculationManager):
             logger.info("  RLX volume converged")
             logger.debug(f"  dV = {volume_diff:.4f}")
             volume_converged = True
+        orig_volume_diff = (
+            c_structure.volume - orig_structure.volume
+        ) / orig_structure.volume
+        self._results = {}
+        self._results["initial_spacegroup"] = orig_spacegroup
+        self._results["relaxed_spacegroup"] = c_spacegroup
+        self._results["total_dV"] = np.round(orig_volume_diff, 4)
         return volume_converged
 
     @property
@@ -212,7 +226,5 @@ class RlxCalculationManager(BaseCalculationManager):
     @property
     def results(self):
         if not self.is_done:
-            self._results = "not finished"
-        else:
-            self._results = "done"
+            self._results = None
         return self._results
