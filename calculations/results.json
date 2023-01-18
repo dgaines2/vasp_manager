@@ -1,9 +1,14 @@
 {
   "AlAs": {
     "rlx-coarse": "done",
-    "rlx": "done",
+    "rlx": {
+      "initial_spacegroup": 216,
+      "relaxed_spacegroup": 216,
+      "total_dV": 0.0006
+    },
     "static": {
-      "final_energy": -9.37328124862
+      "final_energy": -9.3733177,
+      "final_energy_pa": -4.68665885
     },
     "bulkmod": {
       "B": 66.823
@@ -15,7 +20,7 @@
       "G_Reuss": 37.927,
       "G_Voigt": 41.548,
       "G_VRH": 39.738,
-      "warning": false,
+      "unstable": false,
       "elastic_tensor": [
         [
           103.876,
@@ -65,14 +70,22 @@
           -0.0,
           50.977
         ]
-      ]
+      ],
+      "vl": 5.788,
+      "vt": 3.326,
+      "vs": 3.694
     }
   },
   "AlSb": {
     "rlx-coarse": "done",
-    "rlx": "done",
+    "rlx": {
+      "initial_spacegroup": 216,
+      "relaxed_spacegroup": 216,
+      "total_dV": 0.0008
+    },
     "static": {
-      "final_energy": -8.19879090596
+      "final_energy": -8.1988003,
+      "final_energy_pa": -4.09940015
     },
     "bulkmod": {
       "B": 49.085
@@ -84,7 +97,7 @@
       "G_Reuss": 27.594,
       "G_Voigt": 29.896,
       "G_VRH": 28.745,
-      "warning": false,
+      "unstable": false,
       "elastic_tensor": [
         [
           76.59,
@@ -134,14 +147,22 @@
           0.0,
           36.297
         ]
-      ]
+      ],
+      "vl": 4.641,
+      "vt": 2.655,
+      "vs": 2.95
     }
   },
   "BAs": {
     "rlx-coarse": "done",
-    "rlx": "done",
+    "rlx": {
+      "initial_spacegroup": 216,
+      "relaxed_spacegroup": 216,
+      "total_dV": 0.0006
+    },
     "static": {
-      "final_energy": -11.3747889339
+      "final_energy": -11.374785,
+      "final_energy_pa": -5.6873925
     },
     "bulkmod": {
       "B": 131.098
@@ -153,7 +174,7 @@
       "G_Reuss": 123.08,
       "G_Voigt": 126.92,
       "G_VRH": 125.0,
-      "warning": false,
+      "unstable": false,
       "elastic_tensor": [
         [
           266.541,
@@ -203,7 +224,10 @@
           0.0,
           144.317
         ]
-      ]
+      ],
+      "vl": 7.659,
+      "vt": 4.954,
+      "vs": 5.436
     }
   }
 }
