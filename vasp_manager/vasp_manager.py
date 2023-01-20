@@ -6,7 +6,7 @@ import json
 import logging
 import os
 from functools import cached_property
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool
 
 import numpy as np
 from tqdm import tqdm
@@ -37,8 +37,8 @@ class VaspManager:
         to_submit=True,
         ignore_personal_errrors=True,
         tail=5,
-        ncore=None,
         use_multiprocessing=False,
+        ncore=None,
         calculation_manager_kwargs={},
         max_reruns=3,
     ):
@@ -53,15 +53,9 @@ class VaspManager:
                 if on personal computer
             tail (int): number of last lines from stdout.txt to log in debugging
                 if job failed
-            ncore (int): if ncore, use {ncore} for multiprocessing
-                if None, defaults to minimum(number of materials, cpu_count)
             use_multiprocessing (bool): if True, use pool.map()
-                Can be useful to set to false for debugging
-                WARNING
-                I've had issues with job submission using multiprocessing, so consider
-                it an experimental feature for now
-                \\TODO: use a multiprocessing queue manager to handle the jobs
-                to ensure concurrency isn't an issue
+            ncore (int): if ncore, use {ncore} for multiprocessing
+                if None, defaults to minimum(number of materials, 4)
             calculation_manager_kwargs (dict): contains subdictionaries for each
                 calculation type. Eeach subdictorary can be filled with extra kwargs
                 to pass to its associated CalculationManager during instantiation
@@ -74,12 +68,8 @@ class VaspManager:
         self.to_submit = to_submit
         self.ignore_personal_errors = ignore_personal_errrors
         self.tail = tail
-        self.ncore = (
-            ncore
-            if ncore is not None
-            else int(np.min([len(self.material_paths), cpu_count()]))
-        )
         self.use_multiprocessing = use_multiprocessing
+        self.ncore = ncore
         self.calculation_manager_kwargs = calculation_manager_kwargs
         self.max_reruns = max_reruns
 
@@ -103,6 +93,15 @@ class VaspManager:
 
     @ncore.setter
     def ncore(self, value):
+        if value is None:
+            value = int(np.min([len(self.material_paths), 4]))
+            if self.use_multiprocessing:
+                print(
+                    "WARNING: setting default ncore for multiprocessing to"
+                    + f"{value}\n"
+                    + "We strongly recommend you set ncore to the number of"
+                    + "available cores."
+                )
         if not isinstance(value, int):
             raise Exception
         self._ncore = value
