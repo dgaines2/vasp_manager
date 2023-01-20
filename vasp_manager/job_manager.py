@@ -79,7 +79,7 @@ class JobManager:
         try:
             jobid_int = int(job_value)
         except Exception as e:
-            raise Exception(f"{e}")
+            raise Exception(f"Tried to set jobid={job_value}\n{e}")
         self._jobid = jobid_int
 
     def submit_job(self):
