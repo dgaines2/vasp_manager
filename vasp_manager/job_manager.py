@@ -104,15 +104,17 @@ class JobManager:
             # know that the calculation needs to be restarted
             return False
 
-        submission_call = "sbatch vasp.q | awk '{ print $4 }' | tee jobid"
+        submission_call = "sbatch vasp.q | awk '{ print $4 }'"
         with change_directory(self.calc_path):
             jobid = (
                 subprocess.check_output(submission_call, shell=True)
                 .decode("utf-8")
                 .strip()
             )
+            self.jobid = jobid
+            with open("jobid", "w+") as fw:
+                fw.write(jobid)
         logger.info(f"Submitted job {jobid}")
-        self.jobid = jobid
         return True
 
     @property
