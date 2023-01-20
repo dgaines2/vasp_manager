@@ -5,7 +5,7 @@
 #SBATCH -J {jobname}
 #SBATCH -A {allocation}
 #SBATCH -t {walltime}
-#SBATCH -C cpu
+#SBATCH -C {constraint}
 #SBATCH --mem=0
 
 #OpenMP settings:
