@@ -97,9 +97,9 @@ class VaspManager:
             value = int(np.min([len(self.material_paths), 4]))
             if self.use_multiprocessing:
                 print(
-                    "WARNING: setting default ncore for multiprocessing to"
+                    "WARNING: setting default ncore for multiprocessing to "
                     + f"{value}\n"
-                    + "We strongly recommend you set ncore to the number of"
+                    + "We strongly recommend you set ncore to the number of "
                     + "available cores."
                 )
         if not isinstance(value, int):
