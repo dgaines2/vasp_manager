@@ -305,6 +305,7 @@ class VaspManager:
         """
         Runs vasp job workflow for a single material
         """
+        material_results = {}
         for calc_manager in self.calculation_managers[material_name]:
             if calc_manager.mode in self.results[material_name].keys():
                 calc_is_done = self._check_calc_by_result(
@@ -337,25 +338,30 @@ class VaspManager:
                         # independent of each other
                         pass
 
-            self.results[material_name][calc_manager.mode] = calc_manager.results
+            material_results[calc_manager.mode] = calc_manager.results
+        return (material_name, material_results)
 
     def _manage_calculations_wrapper(self):
         if self.use_multiprocessing:
             with Pool(self.ncore) as pool:
-                pool.map(self._manage_calculations, tqdm(self.material_names))
+                results = pool.map(self._manage_calculations, tqdm(self.material_names))
         else:
+            results = []
             for i, material_name in enumerate(self.material_names):
                 print(f"{i+1}/{len(self.material_names)} -- {material_name}")
-                self._manage_calculations(material_name)
+                results.append(self._manage_calculations(material_name))
                 logger.info("")
                 logger.info("")
                 logger.info("")
+        return results
 
     def run_calculations(self):
         """
         Runs vasp job workflow for all materials
         """
-        self._manage_calculations_wrapper()
+        results = self._manage_calculations_wrapper()
+        for material_name, material_result in results:
+            self.results[material_name].update(material_result)
 
         json_str = json.dumps(self.results, indent=2, cls=NumpyEncoder)
         logger.debug(json_str)

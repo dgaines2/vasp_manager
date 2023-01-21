@@ -38,6 +38,7 @@ def test_vmg_in_order(tmpdir):
         vmg = VaspManager(
             calculation_types=calculation_type_subset,
             material_paths=material_paths,
+            use_multiprocessing=True,
             to_rerun=True,
             to_submit=True,
         )
@@ -134,6 +135,7 @@ def test_vmg_with_skipping(tmpdir):
     vmg = VaspManager(
         calculation_types=calculation_types,
         material_paths=material_paths,
+        use_multiprocessing=True,
         to_rerun=True,
         to_submit=True,
     )
