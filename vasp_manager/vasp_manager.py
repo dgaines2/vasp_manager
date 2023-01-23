@@ -308,6 +308,10 @@ class VaspManager:
         material_results = {}
         for calc_manager in self.calculation_managers[material_name]:
             if calc_manager.mode in self.results[material_name].keys():
+                if calc_manager.stopped:
+                    logger.info(f"{material_name} -- STOPPED")
+                    break
+
                 calc_is_done = self._check_calc_by_result(
                     material_name, calc_manager.mode
                 )

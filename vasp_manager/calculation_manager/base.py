@@ -88,6 +88,12 @@ class BaseCalculationManager(ABC):
     def job_complete(self):
         return self.job_manager.job_complete
 
+    @property
+    def stopped(self):
+        stopped_path = os.path.join(self.material_path, "STOP")
+        stopped = os.path.exists(stopped_path)
+        return stopped
+
     def submit_job(self):
         return self.job_manager.submit_job()
 
