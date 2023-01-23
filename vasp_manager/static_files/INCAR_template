@@ -5,6 +5,7 @@ ISPIN = {ispin}
 KSPACING = {kspacing}
 KGAMMA = .TRUE.
 ADDGRID = .TRUE.
+SYMPREC = {symprec}
 
 #= Ionic Relaxation Settings =#
 NSW = {nsw}
