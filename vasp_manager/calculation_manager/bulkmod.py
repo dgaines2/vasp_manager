@@ -42,12 +42,14 @@ class BulkmodCalculationManager(BaseCalculationManager):
             strains (array-like): optional, fractional strain along each axis for
                 each deformation
                 if None, use default
-                default is np.linspace(start=0.8, stop=1.2, number=11)**(1/3)
+                default is np.linspace(start=0.925, stop=1.075, number=11)**(1/3)
                 len(strains) must be odd and strains must be centered around 0
         """
         self.from_relax = from_relax
         self.strains = (
-            strains if strains is not None else np.power(np.linspace(0.8, 1.2, 11), 1 / 3)
+            strains
+            if strains is not None
+            else np.power(np.linspace(0.925, 1.075, 11), 1 / 3)
         )
         self.tail = tail
         super().__init__(
