@@ -66,7 +66,7 @@ class ElasticAnalyzer:
     @property
     def crystal_system(self):
         if self._crystal_system is None:
-            sga = SpacegroupAnalyzer(self.structure, symprec=1e-3)
+            sga = SpacegroupAnalyzer(self.structure, symprec=1e-3, angle_tolerance=-1.0)
             self._crystal_system = sga.get_crystal_system()
         return self._crystal_system
 

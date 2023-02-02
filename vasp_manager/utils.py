@@ -53,7 +53,7 @@ def get_pmg_structure_from_poscar(
     """
     structure = Structure.from_file(poscar_path)
     if to_process:
-        sga = SpacegroupAnalyzer(structure, symprec=symprec)
+        sga = SpacegroupAnalyzer(structure, symprec=symprec, angle_tolerance=-1.0)
         if primitive:
             structure = sga.get_primitive_standard_structure()
         else:
