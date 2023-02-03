@@ -99,7 +99,7 @@ class VaspManager:
                 print(
                     "WARNING: setting default ncore for multiprocessing to "
                     + f"{value}\n"
-                    + "We strongly recommend you set ncore to the number of "
+                    + "    We strongly recommend you set ncore to the number of "
                     + "available cores."
                 )
         if not isinstance(value, int):
@@ -416,10 +416,13 @@ class VaspManager:
             for calc_type in self.calculation_types:
                 name = calc_type.upper()
                 n_finished = summary_dict[calc_type]["n_finished"]
-                summary_str += f"{name: <12} {n_finished}/{n_materials} completed\n"
+                summary_str += f"{name: <12}{n_finished}/{n_materials} completed\n"
                 if print_unfinished:
                     unfinished = summary_dict[calc_type]["unfinished"]
                     if len(unfinished) != 0:
+                        summary_str += (
+                            " " * 12 + f"{n_materials - n_finished} not completed\n"
+                        )
                         summary_str += (
                             f"Unfinished {calc_type.upper()}: " + f"{unfinished}\n"
                         )
