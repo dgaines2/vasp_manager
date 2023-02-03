@@ -7,6 +7,7 @@ import logging
 import os
 import pkgutil
 import shutil
+import warnings
 from functools import cached_property
 
 import numpy as np
@@ -215,7 +216,9 @@ class VaspInputCreator:
 
         # read POTCAR
         potcar_path = os.path.join(self.calc_path, "POTCAR")
-        potcar = Potcar.from_file(potcar_path)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=UserWarning)
+            potcar = Potcar.from_file(potcar_path)
         composition_dict = self.source_structure.composition.as_dict()
         n_electrons = 0
         for potcar_single in potcar:
