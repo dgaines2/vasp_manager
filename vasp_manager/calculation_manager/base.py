@@ -151,7 +151,7 @@ class BaseCalculationManager(ABC):
                     vic.calc_config_dict[self.mode]["algo"] = "Fast"
                     errors_addressed[error] = True
                 case "OOM":
-                    if self.computer == "quest":
+                    if vic.computer == "quest":
                         ncore_per_node_for_memory = 8
                     else:
                         ncore_per_node_for_memory = 32
