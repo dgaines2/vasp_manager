@@ -348,7 +348,9 @@ class VaspManager:
     def _manage_calculations_wrapper(self):
         if self.use_multiprocessing:
             with Pool(self.ncore) as pool:
-                results = pool.map(self._manage_calculations, tqdm(self.material_names))
+                results = pool.map(
+                    self._manage_calculations, tqdm(self.material_names), 1
+                )
         else:
             results = []
             for i, material_name in enumerate(self.material_names):
