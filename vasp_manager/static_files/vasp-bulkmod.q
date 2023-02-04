@@ -20,7 +20,7 @@ starttime=$(date +%s)
 mpitasks=$(echo "$SLURM_JOB_NUM_NODES * {ncore_per_node}" |bc)
 for p in strain*; do
     cd $p
-    srun -n $mpitasks --cpu_bind=cores vasp_std > stdout.txt 2> stderr.txt
+    srun -u -n $mpitasks --cpu_bind=cores vasp_std > stdout.txt 2> stderr.txt
     cd ..
 done
 
