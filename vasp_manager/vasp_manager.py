@@ -354,11 +354,9 @@ class VaspManager:
         else:
             results = []
             for i, material_name in enumerate(self.material_names):
-                print(f"{i+1}/{len(self.material_names)} -- {material_name}")
+                print(f"{i+1}/{len(self.material_names)} -- {material_name}", flush=True)
                 results.append(self._manage_calculations(material_name))
-                logger.info("")
-                logger.info("")
-                logger.info("")
+                print()
         return results
 
     def run_calculations(self):
