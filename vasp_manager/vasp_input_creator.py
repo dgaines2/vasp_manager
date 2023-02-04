@@ -63,6 +63,23 @@ class VaspInputCreator:
             mode = "bulkmod"
         return mode
 
+    def _get_lmaxmix(self, composition_dict):
+        d_f_block = json.loads(
+            pkgutil.get_data(
+                "vasp_manager", os.path.join("static_files", "d_f_block.json")
+            ).decode("utf-8")
+        )
+        d_block_elements = d_f_block["d_block"]
+        f_block_elements = d_f_block["f_block"]
+        lmaxmix = 2
+        for element in composition_dict:
+            if element in d_block_elements:
+                lmaxmix = 4
+        for element in composition_dict:
+            if element in f_block_elements:
+                lmaxmix = 6
+        return lmaxmix
+
     @cached_property
     def calc_config_dict(self):
         # sits in calculation folder like calculations/material_name/mode
@@ -215,26 +232,30 @@ class VaspInputCreator:
         if calc_config["iopt"] != 0 and calc_config["potim"] != 0:
             raise RuntimeError("To use IOPT != 0, POTIM must be set to 0")
 
+        composition_dict = self.source_structure.composition.as_dict()
         # read POTCAR
         potcar_path = os.path.join(self.calc_path, "POTCAR")
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=UserWarning)
             potcar = Potcar.from_file(potcar_path)
-        composition_dict = self.source_structure.composition.as_dict()
         n_electrons = 0
         for potcar_single in potcar:
             n_electrons += (
                 potcar_single.nelectrons * composition_dict[potcar_single.element]
             )
         # make n_bands divisible by NCORE (VASP INCAR tag)
-        nbands = int(np.ceil(0.75 * n_electrons / ncore) * ncore)
+        calc_config["ncore"] = ncore
+        calc_config["nbands"] = int(np.ceil(0.75 * n_electrons / ncore) * ncore)
+        lmaxmix = self._get_lmaxmix(composition_dict)
 
-        # Add lines to the vaspq file for only elastic calculations
-        incar_tmp = self.incar_template
-        if self.mode == "elastic":
+        # Add lines to the vaspq file
+        incar_tmp = self.incar_template.split("\n")
+        for i, line in enumerate(incar_tmp):
             # add extra flags for elastic mode
-            incar_tmp = incar_tmp.split("\n")
-            for i, line in enumerate(incar_tmp):
+            if "LASPH" in line:
+                lmaxmix_line = f"LMAXMIX = {lmaxmix}"
+                incar_tmp.insert(i + 1, lmaxmix_line)
+            if self.mode == "elastic":
                 if "KSPACING" in line:
                     nfree_line = "NFREE = {nfree}"
                     symprec_line = "SYMPREC = {symprec}"
@@ -243,8 +264,8 @@ class VaspInputCreator:
                 if "NCORE" in line:
                     # elastic calculation won't run unless NCORE=1
                     incar_tmp[i] = "NCORE = 1"
-            incar_tmp = "\n".join([line for line in incar_tmp])
-        incar = incar_tmp.format(**calc_config, ncore=ncore, nbands=nbands)
+        incar_tmp = "\n".join([line for line in incar_tmp])
+        incar = incar_tmp.format(**calc_config)
         logger.debug(incar)
         with open(incar_path, "w+") as fw:
             fw.write(incar)
