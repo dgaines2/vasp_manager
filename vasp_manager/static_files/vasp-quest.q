@@ -18,7 +18,7 @@ module load {vasp_module}
 starttime=$(date +%s)
 
 mpi_tasks=$(echo "$SLURM_JOB_NUM_NODES * {ncore_per_node}" | bc)
-mpirun -np $mpi_tasks vasp_std > stdout.txt 2> stderr.txt
+mpirun --timeout {timeout} -np $mpi_tasks vasp_std > stdout.txt 2> stderr.txt
 
 stoptime=$(date +%s)
 tottime=$(echo "$stoptime - $starttime" | bc -l)

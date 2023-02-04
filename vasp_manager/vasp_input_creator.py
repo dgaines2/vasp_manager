@@ -8,6 +8,7 @@ import os
 import pkgutil
 import shutil
 import warnings
+from datetime import time, timedelta
 from functools import cached_property
 
 import numpy as np
@@ -254,7 +255,6 @@ class VaspInputCreator:
         """
         vaspq_path = os.path.join(self.calc_path, "vasp.q")
         calc_config = self.calc_config_dict[self.mode]
-        walltime = calc_config["walltime"]
 
         # create pad string for job naming to differentiate in the queue
         match self.mode:
@@ -284,10 +284,23 @@ class VaspInputCreator:
         else:
             jobname = pad_string + self.name
 
-        if self.increase_walltime_by_factor != 1:
-            hours, minutes, seconds = walltime.split(":")
-            hours = str(int(hours) * self.increase_walltime_by_factor)
-            walltime = ":".join([hours, minutes, seconds])
+        # convert walltime into seconds for increase_walltime_by_factor
+        walltime_iso = time.fromisoformat(calc_config["walltime"])
+        # walltime_duration is in seconds
+        walltime_duration = timedelta(
+            hours=walltime_iso.hour,
+            minutes=walltime_iso.minute,
+            seconds=walltime_iso.second,
+        )
+        walltime_duration *= self.increase_walltime_by_factor
+        # convert to HH:MM:SS
+        walltime = str(walltime_duration)
+        # cut walltime short by 1 minute so job metrics log properly
+        timeout = walltime_duration.seconds - 60
+        # quest uses mpirun which needs timeout in seconds
+        # otherwise, convert it back to HH:MM:SS
+        if not self.computer == "quest":
+            timeout = str(timedelta(seconds=timeout))
 
         computer_config = self.computing_config_dict[self.computer].copy()
         ncore_per_node = self.n_procs_used // self.n_nodes
@@ -297,6 +310,8 @@ class VaspInputCreator:
                 "n_procs": self.n_procs,
                 "ncore_per_node": ncore_per_node,
                 "jobname": jobname,
+                "walltime": walltime,
+                "timeout": timeout,
             }
         )
 
@@ -304,7 +319,7 @@ class VaspInputCreator:
         vaspq_tmp = pkgutil.get_data(
             "vasp_manager", os.path.join("static_files", q_name)
         ).decode("utf-8")
-        vaspq = vaspq_tmp.format(**computer_config, walltime=walltime)
+        vaspq = vaspq_tmp.format(**computer_config)
         logger.debug(vaspq)
         with open(vaspq_path, "w+") as fw:
             fw.write(vaspq)
