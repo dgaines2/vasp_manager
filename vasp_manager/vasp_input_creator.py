@@ -180,7 +180,6 @@ class VaspInputCreator:
         n_procs = (
             self.n_nodes * self.computing_config_dict[self.computer]["ncore_per_node"]
         )
-        n_procs *= self.increase_nodes_by_factor
         return n_procs
 
     @property
