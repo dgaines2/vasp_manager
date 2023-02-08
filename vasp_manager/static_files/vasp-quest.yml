@@ -10,8 +10,10 @@ sbatch_params: |-
 preamble: |-
   ulimit -s unlimited
   export OMP_NUM_THREADS=1
-  module load {vasp_module}
+  module load mpi/intel-mpi-5.1.3.258
+  module swap intel/2016.0 intel/2013.2
+  vasp_std='/projects/b1004/bin/vasp_544_std__intel_mpi_5_1_3_258'
   mpitasks=$(echo "$SLURM_JOB_NUM_NODES * {ncore_per_node}" | bc)
 
 command: |-
-  mpirun -np $mpitasks vasp_std > stdout.txt 2> stderr.txt
+  mpirun -np $mpitasks $vasp_std > stdout.txt 2> stderr.txt
