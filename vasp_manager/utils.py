@@ -117,6 +117,24 @@ def pgrep(
     return matches
 
 
+def phead(f_name, n_head=1, as_string=False):
+    """
+    Custom python-only replacement for head
+
+    Args:
+        f_name (str): path of file
+        n_tail (int): n lines to head
+        as_str (bool): if as_string, return a single string, else return splitlines
+    Returns:
+        head (str | list)
+    """
+    with open(f_name) as fr:
+        head = [line.strip() for line in fr.readlines()[:n_head]]
+    if as_string:
+        head = "\n".join([line for line in head])
+    return head
+
+
 def ptail(f_name, n_tail=1, as_string=False):
     """
     Custom python-only replacement for grep
