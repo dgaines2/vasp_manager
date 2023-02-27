@@ -1,6 +1,7 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
+import gzip
 import json
 import os
 from contextlib import contextmanager
@@ -102,7 +103,8 @@ def pgrep(
     Returns:
         matches (str | list)
     """
-    with open(f_name) as fr:
+    opener = gzip.open if ".gz" in str(f_name) else open
+    with opener(f_name, "rt") as fr:
         f_lines = [line.strip() for line in fr.readlines()]
     matches = []
     for i, line in enumerate(f_lines):
@@ -128,7 +130,8 @@ def phead(f_name, n_head=1, as_string=False):
     Returns:
         head (str | list)
     """
-    with open(f_name) as fr:
+    opener = gzip.open if ".gz" in str(f_name) else open
+    with opener(f_name, "rt") as fr:
         head = [line.strip() for line in fr.readlines()[:n_head]]
     if as_string:
         head = "\n".join([line for line in head])
@@ -146,7 +149,8 @@ def ptail(f_name, n_tail=1, as_string=False):
     Returns:
         tail (str | list)
     """
-    with open(f_name) as fr:
+    opener = gzip.open if ".gz" in str(f_name) else open
+    with opener(f_name, "rt") as fr:
         tail = [line.strip() for line in fr.readlines()[-n_tail:]]
     if as_string:
         tail = "\n".join([line for line in tail])
