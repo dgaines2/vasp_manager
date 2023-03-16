@@ -7,7 +7,7 @@ import sys
 from vasp_manager import VaspManager
 from vasp_manager.utils import change_directory
 
-sys.path.append("..")
+sys.path.append("../..")
 from run_vasp_calculations import make_calculations_folder
 
 

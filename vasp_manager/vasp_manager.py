@@ -315,7 +315,7 @@ class VaspManager:
                 calc_is_done = self._check_calc_by_result(
                     material_name, calc_manager.mode
                 )
-                if calc_is_done:
+                if calc_is_done and not calc_manager.from_scratch:
                     logger.info(
                         f"{material_name} -- {calc_manager.mode.upper()} Successful"
                     )

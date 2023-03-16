@@ -46,6 +46,7 @@ class BaseCalculationManager(ABC):
             calc_path=self.calc_path, ignore_personal_errors=ignore_personal_errors
         )
 
+        self.from_scratch = from_scratch
         if from_scratch:
             self._from_scratch()
 
