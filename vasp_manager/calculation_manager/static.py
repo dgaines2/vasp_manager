@@ -64,6 +64,12 @@ class StaticCalculationManager(BaseCalculationManager):
             name=self.material_name,
         )
 
+    def _check_use_spin(self):
+        rlx_stdout = os.path.join(self.material_path, "rlx", "stdout.txt")
+        rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
+        use_spin = len(rlx_mags) != 0
+        return use_spin
+
     def setup_calc(self, increase_nodes_by_factor=1):
         """
         Runs a static SCF calculation through VASP
@@ -71,6 +77,7 @@ class StaticCalculationManager(BaseCalculationManager):
         By default, requires previous relaxation run
         """
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
+        self.vasp_input_creator.use_spin = self._check_use_spin()
         self.vasp_input_creator.create()
 
         if self.to_submit:
@@ -131,8 +138,10 @@ class StaticCalculationManager(BaseCalculationManager):
         self._results = {}
         final_energy = float(grep_output[0].split()[2])
         num_atoms = len(self.vasp_input_creator.source_structure)
+        magmom_per_atom = self._parse_magmom_per_atom()
         self._results["final_energy"] = final_energy
         self._results["final_energy_pa"] = final_energy / num_atoms
+        self._results["magmom_pa"] = magmom_per_atom
         logger.info(f"{self.mode.upper()} Calculation: SCF converged")
         logger.debug(tail_output)
         return True

@@ -9,6 +9,7 @@ from functools import cached_property
 import numpy as np
 
 from vasp_manager.job_manager import JobManager
+from vasp_manager.utils import get_pmg_structure_from_poscar, pgrep
 
 
 class BaseCalculationManager(ABC):
@@ -74,6 +75,10 @@ class BaseCalculationManager(ABC):
         return os.path.basename(self.material_path)
 
     @abstractmethod
+    def poscar_source_path(self):
+        pass
+
+    @abstractmethod
     def setup_calc(self):
         pass
 
@@ -109,6 +114,25 @@ class BaseCalculationManager(ABC):
     def _from_scratch(self):
         self._cancel_previous_job()
         shutil.rmtree(self.calc_path)
+
+    def _parse_magmom(self):
+        stdout_path = os.path.join(self.calc_path, "stdout.txt")
+        scf_lines = pgrep(stdout_path, "mag=")
+        # if "mag=" not found in stdout, set magmom=None
+        if len(scf_lines) == 0:
+            magmom = None
+        else:
+            total_mag = scf_lines[-1].split()[-1]
+            magmom = float(total_mag)
+        return magmom
+
+    def _parse_magmom_per_atom(self):
+        total_magmom = self._parse_magmom()
+        if total_magmom is None:
+            return None
+        structure = get_pmg_structure_from_poscar(self.poscar_source_path)
+        magmom_per_atom = total_magmom / len(structure)
+        return magmom_per_atom
 
     def _check_vasp_errors(self, stdout_path=None, stderr_path=None):
         """

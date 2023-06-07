@@ -35,15 +35,20 @@ class VaspInputCreator:
         increase_walltime_by_factor=1,
         poscar_significant_figures=8,
         ncore_per_node_for_memory=0,
+        use_spin=True,
     ):
         """
         Args:
             calc_path
             mode
             poscar_source_path
+            primitive
             name
             increase_nodes_by_factor
+            increase_walltime_by_factor
             poscar_significant_figures
+            ncore_per_node_for_memory
+            use_spin -- pass False to supress spin polarization
         """
         self.calc_path = calc_path
         self.poscar_source_path = poscar_source_path
@@ -54,6 +59,7 @@ class VaspInputCreator:
         self.mode = self._get_mode(mode)
         self.poscar_significant_figures = poscar_significant_figures
         self.ncore_per_node_for_memory = ncore_per_node_for_memory
+        self.use_spin = use_spin
 
     def _get_mode(self, mode):
         # rlx-coarse, rlx, bulkmod, stc, or elastic
@@ -62,23 +68,6 @@ class VaspInputCreator:
         if "bulkmod" in mode:
             mode = "bulkmod"
         return mode
-
-    def _get_lmaxmix(self, composition_dict):
-        d_f_block = json.loads(
-            pkgutil.get_data(
-                "vasp_manager", os.path.join("static_files", "d_f_block.json")
-            ).decode("utf-8")
-        )
-        d_block_elements = d_f_block["d_block"]
-        f_block_elements = d_f_block["f_block"]
-        lmaxmix = 2
-        for element in composition_dict:
-            if element in d_block_elements:
-                lmaxmix = 4
-        for element in composition_dict:
-            if element in f_block_elements:
-                lmaxmix = 6
-        return lmaxmix
 
     @cached_property
     def calc_config_dict(self):
@@ -163,6 +152,29 @@ class VaspInputCreator:
             poscar_path, significant_figures=self.poscar_significant_figures
         )
 
+    def make_potcar(self):
+        """
+        Create and write a POTCAR
+        """
+        potcar_path = os.path.join(self.calc_path, "POTCAR")
+        potcar_dir = self.computing_config_dict[self.computer]["potcar_dir"]
+
+        el_names = [el.name for el in self.source_structure.composition]
+        logger.debug(f"{self.source_structure.composition.reduced_formula}, {el_names}")
+        pot_singles = [
+            os.path.join(potcar_dir, self.potcar_dict[el_name], "POTCAR")
+            for el_name in el_names
+        ]
+        for pot_single in pot_singles:
+            if not os.path.exists(pot_single):
+                msg = "Unable to create POTCAR"
+                msg += f"\n\t POTCAR not found at path {pot_single}"
+                raise Exception(msg)
+
+        potcar = pcat(pot_singles)
+        with open(potcar_path, "w+") as fw:
+            fw.write(potcar)
+
     @property
     def n_nodes(self):
         # start with 1 node per 32 atoms
@@ -190,28 +202,49 @@ class VaspInputCreator:
                 self.ncore_per_node_for_memory += 8
         return self.n_nodes * (ncore_per_node - self.ncore_per_node_for_memory)
 
-    def make_potcar(self):
-        """
-        Create and write a POTCAR
-        """
-        potcar_path = os.path.join(self.calc_path, "POTCAR")
-        potcar_dir = self.computing_config_dict[self.computer]["potcar_dir"]
+    @cached_property
+    def d_f_block(self):
+        d_f_block = json.loads(
+            pkgutil.get_data(
+                "vasp_manager", os.path.join("static_files", "d_f_block.json")
+            ).decode("utf-8")
+        )
+        return d_f_block
 
-        el_names = [el.name for el in self.source_structure.composition]
-        logger.debug(f"{self.source_structure.composition.reduced_formula}, {el_names}")
-        pot_singles = [
-            os.path.join(potcar_dir, self.potcar_dict[el_name], "POTCAR")
-            for el_name in el_names
-        ]
-        for pot_single in pot_singles:
-            if not os.path.exists(pot_single):
-                msg = "Unable to create POTCAR"
-                msg += f"\n\t POTCAR not found at path {pot_single}"
-                raise Exception(msg)
+    def _check_needs_spin_polarization(self, composition_dict):
+        needs_spin_polarization = False
+        for el_name in composition_dict:
+            if (
+                el_name in self.d_f_block["d_block"]
+                or el_name in self.d_f_block["f_block"]
+            ):
+                needs_spin_polarization = True
+        return needs_spin_polarization
 
-        potcar = pcat(pot_singles)
-        with open(potcar_path, "w+") as fw:
-            fw.write(potcar)
+    def _get_auto_magmom(self, composition_dict):
+        magmom_string = "MAGMOM ="
+        for el_name in composition_dict:
+            if el_name in self.d_f_block["d_block"]:
+                init_mag = "5.0"
+            elif el_name in self.d_f_block["f_block"]:
+                init_mag = "7.0"
+            else:
+                init_mag = "0.0"
+            magmom_atom = str(int(composition_dict[el_name])) + "*" + init_mag
+            magmom_string += f" {magmom_atom}"
+        return magmom_string
+
+    def _get_lmaxmix(self, composition_dict):
+        d_block_elements = self.d_f_block["d_block"]
+        f_block_elements = self.d_f_block["f_block"]
+        lmaxmix = 2
+        for element in composition_dict:
+            if element in d_block_elements:
+                lmaxmix = 4
+        for element in composition_dict:
+            if element in f_block_elements:
+                lmaxmix = 6
+        return lmaxmix
 
     def make_incar(self):
         """
@@ -225,8 +258,8 @@ class VaspInputCreator:
         ncore = self.computing_config_dict[self.computer]["ncore"]
         calc_config = self.calc_config_dict[self.mode]
 
-        if calc_config["ispin"] != 1:
-            raise NotImplementedError("ISPIN = 2 not yet supported")
+        if calc_config["ispin"] not in [1, "auto"]:
+            raise RuntimeError("ISPIN must be set to 1 or auto")
 
         if calc_config["iopt"] != 0 and calc_config["potim"] != 0:
             raise RuntimeError("To use IOPT != 0, POTIM must be set to 0")
@@ -245,15 +278,34 @@ class VaspInputCreator:
         # make n_bands divisible by NCORE (VASP INCAR tag)
         calc_config["ncore"] = ncore
         calc_config["nbands"] = int(np.ceil(0.75 * n_electrons / ncore) * ncore)
+
+        needs_spin_polarization = self._check_needs_spin_polarization(composition_dict)
+        use_spin_polarization = (
+            needs_spin_polarization and calc_config["ispin"] == "auto" and self.use_spin
+        )
+        if use_spin_polarization:
+            ispin = 2
+            magmom_line = self._get_auto_magmom(composition_dict)
+        else:
+            ispin = 1
         lmaxmix = self._get_lmaxmix(composition_dict)
 
         # Add lines to the vaspq file
         incar_tmp = self.incar_template.split("\n")
         for i, line in enumerate(incar_tmp):
-            # add extra flags for elastic mode
+            # add extra flags for spin polarization
+            if "ISPIN" in line:
+                incar_tmp[i] = f"ISPIN = {ispin}"
+                if use_spin_polarization:
+                    incar_tmp.insert(i + 1, magmom_line)
+            if "LVTOT" in line and use_spin_polarization:
+                lorbit_line = "LORBIT = 11"
+                incar_tmp.insert(i + 1, lorbit_line)
+            # add extra flags for DFT+U
             if "LASPH" in line:
                 lmaxmix_line = f"LMAXMIX = {lmaxmix}"
                 incar_tmp.insert(i + 1, lmaxmix_line)
+            # add extra flags for elastic mode
             if self.mode == "elastic":
                 if "KSPACING" in line:
                     nfree_line = "NFREE = {nfree}"

@@ -31,6 +31,7 @@ class RlxCalculationManager(BaseCalculationManager):
         from_scratch=False,
         tail=5,
         max_reruns=3,
+        magmom_per_atom_cutoff=0.0,
     ):
         """
         For material_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
@@ -43,6 +44,7 @@ class RlxCalculationManager(BaseCalculationManager):
         self.from_coarse_relax = from_coarse_relax
         self.tail = tail
         self.max_reruns = max_reruns
+        self.magmom_per_atom_cutoff = magmom_per_atom_cutoff
         super().__init__(
             material_path=material_path,
             to_rerun=to_rerun,
@@ -76,11 +78,12 @@ class RlxCalculationManager(BaseCalculationManager):
             name=self.material_name,
         )
 
-    def setup_calc(self, increase_nodes_by_factor=1, make_archive=False):
+    def setup_calc(self, increase_nodes_by_factor=1, make_archive=False, use_spin=True):
         """
         Sets up a fine relaxation
         """
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
+        self.vasp_input_creator.use_spin = use_spin
 
         if make_archive:
             self.vasp_input_creator.make_archive_and_repopulate()
@@ -130,6 +133,12 @@ class RlxCalculationManager(BaseCalculationManager):
                 self.setup_calc(make_archive=True)
             return False
 
+        previous_magmom_per_atom = self._parse_magmom_per_atom()
+        if previous_magmom_per_atom is None:
+            use_spin = False
+        else:
+            use_spin = np.abs(previous_magmom_per_atom) >= self.magmom_per_atom_cutoff
+
         tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
         grep_output = pgrep(
             stdout_path, "reached required accuracy", stop_after_first_match=True
@@ -149,7 +158,16 @@ class RlxCalculationManager(BaseCalculationManager):
             if self.to_rerun:
                 logger.info(f"Rerunning {self.calc_path}")
                 # increase nodes as its likely the calculation failed
-                self.setup_calc(increase_nodes_by_factor=2, make_archive=True)
+                self.setup_calc(
+                    increase_nodes_by_factor=2, make_archive=True, use_spin=use_spin
+                )
+            return False
+
+        # in the case that the calculation finishes but results in a spin value lower
+        # than the cutoff, rerun it without spin
+        if not use_spin and previous_magmom_per_atom is not None and self.to_rerun:
+            logger.info(f"Rerunning {self.calc_path}")
+            self.setup_calc(make_archive=True, use_spin=False)
             return False
 
         logger.info(f"{self.mode.upper()} Calculation: reached required accuracy")
@@ -197,8 +215,13 @@ class RlxCalculationManager(BaseCalculationManager):
         if np.abs(volume_diff) >= 0.05:
             logger.warning(f"  NEED TO RE-RELAX: dV = {volume_diff:.4f}")
             volume_converged = False
+            previous_magmom_per_atom = self._parse_magmom_per_atom()
+            if previous_magmom_per_atom is None:
+                use_spin = False
+            else:
+                use_spin = np.abs(previous_magmom_per_atom) >= self.magmom_per_atom_cutoff
             if self.to_rerun:
-                self.setup_calc(make_archive=True)
+                self.setup_calc(make_archive=True, use_spin=use_spin)
         else:
             logger.info("  RLX volume converged")
             logger.debug(f"  dV = {volume_diff:.4f}")

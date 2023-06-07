@@ -41,6 +41,7 @@ class VaspManager:
         ncore=None,
         calculation_manager_kwargs={},
         max_reruns=3,
+        magmom_per_atom_cutoff=0.0,
     ):
         """
         Args:
@@ -57,10 +58,13 @@ class VaspManager:
             ncore (int): if ncore, use {ncore} for multiprocessing
                 if None, defaults to minimum(number of materials, 4)
             calculation_manager_kwargs (dict): contains subdictionaries for each
-                calculation type. Eeach subdictorary can be filled with extra kwargs
+                calculation type. Each subdictorary can be filled with extra kwargs
                 to pass to its associated CalculationManager during instantiation
             max_reruns (int): the maximum number of times a rlx-coarse or rlx
                 calculation can run before refusing to continue
+            magmom_per_atom_cutoff (float): calculations that result in
+                magmom_per_atom less than this parameter will be automatically
+                rerun without spin-polarization
         """
         self.calculation_types = calculation_types
         self.material_paths = material_paths
@@ -72,6 +76,7 @@ class VaspManager:
         self.ncore = ncore
         self.calculation_manager_kwargs = calculation_manager_kwargs
         self.max_reruns = max_reruns
+        self.magmom_per_atom_cutoff = magmom_per_atom_cutoff
 
         self.calculation_managers = self._get_all_calculation_managers()
         self.results_path = os.path.join(self.base_path, "results.json")
@@ -235,6 +240,7 @@ class VaspManager:
                         from_coarse_relax=from_coarse_relax,
                         tail=self.tail,
                         max_reruns=self.max_reruns,
+                        magmom_per_atom_cutoff=self.magmom_per_atom_cutoff,
                         **self.calculation_manager_kwargs[calc_type],
                     )
                 case "static":
@@ -250,11 +256,8 @@ class VaspManager:
                         **self.calculation_manager_kwargs[calc_type],
                     )
                 case "bulkmod" | "bulkmod_standalone":
-                    if calc_type == "bulkmod":
-                        if "rlx" in self.calculation_types:
-                            from_relax = True
-                        else:
-                            from_relax = False
+                    if calc_type == "bulkmod" and "rlx" in self.calculation_types:
+                        from_relax = True
                     else:
                         from_relax = False
                         if len(self.calculation_types) > 1:

@@ -69,6 +69,12 @@ class ElasticCalculationManager(BaseCalculationManager):
             name=self.material_name,
         )
 
+    def _check_use_spin(self):
+        rlx_stdout = os.path.join(self.material_path, "rlx", "stdout.txt")
+        rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
+        use_spin = len(rlx_mags) != 0
+        return use_spin
+
     def setup_calc(self, increase_nodes_by_factor=2, increase_walltime_by_factor=1):
         """
         Runs elastic constants routine through VASP
@@ -78,6 +84,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         """
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
         self.vasp_input_creator.increase_walltime_by_factor = increase_walltime_by_factor
+        self.vasp_input_creator.use_spin = self._check_use_spin()
         self.vasp_input_creator.create()
 
         if self.to_submit:

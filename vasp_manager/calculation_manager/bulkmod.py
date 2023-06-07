@@ -100,6 +100,12 @@ class BulkmodCalculationManager(BaseCalculationManager):
             raise ValueError(f"Strains not centered around 1.0: middle is {middle}")
         self._strains = values
 
+    def _check_use_spin(self):
+        rlx_stdout = os.path.join(self.material_path, "rlx", "stdout.txt")
+        rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
+        use_spin = len(rlx_mags) != 0
+        return use_spin
+
     def setup_calc(self, increase_nodes_by_factor=1):
         """
         Sets up an EOS bulkmod calculation
@@ -110,8 +116,12 @@ class BulkmodCalculationManager(BaseCalculationManager):
                 "\n\t starting structure must be fairly close to equilibrium volume!"
             )
             logger.warning(msg)
+            use_spin = True
+        else:
+            use_spin = self._check_use_spin()
 
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
+        self.vasp_input_creator.use_spin = use_spin
         self.vasp_input_creator.create()
         self._make_bulkmod_strains()
 
