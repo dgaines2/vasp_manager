@@ -110,6 +110,7 @@ class BaseCalculationManager(ABC):
                 jobid = fr.read().strip()
             cancel_job_call = f"scancel {jobid}"
             os.system(cancel_job_call)
+            os.remove(jobid_path)
 
     def _from_scratch(self):
         self._cancel_previous_job()
