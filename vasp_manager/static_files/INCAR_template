@@ -25,6 +25,8 @@ EDIFF = {ediff}
 ALGO = {algo}
 LASPH = .TRUE.
 
+#= DFT+U =#
+
 #= Write flags =#
 LCHARG = .FALSE.
 LWAVE = .FALSE.
