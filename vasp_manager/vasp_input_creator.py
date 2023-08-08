@@ -241,6 +241,9 @@ class VaspInputCreator:
         return hubbards
 
     def _check_needs_dftu(self, hubbards_type, composition_dict):
+        if not hubbards_type:
+            return False
+
         needs_dftu = False
         for el_name in composition_dict:
             if el_name in self.hubbards[hubbards_type]:
@@ -300,6 +303,8 @@ class VaspInputCreator:
 
         if calc_config["hubbards"] not in [None, False, "wang"]:
             raise RuntimeError("hubbards must be set to None, False, or 'wang'")
+        if calc_config["hubbards"] == "wang" and calc_config["gga"] != "PE":
+            raise RuntimeError("DFT+U is only support for PBE")
 
         if calc_config["iopt"] != 0 and calc_config["potim"] != 0:
             raise RuntimeError("To use IOPT != 0, POTIM must be set to 0")
