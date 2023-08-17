@@ -1,6 +1,7 @@
 #!/bin/bash
 
-for calc_dir in */; do
+calc_dirs=$(find * -type d -maxdepth 0)
+for calc_dir in $calc_dirs; do
     echo $calc_dir
-    tar -cvf - $calc_dir | zstd --rm -z > "${calc_dir%/}.tar.zst"
+    tar -czvf $calc_dir.tar.gz $calc_dir && rm -r $calc_dir
 done
