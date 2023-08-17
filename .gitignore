@@ -1,5 +1,6 @@
 **/.pyc
 **/__pycache__/
+dist/
 calculations_test/
 vasp_manager.egg-info
 .vscode/*

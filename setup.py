@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="vasp_manager",
-    version="0.1.0",
+    version="1.0.0",
     description="A simple package to run and analyze VASP calculations",
     packages=["vasp_manager"],
     url="https://github.com/dgaines2/vasp_manager",
