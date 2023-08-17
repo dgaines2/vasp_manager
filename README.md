@@ -19,6 +19,10 @@ calculations
 3. Run `pip install -e .` or optionally `pip install -e .[dev]` to include
 packages needed for development/contribution
 
+This package is also available on
+[PyPi](https://pypi.org/project/vasp-manager/#description). To install, run
+`pip install vasp-manager`.
+
 ## User Guide
 
 This package serves to automate `VASP` calculations. `VASP` input creation is
