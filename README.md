@@ -1,4 +1,4 @@
-# vasp_manager
+# vasp\_manager
 
 Automatically run `VASP` relaxation, static, bulk moduli, or elastic constant
 calculations
@@ -12,12 +12,14 @@ calculations
 3. Run `pip install -e .` or optionally `pip install -e .[dev]` to include
 packages needed for development/contribution.
 
-## VaspManager
+## User Guide
 
 This package serves to automate `VASP` calculations. `VASP` input creation is
 automatic, and so is job submission, queue monitoring, calculation analysis, and
 storage of the results. Simply rerun the main script and any calculations that
 are ready for the next type of calculation will be created and submitted.
+
+### VaspManager
 
 The main class for handling all calculations is `vasp_manager.VaspManager`,
 which takes in a list of calculation types and material paths. See the class
@@ -80,18 +82,19 @@ modifications could be made for other queue management systems.
 placed in the `calculations/` directory. Each mode has its own configuration
 settings with sensible defaults, but these can be easily customized by the user.
 
+    * To include spin polarization, set `"ispin": "auto"` in
+      `calc_config.json`. With this setting, all elements with valence *d* or
+      *f* electrons will start with initial magnetic moments of 5 and 7
+      $\mu_B$. `VaspManager` also accepts an additional argument
+      `magmom_per_atom_cutoff` which defaults to 0. If this argument is passed,
+      `rlx` calculations that finish with a magmom per atom less than this
+      value with be re-run without spin polarization. This argument only
+      affects `rlx` calculations, and the spin setting for following `static`,
+      `bulkmod`, or `elastic` calculations is inferred from the final `rlx`
+      calculation.
+
 The module logger is also made available for information and debugging and can
 be accessed through `logging.getLogger("vasp_manager")`.
-
-To include spin polarization, set `"ispin": "auto"` in `calc_config.json`. With
-this setting, all elements with valence *d* or *f* electrons will start with
-initial magnetic moments of 5 and 7 $\mu_B$. `VaspManager` also accepts an
-additional argument `magmom_per_atom_cutoff` which defaults to 0. If this
-argument is passed, `rlx` calculations that finish with a magmom per atom less
-than this value with be re-run without spin polarization. This argument only
-affects `rlx` calculations, and the spin setting for following `static`,
-`bulkmod`, or `elastic` calculations is inferred from the final `rlx`
-calculation.
 
 ### Notes
 
