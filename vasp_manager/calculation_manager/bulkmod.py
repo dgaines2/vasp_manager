@@ -101,6 +101,10 @@ class BulkmodCalculationManager(BaseCalculationManager):
         self._strains = values
 
     def _check_use_spin(self):
+        # if not from_relax, use setting from calc_config
+        if not self.from_relax:
+            return True
+        # otherwise, check if relax finished with spin
         rlx_stdout = os.path.join(self.material_path, "rlx", "stdout.txt")
         rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
         use_spin = len(rlx_mags) != 0
