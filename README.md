@@ -81,6 +81,8 @@ settings with sensible defaults, but these can be easily customized by the user.
     with be re-run without spin polarization. This argument only affects `rlx`
     calculations, and the spin setting for following `static`, `bulkmod`, or
     `elastic` calculations is inferred from the final `rlx` calculation.
+    * To include DFT+U for transition metal oxides, set `"hubbards": "wang"`.
+    Currently, only `"gga": "PE"` (PBE) is supported.
 
 The module logger is also made available for information and debugging and can
 be accessed through `logging.getLogger("vasp_manager")`.
@@ -88,14 +90,12 @@ be accessed through `logging.getLogger("vasp_manager")`.
 ### Notes
 
 * *The current implementation has only been tested on Linux and Mac OS.*
-* *At this point, KPOINT generation is handled through the KSPACING
-tag in the INCAR, but future versions will be able to specify KPPRA or a manual
-grid instead. Spin-orbit coupling calculations and DFT+U are also not currently
-supported.*
+* *At this point, KPOINT generation is handled through the KSPACING tag in the
+  INCAR, but future versions will be able to specify KPPRA or a manual grid
+  instead. Spin-orbit coupling calculations are also not currently supported.*
 * *For those using Quest, I recommend using you own pre-compiled version of
-* `VASP`
-rather than the Quest `VASP` module. For those in the Wolverton Group, consider
-using the `quest-hotfix` branch.*
+ `VASP` rather than the Quest `VASP` module. For those in the Wolverton Group,
+  consider using the `quest-hotfix` branch.*
 
 \\\ TODO: Implement `band-structure` calculations and possibly `phonopy`
 calculations
