@@ -5,12 +5,10 @@ calculations
 
 ## How to Install
 
-1. Create a new environment with python version $\geq$ 3.10.
-
+1. Create a new environment with python version $\geq$ 3.10
 2. Clone this repository
-
 3. Run `pip install -e .` or optionally `pip install -e .[dev]` to include
-packages needed for development/contribution.
+packages needed for development/contribution
 
 ## User Guide
 
@@ -27,7 +25,7 @@ documentation for more details. By default, results are exported to
 `calculations/results.json`.
 
 The bulk moduli analysis is carried out in the backend using the open-source
-`pymatgen` software to fit an EOS, and elastic constant analysis using custom
+`pymatgen` software to fit an EOS and elastic constant analysis using custom
 scripts.
 
 ### Calculation Modes
@@ -37,18 +35,13 @@ We include calculation modes `"rlx-coarse"`, `"rlx"`, `"static"`, `"bulkmod"`,
 specified when initializing a `VaspManager` object.
 
 * `rlx-coarse`: lower precision energy-based relaxation
-
 * `rlx`: tighter force-based relaxation
-
 * `static`: high accuracy static SCF calculation
-
 * `bulkmod`: bulk modulus calculation using an Equation of State (EOS) fit to an
-energy-volume curve.
-
-* `bulkmod_standalone`: standalone (no relaxation required) bulk modulus
-calculation using an EOS.  (although this is not recommended unless you are sure
-the cell volume is very close to the equilibrium value).
-
+energy-volume curve
+  * `bulkmod_standalone`: standalone (no relaxation required) bulk modulus
+    calculation using an EOS (although this is not recommended unless you are
+    sure the cell volume is very close to the equilibrium value)
 * `elastic`: Determination of elastic constants using the strain/deformation
 method built into `VASP`
 
@@ -67,48 +60,41 @@ In order to use this package, you MUST
 
 1. Create a calculations folder where you'd like to run your calculations.  Each
 subfolder of `calculations/` should have a unique name and contain a `POSCAR`. A
-sample method of creating the calculations folder from a `pandas.DataFrame` is
-available in `run_vasp_calculations.py`, and an example calculations folder is
-provided in `calculations/`.
-
+sample method of creating the calculations folder from a `json` with names and
+cifs is available in `run_vasp_calculations.py`, and an example calculations
+folder is provided in `calculations/`.
 2. Configure `computing_config.json` and place it in the `calculations/`
 directory.  You will need to specify your `user_id`, a `potcar_directory`, a
-`queuetype`, your `allocation` and a `vasp_module` (VASP 6 recommended). As of
-now, only Perlmutter at NERSC and QUEST at Northwestern University are
-supported. Any other SLURM based supercomputers can be easily added, but
-modifications could be made for other queue management systems.
-
+`queuetype`, your `allocation` and a `vasp_module` (VASP 6 strongly
+recommended). As of now, only Perlmutter at NERSC and QUEST at Northwestern
+University are supported. Any other SLURM based supercomputers can be easily
+added, but modifications could be made for other queue management systems.
 3. If desired, make modifications to `calc_config.json`. This must also be
 placed in the `calculations/` directory. Each mode has its own configuration
 settings with sensible defaults, but these can be easily customized by the user.
-
     * To include spin polarization, set `"ispin": "auto"` in
-      `calc_config.json`. With this setting, all elements with valence *d* or
-      *f* electrons will start with initial magnetic moments of 5 and 7
-      $\mu_B$. `VaspManager` also accepts an additional argument
-      `magmom_per_atom_cutoff` which defaults to 0. If this argument is passed,
-      `rlx` calculations that finish with a magmom per atom less than this
-      value with be re-run without spin polarization. This argument only
-      affects `rlx` calculations, and the spin setting for following `static`,
-      `bulkmod`, or `elastic` calculations is inferred from the final `rlx`
-      calculation.
+    `calc_config.json`. With this setting, all elements with valence *d* or
+    *f* electrons will start with initial magnetic moments of 5 and 7
+    $\mu_B$, respectively. `VaspManager` also accepts an additional argument
+    `magmom_per_atom_cutoff` which defaults to 0. If this argument is passed,
+    `rlx` calculations that finish with a magmom per atom less than this value
+    with be re-run without spin polarization. This argument only affects `rlx`
+    calculations, and the spin setting for following `static`, `bulkmod`, or
+    `elastic` calculations is inferred from the final `rlx` calculation.
 
 The module logger is also made available for information and debugging and can
 be accessed through `logging.getLogger("vasp_manager")`.
 
 ### Notes
 
-* *I strongly recommend using `VASP6` instead of `VASP5`.*
-
 * *The current implementation has only been tested on Linux and Mac OS.*
-
 * *At this point, KPOINT generation is handled through the KSPACING
 tag in the INCAR, but future versions will be able to specify KPPRA or a manual
 grid instead. Spin-orbit coupling calculations and DFT+U are also not currently
 supported.*
-
-* *For those using Quest, I recommend using you own pre-compiled version of `VASP`
-rather than the quest `VASP` module. For those in the Wolverton Group, consider
+* *For those using Quest, I recommend using you own pre-compiled version of
+* `VASP`
+rather than the Quest `VASP` module. For those in the Wolverton Group, consider
 using the `quest-hotfix` branch.*
 
 \\\ TODO: Implement `band-structure` calculations and possibly `phonopy`
