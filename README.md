@@ -84,6 +84,9 @@ settings with sensible defaults, but these can be easily customized by the user.
     * To include DFT+U for transition metal oxides, set `"hubbards": "wang"`.
     Currently, only `"gga": "PE"` (PBE) is supported.
 
+To manually stop `VaspManager` from processing a material, place a `STOP` file
+in that material's directory: e.g. `calculations/AlAs/STOP`.
+
 The module logger is also made available for information and debugging and can
 be accessed through `logging.getLogger("vasp_manager")`.
 
