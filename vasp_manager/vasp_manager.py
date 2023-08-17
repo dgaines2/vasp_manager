@@ -62,6 +62,8 @@ class VaspManager:
                 to pass to its associated CalculationManager during instantiation
             max_reruns (int): the maximum number of times a rlx-coarse or rlx
                 calculation can run before refusing to continue
+                Note: other modes don't make archives, so they are not affected
+                by this
             magmom_per_atom_cutoff (float): calculations that result in
                 magmom_per_atom less than this parameter will be automatically
                 rerun without spin-polarization
@@ -79,6 +81,7 @@ class VaspManager:
         self.magmom_per_atom_cutoff = magmom_per_atom_cutoff
 
         self.calculation_managers = self._get_all_calculation_managers()
+        # self.base_path is set in material_paths.setter
         self.results_path = os.path.join(self.base_path, "results.json")
         self.results = None
 
