@@ -3,8 +3,8 @@
 
 import json
 import logging
-import os
 from functools import cached_property
+from pathlib import Path
 
 import numpy as np
 from pymatgen.core import Structure
@@ -31,7 +31,7 @@ class ElasticAnalyzer:
             rounding_precision (int): precision to round calculated quantities
         """
         self._cij = cij
-        self._calc_path = calc_path
+        self._calc_path = Path(calc_path) if calc_path else calc_path
         self.change_from_vasp = change_from_vasp
         self._rounding_precision = rounding_precision
         self._results = None
@@ -49,14 +49,14 @@ class ElasticAnalyzer:
         # make sure cij wasn't already defined
         # if self._cij is not None:
         #     raise Exception("Could not set calc_path as cij was already specified")
-        if not os.path.exists(value):
+        if not value.exists():
             raise ValueError(f"Could not set calc_path to {value} as it does not exist")
         self._calc_path = value
 
     @property
     def structure(self):
         if self._structure is None:
-            self._structure = Structure.from_file(os.path.join(self.calc_path, "POSCAR"))
+            self._structure = Structure.from_file(self.calc_path / "POSCAR")
         return self._structure
 
     @property
@@ -87,11 +87,15 @@ class ElasticAnalyzer:
 
     @cached_property
     def elastic_file(self):
-        return os.path.join(self.calc_path, "elastic_constants.txt")
+        return self.calc_path / "elastic_constants.txt"
 
     @cached_property
     def outcar_file(self):
-        return os.path.join(self.calc_path, "OUTCAR")
+        # search for OUTCAR or OUTCAR.gz
+        outcar_glob = list(self.calc_path.glob("OUTCAR*"))
+        if len(outcar_glob) == 0:
+            raise Exception(f"No OUTCAR available at {self.calc_path}")
+        return outcar_glob[0]
 
     @property
     def cij(self):
@@ -312,10 +316,6 @@ class ElasticAnalyzer:
         Utility function that scrapes OUTCAR for elastic constants
         Writes to elastic_constants.txt
         """
-        if not os.path.exists(self.outcar_file):
-            raise Exception(
-                f"No OUTCAR available at {self.outcar_file} to make stiffness tensor file"
-            )
         # need to get elastic dir
         elastic_table = pgrep(
             self.outcar_file,

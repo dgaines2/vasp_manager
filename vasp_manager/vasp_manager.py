@@ -1,12 +1,11 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
-import glob
 import json
 import logging
-import os
 from functools import cached_property
 from multiprocessing import Pool
+from pathlib import Path
 
 import numpy as np
 from tqdm import tqdm
@@ -82,7 +81,7 @@ class VaspManager:
 
         self.calculation_managers = self._get_all_calculation_managers()
         # self.base_path is set in material_paths.setter
-        self.results_path = os.path.join(self.base_path, "results.json")
+        self.results_path = self.base_path / "results.json"
         self.results = None
 
     @property
@@ -155,13 +154,12 @@ class VaspManager:
         match values:
             case str():
                 self.base_path = values
-                material_paths = [
-                    d for d in glob.glob(os.path.join(values, "*")) if os.path.isdir(d)
-                ]
+                material_paths = [d for d in Path(values).glob("*") if d.is_dir()]
             case list() | np.array():
-                base_path = os.path.dirname(values[0])
+                values = [Path(p) for p in values]
+                base_path = values[0].parent
                 for mat_path in values:
-                    if not os.path.dirname(mat_path) == base_path:
+                    if not mat_path.parent == base_path:
                         raise Exception(
                             "All material paths must be in the same directory"
                         )
@@ -175,8 +173,7 @@ class VaspManager:
         self._material_paths = sorted(material_paths)
 
     def _get_material_name_from_path(self, material_path):
-        material_name = os.path.basename(material_path)
-        return material_name
+        return material_path.name
 
     @cached_property
     def material_names(self):
@@ -189,7 +186,7 @@ class VaspManager:
     @results.setter
     def results(self, value):
         if value is None:
-            if os.path.exists(self.results_path):
+            if self.results_path.exists():
                 with open(self.results_path, "r") as fr:
                     self._results = json.load(fr)
                 for mat_name in self.material_names:
@@ -394,7 +391,7 @@ class VaspManager:
                 if as_string, return string summary
                 else, return dict summary
         """
-        if not os.path.exists(self.results_path):
+        if not self.results_path.exists():
             raise ValueError(f"Can't find results in {self.results_path}")
         with open(self.results_path) as fr:
             results = json.load(fr)

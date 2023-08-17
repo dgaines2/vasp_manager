@@ -1,7 +1,6 @@
-import glob
 import json
 import logging
-import os
+from pathlib import Path
 
 from pymatgen.core import Structure
 from pymatgen.io.vasp import Poscar
@@ -15,11 +14,12 @@ def make_calculations_folder(data_path="structures.json", calcs_path="calculatio
     Make a calculations folder
         For each material, make a named folder that contains a POSCAR
     Args:
-        data_path (str): path to a json with named materials and cifs
-        calcs_path (str): path of base calculations folder to create
+        data_path (str | Path): path to a json with named materials and cifs
+        calcs_path (str | Path): path of base calculations folder to create
     """
-    if not os.path.exists(calcs_path):
-        os.mkdir(calcs_path)
+    calcs_path = Path(calcs_path)
+    if not calcs_path.exists():
+        calcs_path.mkdir()
 
     # This was my data file, but of course you can specify your own here
     with open(data_path) as fr:
@@ -27,14 +27,14 @@ def make_calculations_folder(data_path="structures.json", calcs_path="calculatio
 
     for material, cif_string in structure_dict.items():
         print(material)
-        material_path = os.path.join(calcs_path, material)
-        if not os.path.exists(material_path):
-            os.mkdir(material_path)
+        material_path = calcs_path / material
+        if not material_path.exists():
+            material_path.mkdir()
         structure = Structure.from_str(cif_string, fmt="cif")
         sga = SpacegroupAnalyzer(structure)
         prim_structure = sga.get_primitive_standard_structure()
         poscar = Poscar(prim_structure)
-        poscar_path = os.path.join(material_path, "POSCAR")
+        poscar_path = material_path / "POSCAR"
         poscar.write_file(poscar_path)
 
 
@@ -45,8 +45,8 @@ if __name__ == "__main__":
         logging.basicConfig()
         logging.getLogger("vasp_manager").setLevel(logging_level)
 
-    calculation_folder = "calculations"
-    if not os.path.exists(calculation_folder):
+    calculation_folder = Path("calculations")
+    if not calculation_folder.exists():
         make_calculations_folder(calcs_path=calculation_folder)
     calculation_types = [
         "rlx-coarse",
@@ -55,11 +55,13 @@ if __name__ == "__main__":
         "bulkmod",
         "elastic",
     ]
-    calc_paths = os.path.join(calculation_folder, "*")
-    material_paths = [p for p in sorted(glob.glob(calc_paths)) if os.path.isdir(p)]
+    material_paths = [p for p in sorted(calculation_folder.glob("*")) if p.is_dir()]
 
     vmg = VaspManager(
-        calculation_types, material_paths=material_paths, to_rerun=True, to_submit=True
+        calculation_types,
+        material_paths=material_paths,
+        to_rerun=True,
+        to_submit=True,
     )
     results = vmg.run_calculations()
     print(vmg.summary())

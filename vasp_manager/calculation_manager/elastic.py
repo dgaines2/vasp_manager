@@ -2,7 +2,6 @@
 # Distributed under the terms of the MIT LICENSE
 
 import logging
-import os
 from functools import cached_property
 
 from vasp_manager.analyzer import ElasticAnalyzer
@@ -56,8 +55,7 @@ class ElasticCalculationManager(BaseCalculationManager):
 
     @cached_property
     def poscar_source_path(self):
-        poscar_source_path = os.path.join(self.material_path, "rlx", "CONTCAR")
-        return poscar_source_path
+        return self.material_path / "rlx" / "CONTCAR"
 
     @cached_property
     def vasp_input_creator(self):
@@ -70,7 +68,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         )
 
     def _check_use_spin(self):
-        rlx_stdout = os.path.join(self.material_path, "rlx", "stdout.txt")
+        rlx_stdout = self.material_path / "rlx" / "stdout.txt"
         rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
         use_spin = len(rlx_mags) != 0
         return use_spin
@@ -105,8 +103,8 @@ class ElasticCalculationManager(BaseCalculationManager):
             logger.info(f"{self.mode.upper()} job not finished")
             return False
 
-        stdout_path = os.path.join(self.calc_path, "stdout.txt")
-        if not os.path.exists(stdout_path):
+        stdout_path = self.calc_path / "stdout.txt"
+        if not stdout_path.exists():
             # shouldn't get here unless function was called with submit=False
             logger.info(f"{self.mode.upper()} Calculation: No stdout.txt available")
             if self.to_rerun:
