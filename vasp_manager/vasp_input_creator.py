@@ -231,6 +231,49 @@ class VaspInputCreator:
             magmom_string += f" {magmom_atom}"
         return magmom_string
 
+    @cached_property
+    def hubbards(self):
+        hubbards = json.loads(
+            pkgutil.get_data(
+                "vasp_manager", os.path.join("static_files", "hubbards.json")
+            ).decode("utf-8")
+        )
+        return hubbards
+
+    def _check_needs_dftu(self, hubbards_type, composition_dict):
+        if not hubbards_type:
+            return False
+
+        needs_dftu = False
+        for el_name in composition_dict:
+            if el_name in self.hubbards[hubbards_type]:
+                needs_dftu = True
+        return needs_dftu
+
+    def _get_ldau_string(self, hubbards_type, composition_dict):
+        u_string = "LDAUU ="
+        j_string = "LDAUJ ="
+        l_string = "LDAUL ="
+        hubbards = self.hubbards[hubbards_type]
+
+        for el_name in composition_dict:
+            if el_name in hubbards:
+                u_val = hubbards[el_name]["U"]
+                l_val = hubbards[el_name]["L"]
+            else:
+                u_val = 0.0
+                l_val = -1
+            u_string += f" {float(u_val)}"
+            j_string += " 0.0"
+            l_string += f" {l_val}"
+
+        ldau_string = "LDAU = .TRUE.\n"
+        ldau_string += "LDAUPRINT = 1\n"
+        ldau_string += f"{u_string}\n"
+        ldau_string += f"{j_string}\n"
+        ldau_string += f"{l_string}"
+        return ldau_string
+
     def _get_lmaxmix(self, composition_dict):
         d_block_elements = self.d_f_block["d_block"]
         f_block_elements = self.d_f_block["f_block"]
@@ -257,6 +300,11 @@ class VaspInputCreator:
 
         if calc_config["ispin"] not in [1, "auto"]:
             raise RuntimeError("ISPIN must be set to 1 or auto")
+
+        if calc_config["hubbards"] not in [None, False, "wang"]:
+            raise RuntimeError("hubbards must be set to None, False, or 'wang'")
+        if calc_config["hubbards"] == "wang" and calc_config["gga"] != "PE":
+            raise RuntimeError("DFT+U is only support for PBE")
 
         if calc_config["iopt"] != 0 and calc_config["potim"] != 0:
             raise RuntimeError("To use IOPT != 0, POTIM must be set to 0")
@@ -285,7 +333,13 @@ class VaspInputCreator:
             magmom_line = self._get_auto_magmom(composition_dict)
         else:
             ispin = 1
-        lmaxmix = self._get_lmaxmix(composition_dict)
+
+        needs_dftu = self._check_needs_dftu(calc_config["hubbards"], composition_dict)
+        use_dftu = needs_dftu and calc_config["hubbards"]
+        if use_dftu:
+            lmaxmix = self._get_lmaxmix(composition_dict)
+            lmaxmix_line = f"LMAXMIX = {lmaxmix}"
+            ldau_string = self._get_ldau_string(calc_config["hubbards"], composition_dict)
 
         # Add lines to the vaspq file
         incar_tmp = self.incar_template.split("\n")
@@ -299,9 +353,9 @@ class VaspInputCreator:
                 lorbit_line = "LORBIT = 11"
                 incar_tmp.insert(i + 1, lorbit_line)
             # add extra flags for DFT+U
-            if "LASPH" in line:
-                lmaxmix_line = f"LMAXMIX = {lmaxmix}"
+            if "DFT+U" in line and use_dftu:
                 incar_tmp.insert(i + 1, lmaxmix_line)
+                incar_tmp.insert(i + 1, ldau_string)
             # add extra flags for elastic mode
             if self.mode == "elastic":
                 if "KSPACING" in line:

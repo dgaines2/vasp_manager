@@ -2,6 +2,7 @@
   "rlx-coarse": {
     "prec": "ACC",
     "ispin": 1,
+    "hubbards": null,
     "kspacing": 0.2,
     "symprec": 1e-08,
     "nsw": 60,
@@ -24,6 +25,7 @@
   "rlx": {
     "prec": "ACC",
     "ispin": 1,
+    "hubbards": null,
     "kspacing": 0.15,
     "symprec": 1e-08,
     "nsw": 60,
@@ -46,6 +48,7 @@
   "static": {
     "prec": "ACC",
     "ispin": 1,
+    "hubbards": null,
     "kspacing": 0.15,
     "symprec": 1e-08,
     "nsw": 0,
@@ -68,6 +71,7 @@
   "bulkmod": {
     "prec": "ACC",
     "ispin": 1,
+    "hubbards": null,
     "kspacing": 0.15,
     "symprec": 1e-08,
     "nsw": 0,
@@ -90,6 +94,7 @@
   "elastic": {
     "prec": "ACC",
     "ispin": 1,
+    "hubbards": null,
     "kspacing": 0.15,
     "nfree": 4,
     "symprec": "1e-06",
