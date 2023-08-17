@@ -5,6 +5,7 @@ import os
 import shutil
 from abc import ABC, abstractmethod
 from functools import cached_property
+from pathlib import Path
 
 import numpy as np
 
@@ -39,7 +40,7 @@ class BaseCalculationManager(ABC):
                 restart
                 note: DANGEROUS
         """
-        self.material_path = material_path
+        self.material_path = Path(material_path)
         self.to_rerun = to_rerun
         self.to_submit = to_submit
         self.primitive = primitive
@@ -68,11 +69,11 @@ class BaseCalculationManager(ABC):
 
     @cached_property
     def calc_path(self):
-        return os.path.join(self.material_path, self.mode)
+        return self.material_path / self.mode
 
     @cached_property
     def material_name(self):
-        return os.path.basename(self.material_path)
+        return self.material_path.name
 
     @abstractmethod
     def poscar_source_path(self):
@@ -96,16 +97,14 @@ class BaseCalculationManager(ABC):
 
     @property
     def stopped(self):
-        stopped_path = os.path.join(self.material_path, "STOP")
-        stopped = os.path.exists(stopped_path)
-        return stopped
+        return (self.material_path / "STOP").exists()
 
     def submit_job(self):
         return self.job_manager.submit_job()
 
     def _cancel_previous_job(self):
-        jobid_path = os.path.join(self.calc_path, "jobid")
-        if os.path.exists(jobid_path):
+        jobid_path = self.calc_path / "jobid"
+        if jobid_path.exists():
             with open(jobid_path) as fr:
                 jobid = fr.read().strip()
             cancel_job_call = f"scancel {jobid}"
@@ -117,13 +116,13 @@ class BaseCalculationManager(ABC):
         shutil.rmtree(self.calc_path)
 
     def _parse_magmom(self):
-        stdout_path = os.path.join(self.calc_path, "stdout.txt")
-        scf_lines = pgrep(stdout_path, "mag=")
+        stdout_path = self.calc_path / "stdout.txt"
+        mag_lines = pgrep(stdout_path, "mag=")
         # if "mag=" not found in stdout, set magmom=None
-        if len(scf_lines) == 0:
+        if len(mag_lines) == 0:
             magmom = None
         else:
-            total_mag = scf_lines[-1].split()[-1]
+            total_mag = mag_lines[-1].split()[-1]
             magmom = float(total_mag)
         return magmom
 
@@ -140,9 +139,9 @@ class BaseCalculationManager(ABC):
         Find VASP errors in stdout and stderr
         """
         if stdout_path is None:
-            stdout_path = os.path.join(self.calc_path, "stdout.txt")
+            stdout_path = self.calc_path / "stdout.txt"
         if stderr_path is None:
-            stderr_path = os.path.join(self.calc_path, "stderr.txt")
+            stderr_path = self.calc_path / "stderr.txt"
         errors = set()
 
         with open(stdout_path) as fr:

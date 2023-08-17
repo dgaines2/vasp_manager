@@ -1,9 +1,7 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
-import glob
 import logging
-import os
 from functools import cached_property
 
 import numpy as np
@@ -63,9 +61,9 @@ class RlxCalculationManager(BaseCalculationManager):
     @cached_property
     def poscar_source_path(self):
         if self.from_coarse_relax:
-            poscar_source_path = os.path.join(self.material_path, "rlx-coarse", "CONTCAR")
+            poscar_source_path = self.material_path / "rlx-coarse" / "CONTCAR"
         else:
-            poscar_source_path = os.path.join(self.material_path, "POSCAR")
+            poscar_source_path = self.material_path / "POSCAR"
         return poscar_source_path
 
     @cached_property
@@ -106,8 +104,8 @@ class RlxCalculationManager(BaseCalculationManager):
             logger.info(f"{self.mode.upper()} not finished")
             return False
 
-        stdout_path = os.path.join(self.calc_path, "stdout.txt")
-        if not os.path.exists(stdout_path):
+        stdout_path = self.calc_path / "stdout.txt"
+        if not stdout_path.exists():
             # calculation never actually ran
             # shouldn't get here unless function was called with submit=False
             # or job was manually cancelled
@@ -144,7 +142,7 @@ class RlxCalculationManager(BaseCalculationManager):
             stdout_path, "reached required accuracy", stop_after_first_match=True
         )
         if len(grep_output) == 0:
-            archive_dirs = glob.glob(os.path.join(self.calc_path, "archive*"))
+            archive_dirs = list(self.calc_path.glob("archive*"))
             if len(archive_dirs) >= self.max_reruns - 1:
                 msg = (
                     "Many archives exist, calculations may not be converging\n"
@@ -184,9 +182,9 @@ class RlxCalculationManager(BaseCalculationManager):
         Returns:
             volume_converged (bool): if True, relaxation completed successfully
         """
-        original_poscar_path = os.path.join(self.material_path, "POSCAR")
-        poscar_path = os.path.join(self.calc_path, "POSCAR")
-        contcar_path = os.path.join(self.calc_path, "CONTCAR")
+        original_poscar_path = self.material_path / "POSCAR"
+        poscar_path = self.calc_path / "POSCAR"
+        contcar_path = self.calc_path / "CONTCAR"
         try:
             orig_structure, orig_spacegroup = get_pmg_structure_from_poscar(
                 original_poscar_path, return_sg=True

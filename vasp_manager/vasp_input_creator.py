@@ -1,7 +1,6 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
-import glob
 import json
 import logging
 import os
@@ -10,6 +9,7 @@ import shutil
 import warnings
 from datetime import time, timedelta
 from functools import cached_property
+from pathlib import Path
 
 import numpy as np
 from pymatgen.io.vasp import Poscar, Potcar
@@ -50,8 +50,8 @@ class VaspInputCreator:
             ncore_per_node_for_memory
             use_spin -- pass False to supress spin polarization
         """
-        self.calc_path = calc_path
-        self.poscar_source_path = poscar_source_path
+        self.calc_path = Path(calc_path)
+        self.poscar_source_path = Path(poscar_source_path)
         self.primitive = primitive
         self.increase_nodes_by_factor = int(increase_nodes_by_factor)
         self.increase_walltime_by_factor = int(increase_walltime_by_factor)
@@ -75,26 +75,26 @@ class VaspInputCreator:
         # first pardir is material_name/
         # second pardir is calculations/
         # config dict should sit in calculations/
-        all_calcs_dir = os.path.dirname(os.path.dirname(self.calc_path))
+        all_calcs_dir = self.calc_path.parent.parent
         fname = "calc_config.json"
-        fpath = os.path.join(all_calcs_dir, fname)
-        if os.path.exists(fpath):
+        fpath = all_calcs_dir / fname
+        if fpath.exists():
             with open(fpath) as fr:
                 calc_config = json.load(fr)
         else:
-            raise Exception(f"No {fname} found in path {os.path.abspath(all_calcs_dir)}")
+            raise Exception(f"No {fname} found in path {all_calcs_dir.absolute()}")
         return calc_config
 
     @cached_property
     def computing_config_dict(self):
-        all_calcs_dir = os.path.dirname(os.path.dirname(self.calc_path))
+        all_calcs_dir = self.calc_path.parent.parent
         fname = "computing_config.json"
-        fpath = os.path.join(all_calcs_dir, fname)
-        if os.path.exists(fpath):
+        fpath = all_calcs_dir / fname
+        if fpath.exists():
             with open(fpath) as fr:
                 computing_config = json.load(fr)
         else:
-            raise Exception(f"No {fname} found in path {os.path.abspath(all_calcs_dir)}")
+            raise Exception(f"No {fname} found in path {all_calcs_dir.absolute()}")
         return computing_config
 
     @cached_property
@@ -103,12 +103,10 @@ class VaspInputCreator:
 
     @cached_property
     def source_structure(self):
-        num_archives = len(glob.glob(os.path.join(self.calc_path, "archive*")))
+        num_archives = len(list(self.calc_path.glob("archive*")))
         if num_archives > 0:
             archive_name = f"archive_{num_archives-1}"
-            self.poscar_source_path = os.path.join(
-                self.calc_path, archive_name, "CONTCAR"
-            )
+            self.poscar_source_path = self.calc_path / archive_name / "CONTCAR"
         try:
             structure = get_pmg_structure_from_poscar(
                 self.poscar_source_path, primitive=self.primitive
@@ -120,7 +118,7 @@ class VaspInputCreator:
     @cached_property
     def incar_template(self):
         incar_template = pkgutil.get_data(
-            "vasp_manager", os.path.join("static_files", "INCAR_template")
+            "vasp_manager", str(Path("static_files") / "INCAR_template")
         ).decode("utf-8")
         return incar_template
 
@@ -128,7 +126,7 @@ class VaspInputCreator:
     def potcar_dict(self):
         potcar_dict = json.loads(
             pkgutil.get_data(
-                "vasp_manager", os.path.join("static_files", "pot_dict.json")
+                "vasp_manager", str(Path("static_files") / "pot_dict.json")
             ).decode("utf-8")
         )
         return potcar_dict
@@ -137,7 +135,7 @@ class VaspInputCreator:
     def q_mapper(self):
         q_mapper = json.loads(
             pkgutil.get_data(
-                "vasp_manager", os.path.join("static_files", "q_handles.json")
+                "vasp_manager", str(Path("static_files") / "q_handles.json")
             ).decode("utf-8")
         )
         return q_mapper
@@ -147,7 +145,7 @@ class VaspInputCreator:
         Create and write a POSCAR
         """
         poscar = Poscar(self.source_structure)
-        poscar_path = os.path.join(self.calc_path, "POSCAR")
+        poscar_path = self.calc_path / "POSCAR"
         poscar.write_file(
             poscar_path, significant_figures=self.poscar_significant_figures
         )
@@ -156,17 +154,16 @@ class VaspInputCreator:
         """
         Create and write a POTCAR
         """
-        potcar_path = os.path.join(self.calc_path, "POTCAR")
-        potcar_dir = self.computing_config_dict[self.computer]["potcar_dir"]
+        potcar_path = self.calc_path / "POTCAR"
+        potcar_dir = Path(self.computing_config_dict[self.computer]["potcar_dir"])
 
         el_names = [el.name for el in self.source_structure.composition]
         logger.debug(f"{self.source_structure.composition.reduced_formula}, {el_names}")
         pot_singles = [
-            os.path.join(potcar_dir, self.potcar_dict[el_name], "POTCAR")
-            for el_name in el_names
+            potcar_dir / self.potcar_dict[el_name] / "POTCAR" for el_name in el_names
         ]
         for pot_single in pot_singles:
-            if not os.path.exists(pot_single):
+            if not pot_single.exists():
                 msg = "Unable to create POTCAR"
                 msg += f"\n\t POTCAR not found at path {pot_single}"
                 raise Exception(msg)
@@ -206,7 +203,7 @@ class VaspInputCreator:
     def d_f_block(self):
         d_f_block = json.loads(
             pkgutil.get_data(
-                "vasp_manager", os.path.join("static_files", "d_f_block.json")
+                "vasp_manager", str(Path("static_files") / "d_f_block.json")
             ).decode("utf-8")
         )
         return d_f_block
@@ -254,7 +251,7 @@ class VaspInputCreator:
         Current kpoints coming from the kspacing tag in the INCAR,
             but future versions should include ability to make kpoints from kppra
         """
-        incar_path = os.path.join(self.calc_path, "INCAR")
+        incar_path = self.calc_path / "INCAR"
         ncore = self.computing_config_dict[self.computer]["ncore"]
         calc_config = self.calc_config_dict[self.mode]
 
@@ -266,7 +263,7 @@ class VaspInputCreator:
 
         composition_dict = self.source_structure.composition.as_dict()
         # read POTCAR
-        potcar_path = os.path.join(self.calc_path, "POTCAR")
+        potcar_path = self.calc_path / "POTCAR"
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=UserWarning)
             potcar = Potcar.from_file(potcar_path)
@@ -325,7 +322,7 @@ class VaspInputCreator:
         """
         Create and write vasp.q file
         """
-        vaspq_path = os.path.join(self.calc_path, "vasp.q")
+        vaspq_path = self.calc_path / "vasp.q"
         calc_config = self.calc_config_dict[self.mode]
 
         # create pad string for job naming to differentiate in the queue
@@ -389,7 +386,7 @@ class VaspInputCreator:
 
         q_name = self.q_mapper[self.computer][mode]
         vaspq_tmp = pkgutil.get_data(
-            "vasp_manager", os.path.join("static_files", q_name)
+            "vasp_manager", str(Path("static_files") / q_name)
         ).decode("utf-8")
         vaspq = vaspq_tmp.format(**computer_config)
         logger.debug(vaspq)
@@ -401,26 +398,26 @@ class VaspInputCreator:
         Make an archive of a VASP calculation and copy back over relevant files
         """
         with change_directory(self.calc_path):
-            contcar_path = "CONTCAR"
-            contcar_exists = os.path.exists(contcar_path)
+            contcar_path = Path("CONTCAR")
+            contcar_exists = contcar_path.exists()
             if contcar_exists:
-                contcar_is_empty = os.stat(contcar_path).st_size == 0
+                contcar_is_empty = contcar_path.stat().st_size == 0
             else:
                 contcar_is_empty = True
 
             if contcar_is_empty:
                 # if CONTCAR is empty, don't make an archive and clean up
-                all_files = [d for d in glob.glob("*") if os.path.isfile(d)]
+                all_files = [f for f in Path(".").glob("*") if f.is_file()]
                 for f in all_files:
                     os.remove(f)
             else:
                 # make the archive
-                num_previous_archives = len(glob.glob("archive*"))
-                archive_name = f"archive_{num_previous_archives}"
+                num_previous_archives = len(list(Path(".").glob("*")))
+                archive_name = Path(f"archive_{num_previous_archives}")
                 logger.info(f"Making {archive_name}...")
-                os.mkdir(archive_name)
+                archive_name.mkdir()
 
-                all_files = [d for d in glob.glob("*") if os.path.isfile(d)]
+                all_files = [f for f in Path(".").glob("*") if f.is_file()]
                 for f in all_files:
                     shutil.move(f, archive_name)
 
@@ -433,8 +430,8 @@ class VaspInputCreator:
         Don't touch the order! make_incar and make_vaspq rely on the poscar and
         potcar existing already
         """
-        if not os.path.exists(self.calc_path):
-            os.mkdir(self.calc_path)
+        if not self.calc_path.exists():
+            self.calc_path.mkdir()
         self.make_poscar()
         self.make_potcar()
         self.make_incar()

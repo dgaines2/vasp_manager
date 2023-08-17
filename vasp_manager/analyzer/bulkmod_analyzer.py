@@ -1,9 +1,8 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
-import glob
 import logging
-import os
+from pathlib import Path
 
 import numpy as np
 from pymatgen.analysis.eos import BirchMurnaghan
@@ -20,7 +19,7 @@ class BulkmodAnalyzer:
             calc_path (str): path to bulkmod calculation folder
             rounding_precision (int): precision to round calculated quantities
         """
-        self._calc_path = calc_path
+        self._calc_path = Path(calc_path) if calc_path else calc_path
         self._rounding_precision = rounding_precision
         self._results = None
 
@@ -33,7 +32,7 @@ class BulkmodAnalyzer:
     @calc_path.setter
     def calc_path(self, value):
         # make sure cij wasn't already defined
-        if not os.path.exists(value):
+        if not value.exists():
             raise ValueError(f"Could not set calc_path to {value} as it does not exist")
         self._calc_path = value
 
@@ -57,17 +56,13 @@ class BulkmodAnalyzer:
         """
         Fit an EOS to calculate the bulk modulus from a finished bulkmod calculation
         """
-        strain_paths = [
-            path
-            for path in glob.glob(os.path.join(calc_path, "strain*"))
-            if os.path.isdir(path)
-        ]
-        strain_paths = sorted(strain_paths, key=lambda d: int(d.split("_")[-1]))
+        strain_paths = [path for path in calc_path.glob("strain*") if path.is_dir()]
+        strain_paths = sorted(strain_paths, key=lambda d: int(d.name.split("_")[-1]))
         volumes = []
         final_energies = []
         for i, strain_path in enumerate(strain_paths):
-            poscar_path = os.path.join(strain_path, "POSCAR")
-            vasprun_path = os.path.join(strain_path, "vasprun.xml")
+            poscar_path = strain_path / "POSCAR"
+            vasprun_path = strain_path / "vasprun.xml"
             volume = Structure.from_file(poscar_path).volume
             vasprun = Vasprun(
                 filename=vasprun_path,

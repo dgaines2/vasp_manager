@@ -3,7 +3,6 @@
 
 import json
 import logging
-import os
 import subprocess
 from functools import cached_property
 
@@ -31,14 +30,14 @@ class JobManager:
 
     @property
     def computing_config_dict(self):
-        all_calcs_dir = os.path.dirname(os.path.dirname(self.calc_path))
+        all_calcs_dir = self.calc_path.parent.parent
         fname = "computing_config.json"
-        fpath = os.path.join(all_calcs_dir, fname)
-        if os.path.exists(fpath):
+        fpath = all_calcs_dir / "computing_config.json"
+        if fpath.exists():
             with open(fpath) as fr:
                 computing_config = json.load(fr)
         else:
-            raise Exception(f"No {fname} found in path {os.path.abspath(all_calcs_dir)}")
+            raise Exception(f"No {fname} found in path {all_calcs_dir.absolute()}")
         return computing_config
 
     @cached_property
@@ -51,14 +50,14 @@ class JobManager:
 
     @cached_property
     def mode(self):
-        return os.path.basename(self.calc_path)
+        return self.calc_path.name
 
     @property
     def job_exists(self):
-        jobid_path = os.path.join(self.calc_path, "jobid")
-        if not os.path.exists(jobid_path):
+        jobid_path = self.calc_path / "jobid"
+        if not jobid_path.exists():
             return False
-        if os.path.getsize(jobid_path) == 0:
+        if jobid_path.stat().st_size == 0:
             return False
 
         with open(jobid_path) as fr:
@@ -96,8 +95,8 @@ class JobManager:
             logger.debug(error_msg)
             return True
 
-        vaspq_path = os.path.join(self.calc_path, "vasp.q")
-        if not os.path.exists(vaspq_path):
+        vaspq_path = self.calc_path / "vasp.q"
+        if not vaspq_path.exists():
             logger.info(f"No vasp.q file in {self.calc_path}")
             # return False here instead of catching an exception
             # This enables job resubmission by letting the calling function

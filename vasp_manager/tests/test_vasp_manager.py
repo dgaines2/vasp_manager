@@ -1,8 +1,7 @@
-import glob
-import os
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 from vasp_manager import VaspManager
 from vasp_manager.utils import change_directory
@@ -11,17 +10,15 @@ sys.path.append("../..")
 from run_vasp_calculations import make_calculations_folder
 
 
-def test_vmg_in_order(tmpdir):
-    original_calculations_folder = "calculations"
-    temp_calculation_folder = tmpdir
-    if os.path.exists(temp_calculation_folder):
+def test_vmg_in_order(tmp_path):
+    original_calculations_folder = Path("calculations")
+    temp_calculation_folder = tmp_path
+    if temp_calculation_folder.exists():
         shutil.rmtree(temp_calculation_folder)
     make_calculations_folder(calcs_path=temp_calculation_folder)
 
     for f in ["computing_config.json", "calc_config.json", "unzip_outputs.sh"]:
-        shutil.copy(
-            os.path.join(original_calculations_folder, f), temp_calculation_folder
-        )
+        shutil.copy(original_calculations_folder / f, temp_calculation_folder)
 
     calculation_types = [
         "rlx-coarse",
@@ -30,8 +27,9 @@ def test_vmg_in_order(tmpdir):
         "bulkmod",
         "elastic",
     ]
-    calc_paths = os.path.join(temp_calculation_folder, "*")
-    material_paths = [p for p in sorted(glob.glob(calc_paths)) if os.path.isdir(p)]
+    material_paths = [
+        p for p in sorted(list(temp_calculation_folder.glob("*"))) if p.is_dir()
+    ]
 
     for i, calculation_type in enumerate(calculation_types):
         calculation_type_subset = calculation_types[: i + 1]
@@ -67,9 +65,9 @@ def test_vmg_in_order(tmpdir):
                 assert summary["n_total"] == summary[pc]["n_finished"]
 
         for p in material_paths:
-            mat_name = os.path.basename(p)
-            orig_mode_path = os.path.join("calculations", mat_name, calculation_type)
-            temp_mode_path = os.path.join(p, calculation_type)
+            mat_name = p.name
+            orig_mode_path = original_calculations_folder / mat_name / calculation_type
+            temp_mode_path = p / calculation_type
             shutil.rmtree(temp_mode_path)
             shutil.copytree(orig_mode_path, temp_mode_path)
         unzip_call = f"bash unzip_outputs.sh"
@@ -97,17 +95,15 @@ def test_vmg_in_order(tmpdir):
         assert summary["n_total"] == summary[calculation_type]["n_finished"]
 
 
-def test_vmg_with_skipping(tmpdir):
-    original_calculations_folder = "calculations"
-    temp_calculation_folder = tmpdir
-    if os.path.exists(temp_calculation_folder):
+def test_vmg_with_skipping(tmp_path):
+    original_calculations_folder = Path("calculations")
+    temp_calculation_folder = tmp_path
+    if temp_calculation_folder.exists():
         shutil.rmtree(temp_calculation_folder)
     make_calculations_folder(calcs_path=temp_calculation_folder)
 
     for f in ["computing_config.json", "calc_config.json", "unzip_outputs.sh"]:
-        shutil.copy(
-            os.path.join(original_calculations_folder, f), temp_calculation_folder
-        )
+        shutil.copy(original_calculations_folder / f, temp_calculation_folder)
 
     calculation_types = [
         "rlx-coarse",
@@ -116,16 +112,17 @@ def test_vmg_with_skipping(tmpdir):
         "bulkmod",
         "elastic",
     ]
-    calc_paths = os.path.join(temp_calculation_folder, "*")
-    material_paths = [p for p in sorted(glob.glob(calc_paths)) if os.path.isdir(p)]
+    material_paths = [
+        p for p in sorted(list(temp_calculation_folder.glob("*"))) if p.is_dir()
+    ]
 
     # skip static and bulkmod when copying
     completed_calc_types = ["rlx-coarse", "rlx", "elastic"]
     for calculation_type in completed_calc_types:
         for p in material_paths:
-            mat_name = os.path.basename(p)
-            orig_mode_path = os.path.join("calculations", mat_name, calculation_type)
-            temp_mode_path = os.path.join(p, calculation_type)
+            mat_name = p.name
+            orig_mode_path = original_calculations_folder / mat_name / calculation_type
+            temp_mode_path = p / calculation_type
             shutil.copytree(orig_mode_path, temp_mode_path)
 
     unzip_call = f"bash unzip_outputs.sh"

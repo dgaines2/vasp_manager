@@ -1,9 +1,7 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
-import glob
 import logging
-import os
 from functools import cached_property
 
 from vasp_manager.calculation_manager.base import BaseCalculationManager
@@ -55,8 +53,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
 
     @cached_property
     def poscar_source_path(self):
-        poscar_source_path = os.path.join(self.material_path, "POSCAR")
-        return poscar_source_path
+        return self.material_path / "POSCAR"
 
     @cached_property
     def vasp_input_creator(self):
@@ -97,8 +94,8 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             logger.info(f"{self.mode.upper()} not finished")
             return False
 
-        stdout_path = os.path.join(self.calc_path, "stdout.txt")
-        if not os.path.exists(stdout_path):
+        stdout_path = self.calc_path / "stdout.txt"
+        if not stdout_path.exists():
             # calculation never actually ran
             # shouldn't get here unless function was called with submit=False
             # or job was manually cancelled
@@ -129,7 +126,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             stdout_path, "reached required accuracy", stop_after_first_match=True
         )
         if len(grep_output) == 0:
-            archive_dirs = glob.glob(os.path.join(self.calc_path, "archive*"))
+            archive_dirs = list(self.calc_path.glob("archive*"))
             if len(archive_dirs) >= self.max_reruns - 1:
                 logger.warning(
                     "Many archives exist, continuing to force based relaxation..."

@@ -73,9 +73,9 @@ class BulkmodCalculationManager(BaseCalculationManager):
     @cached_property
     def poscar_source_path(self):
         if self.from_relax:
-            poscar_source_path = os.path.join(self.material_path, "rlx", "CONTCAR")
+            poscar_source_path = self.material_path / "rlx" / "CONTCAR"
         else:
-            poscar_source_path = os.path.join(self.material_path, "POSCAR")
+            poscar_source_path = self.material_path / "POSCAR"
         return poscar_source_path
 
     @cached_property
@@ -105,7 +105,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
         if not self.from_relax:
             return True
         # otherwise, check if relax finished with spin
-        rlx_stdout = os.path.join(self.material_path, "rlx", "stdout.txt")
+        rlx_stdout = self.material_path / "rlx" / "stdout.txt"
         rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
         use_spin = len(rlx_mags) != 0
         return use_spin
@@ -150,10 +150,10 @@ class BulkmodCalculationManager(BaseCalculationManager):
             middle = int(len(self.strains) / 2)
             strain_index = i - middle
             strain_name = f"strain_{strain_index}"
-            strain_path = os.path.join(self.calc_path, strain_name)
-            stdout_path = os.path.join(strain_path, "stdout.txt")
-            stderr_path = os.path.join(strain_path, "stderr.txt")
-            if not os.path.exists(stdout_path):
+            strain_path = self.calc_path / strain_name
+            stdout_path = strain_path / "stdout.txt"
+            stderr_path = strain_path / "stderr.txt"
+            if not stdout_path.exists():
                 return False
 
             vasp_errors = self._check_vasp_errors(
@@ -215,13 +215,13 @@ class BulkmodCalculationManager(BaseCalculationManager):
             middle = int(len(self.strains) / 2)
             strain_index = i - middle
             strain_name = f"strain_{strain_index}"
-            strain_path = os.path.join(self.calc_path, strain_name)
+            strain_path = self.calc_path / strain_name
             logger.info(strain_path)
 
-            if not os.path.exists(strain_path):
-                os.mkdir(strain_path)
-            orig_poscar_path = os.path.join(self.calc_path, "POSCAR")
-            strain_poscar_path = os.path.join(strain_path, "POSCAR")
+            if not strain_path.exists():
+                strain_path.mkdir()
+            orig_poscar_path = self.calc_path / "POSCAR"
+            strain_poscar_path = strain_path / "POSCAR"
             shutil.copy(orig_poscar_path, strain_poscar_path)
 
             # change second line to be {strain} rather than 1.0
@@ -234,5 +234,5 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
             with change_directory(strain_path):
                 for f in ["POTCAR", "INCAR"]:
-                    orig_path = os.path.join(os.pardir, f)
+                    orig_path = strain_path.parent / f
                     os.symlink(orig_path, f, target_is_directory=False)
