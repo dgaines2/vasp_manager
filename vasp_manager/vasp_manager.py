@@ -156,8 +156,13 @@ class VaspManager:
                     d for d in glob.glob(os.path.join(values, "*")) if os.path.isdir(d)
                 ]
             case list() | np.array():
-                mat_path = values[0]
-                self.base_path = os.path.dirname(mat_path)
+                base_path = os.path.dirname(values[0])
+                for mat_path in values:
+                    if not os.path.dirname(mat_path) == base_path:
+                        raise Exception(
+                            "All material paths must be in the same directory"
+                        )
+                self.base_path = base_path
                 material_paths = values
             case _:
                 raise TypeError(
