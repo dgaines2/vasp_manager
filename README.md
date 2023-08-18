@@ -6,7 +6,7 @@
     \  / (_| \__ \ |_) | |  | | (_| | | | | (_| | (_| |  __/ |
      \/ \__,_|___/ .__/|_|  |_|\__,_|_| |_|\__,_|\__, |\___|_|
                  | |                              __/ |
-                 |_|                             |___/ v1.0.1
+                 |_|                             |___/ v1.0.2
 ```
 
 Automatically run `VASP` relaxation, static, bulk moduli, or elastic constant
