@@ -1,9 +1,14 @@
 from setuptools import setup
 
+with open("README.md") as file:
+    long_description = file.read()
+
 setup(
     name="vasp_manager",
     version="1.0.3",
     description="A simple package to run and analyze VASP calculations",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     packages=["vasp_manager"],
     url="https://github.com/dgaines2/vasp_manager",
     author="Dale Gaines II",
