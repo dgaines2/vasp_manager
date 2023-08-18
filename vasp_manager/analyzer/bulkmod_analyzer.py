@@ -63,7 +63,7 @@ class BulkmodAnalyzer:
         for i, strain_path in enumerate(strain_paths):
             poscar_path = strain_path / "POSCAR"
             # search for vasprun.xml or vasprun.xml.gz
-            vasprun_glob = list(strain_path.glob("vasprun.xml"))
+            vasprun_glob = list(strain_path.glob("vasprun.xml*"))
             if len(vasprun_glob) == 0:
                 raise Exception(f"No OUTCAR available at {strain_path}")
             vasprun_path = vasprun_glob[0]
