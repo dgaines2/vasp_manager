@@ -466,7 +466,7 @@ class VaspInputCreator:
                     os.remove(f)
             else:
                 # make the archive
-                num_previous_archives = len(list(Path(".").glob("*")))
+                num_previous_archives = len(list(Path(".").glob("archive*")))
                 archive_name = Path(f"archive_{num_previous_archives}")
                 logger.info(f"Making {archive_name}...")
                 archive_name.mkdir()
