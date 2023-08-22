@@ -155,3 +155,23 @@ def ptail(f_name, n_tail=1, as_string=False):
     if as_string:
         tail = "\n".join([line for line in tail])
     return tail
+
+
+def make_potcar_anonymous(f_name):
+    """
+    Replace full POTCAR with only single POTCAR names
+
+    Args:
+        f_name (str): path of POTCAR file
+    Returns:
+        None
+    """
+    with open(f_name, "rt") as fr:
+        full_potcar_text = [line.strip() for line in fr.readlines()]
+    trimmed_potcar_lines = []
+    for line in full_potcar_text:
+        if "TITEL" in line:
+            trimmed_potcar_lines.append(line.split("=")[1])
+    trimmed_potcar_string = "\n".join([line for line in trimmed_potcar_lines])
+    with open(f_name, "w+") as fw:
+        fw.write(trimmed_potcar_string)
