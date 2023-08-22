@@ -360,8 +360,6 @@ class VaspInputCreator:
             if self.mode == "elastic":
                 if "KSPACING" in line:
                     nfree_line = "NFREE = {nfree}"
-                    symprec_line = "SYMPREC = {symprec}"
-                    incar_tmp.insert(i + 1, symprec_line)
                     incar_tmp.insert(i + 1, nfree_line)
                 if "NCORE" in line:
                     # elastic calculation won't run unless NCORE=1
