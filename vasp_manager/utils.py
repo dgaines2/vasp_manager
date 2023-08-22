@@ -5,6 +5,7 @@ import gzip
 import json
 import os
 from contextlib import contextmanager
+from pathlib import Path
 
 import numpy as np
 from pymatgen.core import Structure
@@ -75,6 +76,8 @@ def pcat(f_names):
         catted (str)
     """
     f_contents = []
+    if isinstance(f_names, (str, Path)):
+        f_names = [f_names]
     for f_name in f_names:
         with open(f_name) as fr:
             f_content = fr.read()
