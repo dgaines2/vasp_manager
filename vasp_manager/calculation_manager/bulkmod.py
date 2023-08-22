@@ -5,6 +5,7 @@ import logging
 import os
 import shutil
 from functools import cached_property
+from pathlib import Path
 
 import numpy as np
 
@@ -234,5 +235,5 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
             with change_directory(strain_path):
                 for f in ["POTCAR", "INCAR"]:
-                    orig_path = strain_path.parent / f
+                    orig_path = Path("..") / f
                     os.symlink(orig_path, f, target_is_directory=False)
