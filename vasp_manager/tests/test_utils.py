@@ -143,7 +143,7 @@ def test_ptail_as_string(tmp_path):
 
 def test_make_potcar_anonymous(tmp_path):
     potcar_path = importlib_resources.files("vasp_manager").joinpath(
-        str(Path("tests") / "calculations" / "POTCAR_example")
+        str(Path("tests") / "POTCARS" / "POTCAR_example")
     )
     new_potcar_path = tmp_path / "POTCAR"
     shutil.copy(potcar_path, new_potcar_path)
