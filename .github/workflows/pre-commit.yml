@@ -1,0 +1,31 @@
+name: pre-commit
+on:
+  pull_request:
+    branches: [main]
+  push:
+jobs:
+  # prevent this action from running on forks
+  pre-commit:
+    # if: github.repository == 'dgaines2/vasp_manager'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with: 
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip wheel
+          python -m pip install -e '.[dev]'
+      - uses: pre-commit/action@v3.0.0
+      - name: Coverage
+        run: |
+          coverage run
+          coverage report -m
+          coverage xml
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
