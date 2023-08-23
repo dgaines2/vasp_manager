@@ -1,0 +1,1026 @@
+ ----------------------------------------------------
+    OOO  PPPP  EEEEE N   N M   M PPPP
+   O   O P   P E     NN  N MM MM P   P
+   O   O PPPP  EEEEE N N N M M M PPPP   -- VERSION
+   O   O P     E     N  NN M   M P
+    OOO  P     EEEEE N   N M   M P
+ ----------------------------------------------------
+ running  256 mpi-ranks, with    1 threads/rank
+ distrk:  each k-point on   64 cores,    4 groups
+ distr:  one band on    1 cores,   64 groups
+ vasp.6.3.2 27Jun22 (build Jun 30 2023 15:13:53) complex                         
+ POSCAR found type information on POSCAR NaCl
+ POSCAR found :  2 types and       2 ions
+ Reading from existing POTCAR
+ scaLAPACK will be used
+ Reading from existing POTCAR
+ LDA part: xc-table for Pade appr. of Perdew
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The number of bands has been changed from the values supplied in        |
+|     the INCAR file. This is a result of running the parallel version.       |
+|     The orbitals not found in the WAVECAR file will be initialized with     |
+|     random numbers, which is usually adequate. For correlated               |
+|     calculations, however, you should redo the groundstate calculation.     |
+|     I found NBANDS = 16. Now, NBANDS = 64.                                  |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ INCAR ok, starting setup
+ POSCAR ok, starting setup
+ FFT: planning ... GRIDC
+ FFT: planning ... GRID_SOFT
+ FFT: planning ... GRID
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1     0.361594163861E+01    0.36159E+01   -0.82049E+03 10816   0.217E+02
+DAV:   2    -0.697584350181E+01   -0.10592E+02   -0.10592E+02 16128   0.214E+01
+DAV:   3    -0.698233237479E+01   -0.64889E-02   -0.64889E-02 10752   0.667E-01
+DAV:   4    -0.698233464510E+01   -0.22703E-05   -0.22703E-05 20608   0.121E-02
+DAV:   5    -0.698233464511E+01   -0.40927E-11   -0.49355E-11 10752   0.115E-05    0.214E+00
+DAV:   6    -0.678419629042E+01    0.19814E+00   -0.57185E-01 16576   0.722E-01    0.173E+00
+DAV:   7    -0.677162208125E+01    0.12574E-01   -0.10811E-01 19200   0.331E-01    0.105E+00
+DAV:   8    -0.677739344433E+01   -0.57714E-02   -0.96177E-03 18368   0.167E-01    0.140E-01
+DAV:   9    -0.677770330758E+01   -0.30986E-03   -0.18839E-04 16640   0.201E-02    0.728E-02
+DAV:  10    -0.677789046099E+01   -0.18715E-03   -0.25272E-04 17344   0.216E-02    0.280E-03
+DAV:  11    -0.677789209744E+01   -0.16364E-05   -0.14696E-06 13376   0.275E-03    0.107E-03
+DAV:  12    -0.677789241428E+01   -0.31684E-06   -0.28758E-07 17856   0.717E-04    0.355E-04
+DAV:  13    -0.677789242506E+01   -0.10785E-07   -0.18781E-08 14528   0.296E-04
+   1 F= -.67778924E+01 E0= -.67778924E+01  d E =-.175244E-35
+ Found     2 degrees of freedom:
+ Adding 6 more for cell shape distortion
+ Finite differences POTIM= 0.01000 DOF=   8
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.682749882013E+01   -0.49606E-01   -0.19403E+00 42176   0.288E+00    0.144E+00
+DAV:   2    -0.678642327843E+01    0.41076E-01   -0.71689E-02 27968   0.410E-01    0.667E-01
+DAV:   3    -0.677620106666E+01    0.10222E-01   -0.18904E-02 42880   0.241E-01    0.271E-01
+DAV:   4    -0.677504268747E+01    0.11584E-02   -0.10884E-03 29632   0.504E-02    0.302E-02
+DAV:   5    -0.677503905342E+01    0.36341E-05   -0.25319E-05 40768   0.154E-02    0.104E-02
+DAV:   6    -0.677504126428E+01   -0.22109E-05   -0.26551E-06 40384   0.351E-03    0.294E-03
+DAV:   7    -0.677504174929E+01   -0.48501E-06   -0.78571E-07 43904   0.256E-03    0.893E-04
+DAV:   8    -0.677504185804E+01   -0.10874E-06   -0.78531E-08 41856   0.381E-04    0.295E-04
+DAV:   9    -0.677504184830E+01    0.97352E-08   -0.80697E-10 14336   0.532E-05
+   2 F= -.67750418E+01 E0= -.67750418E+01  d E =-.122598E-20
+ Finite differences progress:
+  Degree of freedom:   1/  8
+  Displacement:        1/  4
+  Total:               1/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.678980997025E+01   -0.14768E-01   -0.10070E+00 42688   0.185E+00    0.723E-01
+DAV:   2    -0.677980363964E+01    0.10006E-01   -0.17753E-02 26496   0.208E-01    0.333E-01
+DAV:   3    -0.677733351551E+01    0.24701E-02   -0.45124E-03 42496   0.119E-01    0.138E-01
+DAV:   4    -0.677707015225E+01    0.26336E-03   -0.26189E-04 29248   0.283E-02    0.156E-02
+DAV:   5    -0.677707116448E+01   -0.10122E-05   -0.86702E-06 42176   0.911E-03    0.385E-03
+DAV:   6    -0.677707141979E+01   -0.25530E-06   -0.34837E-07 37760   0.118E-03    0.133E-03
+DAV:   7    -0.677707133682E+01    0.82969E-07   -0.15416E-07 44160   0.113E-03
+   3 F= -.67770713E+01 E0= -.67770713E+01  d E =-.319166E-28
+ Finite differences progress:
+  Degree of freedom:   1/  8
+  Displacement:        2/  4
+  Total:               2/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.682919348510E+01   -0.52122E-01   -0.15399E+00 42176   0.262E+00    0.147E+00
+DAV:   2    -0.678857665627E+01    0.40617E-01   -0.70537E-02 28544   0.413E-01    0.679E-01
+DAV:   3    -0.677842229794E+01    0.10154E-01   -0.18307E-02 40128   0.240E-01    0.280E-01
+DAV:   4    -0.677732701020E+01    0.10953E-02   -0.10387E-03 30208   0.527E-02    0.328E-02
+DAV:   5    -0.677732738439E+01   -0.37419E-06   -0.29322E-05 41600   0.170E-02    0.947E-03
+DAV:   6    -0.677732890975E+01   -0.15254E-05   -0.20180E-06 39616   0.232E-03    0.270E-03
+DAV:   7    -0.677732873021E+01    0.17954E-06   -0.66897E-07 44160   0.239E-03    0.824E-04
+DAV:   8    -0.677732873636E+01   -0.61543E-08   -0.67277E-08 41344   0.377E-04
+   4 F= -.67773287E+01 E0= -.67773287E+01  d E =-.628818E-18
+ Finite differences progress:
+  Degree of freedom:   1/  8
+  Displacement:        3/  4
+  Total:               3/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.678853767172E+01   -0.11209E-01   -0.11803E+00 42368   0.194E+00    0.744E-01
+DAV:   2    -0.677808312544E+01    0.10455E-01   -0.17997E-02 25920   0.212E-01    0.344E-01
+DAV:   3    -0.677545262221E+01    0.26305E-02   -0.47978E-03 41920   0.124E-01    0.141E-01
+DAV:   4    -0.677518700046E+01    0.26562E-03   -0.26741E-04 29760   0.309E-02    0.161E-02
+DAV:   5    -0.677518808602E+01   -0.10856E-05   -0.86975E-06 41792   0.916E-03    0.398E-03
+DAV:   6    -0.677518821610E+01   -0.13008E-06   -0.35865E-07 37824   0.114E-03    0.131E-03
+DAV:   7    -0.677518807681E+01    0.13928E-06   -0.14820E-07 43712   0.113E-03    0.464E-04
+DAV:   8    -0.677518805789E+01    0.18927E-07   -0.17195E-08 36160   0.193E-04
+   5 F= -.67751881E+01 E0= -.67751881E+01  d E =-.105984E-26
+ Finite differences progress:
+  Degree of freedom:   1/  8
+  Displacement:        4/  4
+  Total:               4/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.693118048993E+01   -0.15599E+00   -0.51519E+00 40832   0.529E+00    0.252E+00
+DAV:   2    -0.680241706830E+01    0.12876E+00   -0.26899E-01 28544   0.791E-01    0.107E+00
+DAV:   3    -0.677743154921E+01    0.24986E-01   -0.57539E-02 41280   0.427E-01    0.476E-01
+DAV:   4    -0.677469287023E+01    0.27387E-02   -0.24465E-03 28096   0.900E-02    0.398E-02
+DAV:   5    -0.677482000688E+01   -0.12714E-03   -0.61340E-05 44672   0.216E-02    0.197E-02
+DAV:   6    -0.677498971695E+01   -0.16971E-03   -0.26371E-05 37824   0.135E-02    0.607E-03
+DAV:   7    -0.677502940813E+01   -0.39691E-04   -0.20963E-06 43328   0.433E-03    0.103E-03
+DAV:   8    -0.677503812027E+01   -0.87121E-05   -0.37132E-08 38080   0.465E-04    0.445E-04
+DAV:   9    -0.677504119180E+01   -0.30715E-05   -0.51573E-09 17344   0.134E-04    0.272E-04
+DAV:  10    -0.677504188779E+01   -0.69599E-06   -0.32430E-10 13248   0.324E-05    0.264E-04
+DAV:  11    -0.677504191171E+01   -0.23917E-07   -0.62110E-12 13184   0.748E-06
+   6 F= -.67750419E+01 E0= -.67750419E+01  d E =-.122756E-20
+ Finite differences progress:
+  Degree of freedom:   2/  8
+  Displacement:        1/  4
+  Total:               5/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.678981158725E+01   -0.14770E-01   -0.10184E+00 43200   0.186E+00    0.723E-01
+DAV:   2    -0.677980888415E+01    0.10003E-01   -0.17742E-02 26112   0.208E-01    0.334E-01
+DAV:   3    -0.677733564398E+01    0.24732E-02   -0.45077E-03 42688   0.119E-01    0.138E-01
+DAV:   4    -0.677707021776E+01    0.26543E-03   -0.26148E-04 28800   0.283E-02    0.156E-02
+DAV:   5    -0.677707116865E+01   -0.95089E-06   -0.87504E-06 42432   0.916E-03    0.386E-03
+DAV:   6    -0.677707140899E+01   -0.24034E-06   -0.35488E-07 37824   0.119E-03    0.133E-03
+DAV:   7    -0.677707135124E+01    0.57746E-07   -0.15422E-07 43968   0.113E-03
+   7 F= -.67770714E+01 E0= -.67770714E+01  d E =-.202265E-28
+ Finite differences progress:
+  Degree of freedom:   2/  8
+  Displacement:        2/  4
+  Total:               6/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.682919496546E+01   -0.52124E-01   -0.15484E+00 42624   0.262E+00    0.147E+00
+DAV:   2    -0.678859467787E+01    0.40600E-01   -0.70521E-02 27904   0.413E-01    0.679E-01
+DAV:   3    -0.677842876376E+01    0.10166E-01   -0.18307E-02 39872   0.240E-01    0.280E-01
+DAV:   4    -0.677732709221E+01    0.11017E-02   -0.10390E-03 30272   0.528E-02    0.328E-02
+DAV:   5    -0.677732718743E+01   -0.95222E-07   -0.29277E-05 41984   0.170E-02    0.947E-03
+DAV:   6    -0.677732876623E+01   -0.15788E-05   -0.20171E-06 39040   0.232E-03    0.270E-03
+DAV:   7    -0.677732866554E+01    0.10069E-06   -0.66921E-07 44096   0.239E-03    0.824E-04
+DAV:   8    -0.677732869009E+01   -0.24555E-07   -0.67345E-08 41472   0.377E-04
+   8 F= -.67773287E+01 E0= -.67773287E+01  d E =-.628822E-18
+ Finite differences progress:
+  Degree of freedom:   2/  8
+  Displacement:        3/  4
+  Total:               7/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.678853929772E+01   -0.11211E-01   -0.11773E+00 42176   0.194E+00    0.744E-01
+DAV:   2    -0.677809321242E+01    0.10446E-01   -0.17981E-02 25792   0.212E-01    0.344E-01
+DAV:   3    -0.677545651924E+01    0.26367E-02   -0.48004E-03 42112   0.124E-01    0.141E-01
+DAV:   4    -0.677518698293E+01    0.26954E-03   -0.26763E-04 29824   0.309E-02    0.161E-02
+DAV:   5    -0.677518787579E+01   -0.89286E-06   -0.86644E-06 41728   0.914E-03    0.397E-03
+DAV:   6    -0.677518806841E+01   -0.19262E-06   -0.35447E-07 37824   0.114E-03    0.131E-03
+DAV:   7    -0.677518797995E+01    0.88467E-07   -0.14773E-07 43840   0.113E-03
+   9 F= -.67751880E+01 E0= -.67751880E+01  d E =-.107297E-26
+ Finite differences progress:
+  Degree of freedom:   2/  8
+  Displacement:        4/  4
+  Total:               8/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.693381368482E+01   -0.15863E+00   -0.52045E+00 41280   0.525E+00    0.251E+00
+DAV:   2    -0.680461805662E+01    0.12920E+00   -0.26767E-01 28096   0.791E-01    0.107E+00
+DAV:   3    -0.677872182387E+01    0.25896E-01   -0.57280E-02 41920   0.427E-01    0.475E-01
+DAV:   4    -0.677513043064E+01    0.35914E-02   -0.24530E-03 27776   0.901E-02    0.400E-02
+DAV:   5    -0.677506753710E+01    0.62894E-04   -0.61747E-05 44032   0.217E-02    0.198E-02
+DAV:   6    -0.677504775773E+01    0.19779E-04   -0.27198E-05 38848   0.136E-02    0.597E-03
+DAV:   7    -0.677504314556E+01    0.46122E-05   -0.21227E-06 43136   0.431E-03    0.100E-03
+DAV:   8    -0.677504233074E+01    0.81483E-06   -0.40317E-08 39936   0.472E-04    0.444E-04
+DAV:   9    -0.677504201757E+01    0.31316E-06   -0.61867E-09 19776   0.134E-04    0.260E-04
+DAV:  10    -0.677504196156E+01    0.56016E-07   -0.54110E-10 13504   0.363E-05
+  10 F= -.67750420E+01 E0= -.67750420E+01  d E =-.122736E-20
+ Finite differences progress:
+  Degree of freedom:   3/  8
+  Displacement:        1/  4
+  Total:               9/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.678980391527E+01   -0.14762E-01   -0.11306E+00 42048   0.196E+00    0.723E-01
+DAV:   2    -0.677981485138E+01    0.99891E-02   -0.17797E-02 26752   0.209E-01    0.333E-01
+DAV:   3    -0.677733681648E+01    0.24780E-02   -0.45224E-03 41984   0.119E-01    0.138E-01
+DAV:   4    -0.677707030653E+01    0.26651E-03   -0.26258E-04 29248   0.283E-02    0.155E-02
+DAV:   5    -0.677707110061E+01   -0.79409E-06   -0.85321E-06 41472   0.902E-03    0.385E-03
+DAV:   6    -0.677707142676E+01   -0.32614E-06   -0.34004E-07 38912   0.114E-03    0.135E-03
+DAV:   7    -0.677707138545E+01    0.41306E-07   -0.15575E-07 43904   0.113E-03
+  11 F= -.67770714E+01 E0= -.67770714E+01  d E =-.202332E-28
+ Finite differences progress:
+  Degree of freedom:   3/  8
+  Displacement:        2/  4
+  Total:              10/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.682919325229E+01   -0.52122E-01   -0.14411E+00 42432   0.258E+00    0.147E+00
+DAV:   2    -0.678861596455E+01    0.40577E-01   -0.70526E-02 29824   0.413E-01    0.679E-01
+DAV:   3    -0.677843570365E+01    0.10180E-01   -0.18304E-02 39360   0.240E-01    0.280E-01
+DAV:   4    -0.677732721400E+01    0.11085E-02   -0.10390E-03 30400   0.528E-02    0.327E-02
+DAV:   5    -0.677732698995E+01    0.22405E-06   -0.29333E-05 41344   0.170E-02    0.946E-03
+DAV:   6    -0.677732863332E+01   -0.16434E-05   -0.20167E-06 40128   0.232E-03    0.269E-03
+DAV:   7    -0.677732861364E+01    0.19678E-07   -0.66634E-07 43712   0.239E-03
+  12 F= -.67773286E+01 E0= -.67773286E+01  d E =-.638924E-18
+ Finite differences progress:
+  Degree of freedom:   3/  8
+  Displacement:        3/  4
+  Total:              11/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.678854050720E+01   -0.11212E-01   -0.13448E+00 42880   0.206E+00    0.745E-01
+DAV:   2    -0.677810474068E+01    0.10436E-01   -0.17978E-02 26240   0.212E-01    0.344E-01
+DAV:   3    -0.677546152987E+01    0.26432E-02   -0.47943E-03 41344   0.124E-01    0.141E-01
+DAV:   4    -0.677518699569E+01    0.27453E-03   -0.26727E-04 29696   0.310E-02    0.161E-02
+DAV:   5    -0.677518771299E+01   -0.71730E-06   -0.87979E-06 41792   0.922E-03    0.397E-03
+DAV:   6    -0.677518792315E+01   -0.21016E-06   -0.36278E-07 37440   0.117E-03    0.130E-03
+DAV:   7    -0.677518789160E+01    0.31554E-07   -0.14673E-07 43648   0.112E-03
+  13 F= -.67751879E+01 E0= -.67751879E+01  d E =-.107295E-26
+ Finite differences progress:
+  Degree of freedom:   3/  8
+  Displacement:        4/  4
+  Total:              12/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.683943003550E+01   -0.64242E-01   -0.24402E+00130560   0.323E+00    0.161E+00
+DAV:   2    -0.679153431340E+01    0.47896E-01   -0.75856E-02 83200   0.429E-01    0.783E-01
+DAV:   3    -0.677842142393E+01    0.13113E-01   -0.23052E-02129728   0.265E-01    0.300E-01
+DAV:   4    -0.677716457938E+01    0.12568E-02   -0.13938E-03 92544   0.545E-02    0.362E-02
+DAV:   5    -0.677716563056E+01   -0.10512E-05   -0.31713E-05125184   0.165E-02    0.112E-02
+DAV:   6    -0.677716840580E+01   -0.27752E-05   -0.29658E-06123200   0.323E-03    0.310E-03
+DAV:   7    -0.677716887221E+01   -0.46641E-06   -0.92930E-07132096   0.280E-03    0.972E-04
+DAV:   8    -0.677716898479E+01   -0.11257E-06   -0.10747E-07124480   0.511E-04    0.312E-04
+DAV:   9    -0.677716897682E+01    0.79617E-08   -0.11914E-09 49408   0.712E-05
+  14 F= -.67771690E+01 E0= -.67771690E+01  d E =-.129034E-35
+ Finite differences progress:
+  Degree of freedom:   4/  8
+  Displacement:        1/  4
+  Total:              13/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.677969152580E+01   -0.25225E-02   -0.66036E-01124224   0.142E+00    0.330E-01
+DAV:   2    -0.677835408301E+01    0.13374E-02   -0.81943E-04 76544   0.535E-02    0.195E-01
+DAV:   3    -0.677770895083E+01    0.64513E-03   -0.90166E-04136064   0.463E-02    0.250E-02
+DAV:   4    -0.677771082314E+01   -0.18723E-05   -0.75958E-06 98752   0.582E-03    0.198E-03
+DAV:   5    -0.677771107914E+01   -0.25600E-06   -0.12264E-07134976   0.691E-04    0.110E-03
+DAV:   6    -0.677771120505E+01   -0.12590E-06   -0.13845E-07120704   0.566E-04    0.344E-04
+DAV:   7    -0.677771119791E+01    0.71348E-08   -0.45985E-09 69376   0.916E-05
+  15 F= -.67777112E+01 E0= -.67777112E+01  d E =-.109485E-35
+ Finite differences progress:
+  Degree of freedom:   4/  8
+  Displacement:        2/  4
+  Total:              14/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.678572938090E+01   -0.80182E-02   -0.33917E-01120832   0.922E-01    0.660E-01
+DAV:   2    -0.678028688330E+01    0.54425E-02   -0.22014E-03 78656   0.643E-02    0.390E-01
+DAV:   3    -0.677770228482E+01    0.25846E-02   -0.36091E-03121280   0.811E-02    0.496E-02
+DAV:   4    -0.677770992051E+01   -0.76357E-05   -0.33650E-05106496   0.111E-02    0.362E-03
+DAV:   5    -0.677771075232E+01   -0.83181E-06   -0.54503E-07123136   0.129E-03    0.212E-03
+DAV:   6    -0.677771121290E+01   -0.46058E-06   -0.44870E-07124544   0.103E-03    0.595E-04
+DAV:   7    -0.677771120638E+01    0.65276E-08   -0.32193E-08130624   0.248E-04
+  16 F= -.67777112E+01 E0= -.67777112E+01  d E =-.109020E-35
+ Finite differences progress:
+  Degree of freedom:   4/  8
+  Displacement:        3/  4
+  Total:              15/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.677915145499E+01   -0.14402E-02   -0.72909E-01123904   0.144E+00    0.330E-01
+DAV:   2    -0.677781277378E+01    0.13387E-02   -0.76284E-04 76160   0.491E-02    0.195E-01
+DAV:   3    -0.677716685774E+01    0.64592E-03   -0.91544E-04137472   0.445E-02    0.249E-02
+DAV:   4    -0.677716876477E+01   -0.19070E-05   -0.93560E-06 97664   0.561E-03    0.164E-03
+DAV:   5    -0.677716887993E+01   -0.11516E-06   -0.16065E-07119552   0.685E-04    0.112E-03
+DAV:   6    -0.677716901151E+01   -0.13158E-06   -0.15177E-07123136   0.601E-04    0.324E-04
+DAV:   7    -0.677716900550E+01    0.60118E-08   -0.20889E-09 63232   0.621E-05
+  17 F= -.67771690E+01 E0= -.67771690E+01  d E =-.129025E-35
+ Finite differences progress:
+  Degree of freedom:   4/  8
+  Displacement:        4/  4
+  Total:              16/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.678717689294E+01   -0.10008E-01   -0.12699E+00119616   0.181E+00    0.905E-01
+DAV:   2    -0.677886326943E+01    0.83136E-02   -0.38606E-03 78848   0.928E-02    0.546E-01
+DAV:   3    -0.677654873988E+01    0.23145E-02   -0.74155E-03122176   0.113E-01    0.556E-02
+DAV:   4    -0.677701413191E+01   -0.46539E-03   -0.11973E-04104704   0.151E-02    0.724E-03
+DAV:   5    -0.677709989120E+01   -0.85759E-04   -0.27676E-06124096   0.235E-03    0.329E-03
+DAV:   6    -0.677715505124E+01   -0.55160E-04   -0.84399E-07123392   0.145E-03    0.103E-03
+DAV:   7    -0.677716756217E+01   -0.12511E-04   -0.85286E-08127040   0.414E-04    0.326E-04
+DAV:   8    -0.677716854517E+01   -0.98300E-06   -0.20872E-09 46784   0.895E-05    0.253E-04
+DAV:   9    -0.677716880271E+01   -0.25754E-06   -0.18719E-10 40448   0.247E-05    0.248E-04
+DAV:  10    -0.677716880988E+01   -0.71697E-08   -0.18627E-11 38912   0.111E-05
+  18 F= -.67771688E+01 E0= -.67771688E+01  d E =-.129195E-35
+ Finite differences progress:
+  Degree of freedom:   5/  8
+  Displacement:        1/  4
+  Total:              17/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.677969323611E+01   -0.25244E-02   -0.65354E-01126528   0.142E+00    0.330E-01
+DAV:   2    -0.677835435926E+01    0.13389E-02   -0.79433E-04 76160   0.527E-02    0.195E-01
+DAV:   3    -0.677770875503E+01    0.64560E-03   -0.90365E-04134784   0.463E-02    0.250E-02
+DAV:   4    -0.677771062837E+01   -0.18733E-05   -0.78953E-06 97792   0.586E-03    0.187E-03
+DAV:   5    -0.677771088370E+01   -0.25532E-06   -0.12107E-07132928   0.690E-04    0.108E-03
+DAV:   6    -0.677771101462E+01   -0.13092E-06   -0.13826E-07121088   0.568E-04    0.333E-04
+DAV:   7    -0.677771100819E+01    0.64247E-08   -0.35807E-09 64960   0.812E-05
+  19 F= -.67777110E+01 E0= -.67777110E+01  d E =-.109477E-35
+ Finite differences progress:
+  Degree of freedom:   5/  8
+  Displacement:        2/  4
+  Total:              18/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.678572838433E+01   -0.80174E-02   -0.34227E-01118912   0.934E-01    0.660E-01
+DAV:   2    -0.678028675061E+01    0.54416E-02   -0.22115E-03 78208   0.648E-02    0.390E-01
+DAV:   3    -0.677770201317E+01    0.25847E-02   -0.36082E-03120256   0.811E-02    0.496E-02
+DAV:   4    -0.677770960448E+01   -0.75913E-05   -0.33374E-05104128   0.111E-02    0.361E-03
+DAV:   5    -0.677771053759E+01   -0.93311E-06   -0.54295E-07124736   0.130E-03    0.212E-03
+DAV:   6    -0.677771102306E+01   -0.48547E-06   -0.46489E-07124928   0.105E-03    0.581E-04
+DAV:   7    -0.677771101768E+01    0.53796E-08   -0.28565E-08128512   0.232E-04
+  20 F= -.67777110E+01 E0= -.67777110E+01  d E =-.109036E-35
+ Finite differences progress:
+  Degree of freedom:   5/  8
+  Displacement:        3/  4
+  Total:              19/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.677915415313E+01   -0.14431E-02   -0.72236E-01126784   0.144E+00    0.330E-01
+DAV:   2    -0.677781317126E+01    0.13410E-02   -0.73811E-04 76224   0.479E-02    0.195E-01
+DAV:   3    -0.677716661705E+01    0.64655E-03   -0.91304E-04137472   0.444E-02    0.249E-02
+DAV:   4    -0.677716850075E+01   -0.18837E-05   -0.89978E-06100096   0.556E-03    0.160E-03
+DAV:   5    -0.677716867473E+01   -0.17397E-06   -0.13782E-07120704   0.653E-04    0.113E-03
+DAV:   6    -0.677716882371E+01   -0.14898E-06   -0.14957E-07123264   0.594E-04    0.327E-04
+DAV:   7    -0.677716881764E+01    0.60713E-08   -0.26143E-09 63488   0.691E-05
+  21 F= -.67771688E+01 E0= -.67771688E+01  d E =-.129020E-35
+ Finite differences progress:
+  Degree of freedom:   5/  8
+  Displacement:        4/  4
+  Total:              20/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.679363952542E+01   -0.16471E-01   -0.12044E+00120832   0.176E+00    0.905E-01
+DAV:   2    -0.678320011153E+01    0.10439E-01   -0.37589E-03 78976   0.934E-02    0.546E-01
+DAV:   3    -0.677723584225E+01    0.59643E-02   -0.73083E-03119744   0.117E-01    0.546E-02
+DAV:   4    -0.677717562611E+01    0.60216E-04   -0.12365E-04106176   0.160E-02    0.559E-03
+DAV:   5    -0.677717223341E+01    0.33927E-05   -0.15033E-06118272   0.220E-03    0.328E-03
+DAV:   6    -0.677716893476E+01    0.32987E-05   -0.10191E-06124992   0.174E-03    0.701E-04
+DAV:   7    -0.677716868454E+01    0.25022E-06   -0.32236E-08108608   0.310E-04    0.318E-04
+DAV:   8    -0.677716874258E+01   -0.58042E-07   -0.12969E-09 46080   0.663E-05
+  22 F= -.67771687E+01 E0= -.67771687E+01  d E =-.129318E-35
+ Finite differences progress:
+  Degree of freedom:   6/  8
+  Displacement:        1/  4
+  Total:              21/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.677969302742E+01   -0.25243E-02   -0.64198E-01128256   0.141E+00    0.330E-01
+DAV:   2    -0.677835448607E+01    0.13385E-02   -0.79572E-04 76288   0.525E-02    0.195E-01
+DAV:   3    -0.677770876103E+01    0.64573E-03   -0.90366E-04134656   0.463E-02    0.250E-02
+DAV:   4    -0.677771064794E+01   -0.18869E-05   -0.80191E-06 99200   0.589E-03    0.185E-03
+DAV:   5    -0.677771089351E+01   -0.24558E-06   -0.11736E-07132224   0.681E-04    0.109E-03
+DAV:   6    -0.677771102836E+01   -0.13485E-06   -0.13597E-07121600   0.562E-04    0.340E-04
+DAV:   7    -0.677771102175E+01    0.66109E-08   -0.45881E-09 67520   0.909E-05
+  23 F= -.67777110E+01 E0= -.67777110E+01  d E =-.109476E-35
+ Finite differences progress:
+  Degree of freedom:   6/  8
+  Displacement:        2/  4
+  Total:              22/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.678572787703E+01   -0.80168E-02   -0.34904E-01120896   0.949E-01    0.660E-01
+DAV:   2    -0.678028668682E+01    0.54412E-02   -0.22167E-03 77504   0.649E-02    0.390E-01
+DAV:   3    -0.677770204314E+01    0.25846E-02   -0.36089E-03120832   0.812E-02    0.497E-02
+DAV:   4    -0.677770964353E+01   -0.76004E-05   -0.33450E-05104640   0.110E-02    0.363E-03
+DAV:   5    -0.677771054712E+01   -0.90359E-06   -0.54944E-07126272   0.131E-03    0.213E-03
+DAV:   6    -0.677771103492E+01   -0.48780E-06   -0.45861E-07124800   0.104E-03    0.593E-04
+DAV:   7    -0.677771103107E+01    0.38462E-08   -0.31590E-08129536   0.245E-04
+  24 F= -.67777110E+01 E0= -.67777110E+01  d E =-.109028E-35
+ Finite differences progress:
+  Degree of freedom:   6/  8
+  Displacement:        3/  4
+  Total:              23/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.677915348660E+01   -0.14425E-02   -0.70994E-01124864   0.142E+00    0.330E-01
+DAV:   2    -0.677781301255E+01    0.13405E-02   -0.74451E-04 76224   0.482E-02    0.195E-01
+DAV:   3    -0.677716663735E+01    0.64638E-03   -0.91358E-04139328   0.445E-02    0.249E-02
+DAV:   4    -0.677716851348E+01   -0.18761E-05   -0.89230E-06 96448   0.553E-03    0.158E-03
+DAV:   5    -0.677716869101E+01   -0.17753E-06   -0.14067E-07125056   0.669E-04    0.112E-03
+DAV:   6    -0.677716883742E+01   -0.14641E-06   -0.15338E-07122240   0.603E-04    0.326E-04
+DAV:   7    -0.677716883141E+01    0.60148E-08   -0.21005E-09 63232   0.626E-05
+  25 F= -.67771688E+01 E0= -.67771688E+01  d E =-.129023E-35
+ Finite differences progress:
+  Degree of freedom:   6/  8
+  Displacement:        4/  4
+  Total:              24/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.678428213683E+01   -0.71133E-02   -0.21815E+00 43712   0.217E+00    0.620E-01
+DAV:   2    -0.677990162000E+01    0.43805E-02   -0.19354E-03 25088   0.835E-02    0.383E-01
+DAV:   3    -0.677756210231E+01    0.23395E-02   -0.39458E-03 38656   0.878E-02    0.176E-02
+DAV:   4    -0.677762276627E+01   -0.60664E-04   -0.24271E-05 32128   0.833E-03    0.588E-03
+DAV:   5    -0.677765110870E+01   -0.28342E-04   -0.28045E-06 41088   0.271E-03    0.107E-03
+DAV:   6    -0.677765609210E+01   -0.49834E-05   -0.13641E-07 36672   0.552E-04    0.558E-04
+DAV:   7    -0.677765770007E+01   -0.16080E-05   -0.11320E-08 35264   0.171E-04    0.259E-04
+DAV:   8    -0.677765794169E+01   -0.24162E-06   -0.34749E-10 14080   0.324E-05    0.250E-04
+DAV:   9    -0.677765797359E+01   -0.31900E-07   -0.24408E-11 13184   0.945E-06
+  26 F= -.67776580E+01 E0= -.67776580E+01  d E =-.187699E-35
+ Finite differences progress:
+  Degree of freedom:   7/  8
+  Displacement:        1/  4
+  Total:              25/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.677782340839E+01   -0.16547E-03   -0.12244E+00 25856   0.126E+00    0.108E-02
+DAV:   2    -0.677783431883E+01   -0.10910E-04   -0.14030E-04 27136   0.249E-02    0.528E-03
+DAV:   3    -0.677783395400E+01    0.36484E-06   -0.23370E-06 46656   0.194E-03    0.156E-03
+DAV:   4    -0.677783395575E+01   -0.17572E-08   -0.12119E-07 27136   0.505E-04    0.336E-04
+DAV:   5    -0.677783395756E+01   -0.18009E-08   -0.19285E-09 41984   0.895E-05
+  27 F= -.67778340E+01 E0= -.67778340E+01  d E =-.177635E-35
+ Finite differences progress:
+  Degree of freedom:   7/  8
+  Displacement:        2/  4
+  Total:              26/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.677783157351E+01    0.23822E-05   -0.11610E+00 25536   0.130E+00    0.215E-02
+DAV:   2    -0.677783535028E+01   -0.37768E-05   -0.16126E-04 27904   0.269E-02    0.106E-02
+DAV:   3    -0.677783389481E+01    0.14555E-05   -0.92600E-06 45376   0.374E-03    0.308E-03
+DAV:   4    -0.677783394801E+01   -0.53206E-07   -0.43848E-07 28032   0.968E-04    0.569E-04
+DAV:   5    -0.677783395600E+01   -0.79812E-08   -0.13365E-08 43904   0.205E-04
+  28 F= -.67778340E+01 E0= -.67778340E+01  d E =-.177625E-35
+ Finite differences progress:
+  Degree of freedom:   7/  8
+  Displacement:        3/  4
+  Total:              27/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.677764798739E+01    0.18596E-03   -0.12241E+00 26368   0.126E+00    0.107E-02
+DAV:   2    -0.677765827997E+01   -0.10293E-04   -0.13384E-04 27520   0.244E-02    0.532E-03
+DAV:   3    -0.677765796153E+01    0.31844E-06   -0.23993E-06 46272   0.196E-03    0.158E-03
+DAV:   4    -0.677765798642E+01   -0.24882E-07   -0.98616E-08 27520   0.463E-04    0.406E-04
+DAV:   5    -0.677765799207E+01   -0.56490E-08   -0.53687E-09 42368   0.120E-04
+  29 F= -.67776580E+01 E0= -.67776580E+01  d E =-.187643E-35
+ Finite differences progress:
+  Degree of freedom:   7/  8
+  Displacement:        4/  4
+  Total:              28/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.677747726896E+01    0.18072E-03   -0.24126E+00 28288   0.211E+00    0.486E-02
+DAV:   2    -0.677765697213E+01   -0.17970E-03   -0.21921E-03 27584   0.112E-01    0.280E-02
+DAV:   3    -0.677765573213E+01    0.12400E-05   -0.54855E-05 46208   0.843E-03    0.903E-03
+DAV:   4    -0.677765706236E+01   -0.13302E-05   -0.26205E-06 28864   0.227E-03    0.269E-03
+DAV:   5    -0.677765723371E+01   -0.17135E-06   -0.12710E-07 43840   0.494E-04    0.175E-03
+DAV:   6    -0.677765729668E+01   -0.62969E-07   -0.71929E-08 38336   0.353E-04
+  30 F= -.67776573E+01 E0= -.67776573E+01  d E =-.187637E-35
+ Finite differences progress:
+  Degree of freedom:   8/  8
+  Displacement:        1/  4
+  Total:              29/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.677777888991E+01   -0.12166E-03   -0.63404E-01 25792   0.628E-01    0.280E-02
+DAV:   2    -0.677783715268E+01   -0.58263E-04   -0.82461E-04 31360   0.495E-02    0.155E-02
+DAV:   3    -0.677783337196E+01    0.37807E-05   -0.19552E-05 42496   0.476E-03    0.583E-03
+DAV:   4    -0.677783363506E+01   -0.26311E-06   -0.86823E-07 31488   0.147E-03    0.158E-03
+DAV:   5    -0.677783366160E+01   -0.26533E-07   -0.10298E-08 39552   0.176E-04
+  31 F= -.67778337E+01 E0= -.67778337E+01  d E =-.177412E-35
+ Finite differences progress:
+  Degree of freedom:   8/  8
+  Displacement:        2/  4
+  Total:              30/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.677786482524E+01   -0.31190E-04   -0.63742E-01 25216   0.657E-01    0.547E-02
+DAV:   2    -0.677784659736E+01    0.18228E-04   -0.79778E-04 32576   0.498E-02    0.314E-02
+DAV:   3    -0.677783228383E+01    0.14314E-04   -0.84181E-05 40640   0.979E-03    0.114E-02
+DAV:   4    -0.677783354553E+01   -0.12617E-05   -0.43483E-06 33920   0.315E-03    0.324E-03
+DAV:   5    -0.677783361188E+01   -0.66347E-07   -0.43422E-08 38656   0.355E-04
+  32 F= -.67778336E+01 E0= -.67778336E+01  d E =-.177508E-35
+ Finite differences progress:
+  Degree of freedom:   8/  8
+  Displacement:        3/  4
+  Total:              31/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.677761298254E+01    0.22056E-03   -0.64432E-01 25792   0.632E-01    0.269E-02
+DAV:   2    -0.677766018986E+01   -0.47207E-04   -0.71974E-04 29824   0.467E-02    0.157E-02
+DAV:   3    -0.677765693785E+01    0.32520E-05   -0.22045E-05 44224   0.509E-03    0.566E-03
+DAV:   4    -0.677765725460E+01   -0.31675E-06   -0.10757E-06 30272   0.155E-03    0.150E-03
+DAV:   5    -0.677765727752E+01   -0.22919E-07   -0.10838E-08 40832   0.190E-04
+  33 F= -.67776573E+01 E0= -.67776573E+01  d E =-.187668E-35
+ Finite differences progress:
+  Degree of freedom:   8/  8
+  Displacement:        4/  4
+  Total:              32/ 32
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ PROFILE, used timers:     342
