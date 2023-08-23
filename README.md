@@ -86,19 +86,21 @@ added, but modifications could be made for other queue management systems.
 placed in the `calculations/` directory. Each mode has its own configuration
 settings with sensible defaults, but these can be easily customized by the user.
     * To include spin polarization, set `"ispin": "auto"` in
-    `calc_config.json`. With this setting, all elements with valence *d* or
-    *f* electrons will start with initial magnetic moments of 5 and 7
-    $\mu_B$, respectively. `VaspManager` also accepts an additional argument
-    `magmom_per_atom_cutoff` which defaults to 0. If this argument is passed,
-    `rlx` calculations that finish with a magmom per atom less than this value
-    with be re-run without spin polarization. This argument only affects `rlx`
-    calculations, and the spin setting for following `static`, `bulkmod`, or
-    `elastic` calculations is inferred from the final `rlx` calculation.
-    * To include DFT+U for transition metal oxides, set `"hubbards": "wang"`.
-    Currently, only `"gga": "PE"` (PBE) is supported.
+    `calc_config.json`; otherwise set `"ispin": 1` With this setting, all
+    elements with valence *d* or *f* electrons will start with initial magnetic
+    moments of 5 and 7 $\mu_B$, respectively. `VaspManager` also accepts an
+    additional argument `magmom_per_atom_cutoff` which defaults to 0. If this
+    argument is passed, `rlx` calculations that finish with a magmom per atom
+    less than this value with be re-run without spin polarization. This argument
+    only affects `rlx` calculations, and the spin setting for following
+    `static`, `bulkmod`, or `elastic` calculations is inferred from the final
+    `rlx` calculation.
+    * To include DFT+U for transition metal oxides, set `"hubbards": "wang"`;
+    otherwise, set `"hubbards": null`.  Currently, only `"gga": "PE"` (PBE) is
+    supported.
 
 To manually stop `VaspManager` from processing a material, place a `STOP` file
-in that material's directory: e.g. `calculations/AlAs/STOP`.
+in that material's directory: e.g. `calculations/NaCl/STOP`.
 
 The module logger is also made available for information and debugging and can
 be accessed through `logging.getLogger("vasp_manager")`.
