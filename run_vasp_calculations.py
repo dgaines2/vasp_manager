@@ -48,6 +48,16 @@ if __name__ == "__main__":
     calculation_folder = Path("calculations")
     if not calculation_folder.exists():
         make_calculations_folder(calcs_path=calculation_folder)
+
+    calc_config_path = calculation_folder / "calc_config.json"
+    computing_config_path = calculation_folder / "computing_config.json"
+    if not calc_config_path.exists() or not computing_config_path.exists():
+        raise Exception(
+            f"""Couldn't find one of the configuration files
+           Be sure to set up the configuration files in {calculation_folder}
+           before trying to run VaspManager"""
+        )
+
     calculation_types = [
         "rlx-coarse",
         "rlx",
