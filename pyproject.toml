@@ -25,6 +25,11 @@ exclude = '''
 )/
 '''
 
+[tool.coverage.run]
+command_line = "-m pytest"
+source = ["vasp_manager"]
+omit = ["*tests*"]
+
 
 [tool.isort]
 profile = 'black'

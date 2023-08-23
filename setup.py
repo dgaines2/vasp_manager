@@ -21,5 +21,5 @@ setup(
         "pandas>=1.4",
         "pymatgen>=2022.5",
     ],
-    extras_require={"dev": ["black", "isort", "pre-commit", "pytest"]},
+    extras_require={"dev": ["black", "coverage", "isort", "pre-commit", "pytest"]},
 )
