@@ -183,7 +183,7 @@ def test_hit_errors(calc_dir):
     assert rlx_coarse_dir.exists()
     rlx_coarse_manager = RlxCoarseCalculationManager(
         material_path=material_path,
-        to_rerun=True,
+        to_rerun=False,
         to_submit=False,
     )
     errors = rlx_coarse_manager._check_vasp_errors(stdout_path, stderr_path)
@@ -193,6 +193,81 @@ def test_hit_errors(calc_dir):
     assert "OOM" in errors
     assert not rlx_coarse_manager.is_done
     assert rlx_coarse_manager.results == "not finished"
+
+
+def test_rlx_coarse_hit_errors(calc_dir):
+    """
+    Test parsing and handling of VASP errors for rlx-coarse
+    """
+    material_path = calc_dir / "material_hit_errors"
+    rlx_coarse_dir = material_path / "rlx-coarse"
+    assert rlx_coarse_dir.exists()
+    rlx_coarse_manager = RlxCoarseCalculationManager(
+        material_path=material_path,
+        to_rerun=False,
+        to_submit=False,
+    )
+    assert not rlx_coarse_manager.is_done
+
+
+def test_rlx_hit_errors(calc_dir):
+    """
+    Test parsing and handling of VASP errors for rlx
+    """
+    material_path = calc_dir / "material_hit_errors"
+    rlx_dir = material_path / "rlx"
+    assert rlx_dir.exists()
+    rlx_manager = RlxCalculationManager(
+        material_path=material_path,
+        to_rerun=False,
+        to_submit=False,
+    )
+    assert not rlx_manager.is_done
+
+
+def test_static_hit_errors(calc_dir):
+    """
+    Test parsing and handling of VASP errors for static
+    """
+    material_path = calc_dir / "material_hit_errors"
+    static_dir = material_path / "static"
+    assert static_dir.exists()
+    static_manager = StaticCalculationManager(
+        material_path=material_path,
+        to_rerun=False,
+        to_submit=False,
+    )
+    assert not static_manager.is_done
+
+
+def test_bulkmod_hit_errors(calc_dir):
+    """
+    Test parsing and handling of VASP errors for bulkmod
+    """
+    material_path = calc_dir / "material_hit_errors"
+    bulkmod_dir = material_path / "bulkmod"
+    assert bulkmod_dir.exists()
+    bulkmod_manager = BulkmodCalculationManager(
+        material_path=material_path,
+        to_rerun=False,
+        to_submit=False,
+    )
+    assert not bulkmod_manager.is_done
+
+
+def test_elastic_hit_errors(calc_dir):
+    """
+    Test parsing and handling of VASP errors for elastic
+    """
+    material_path = calc_dir / "material_hit_errors"
+    elastic_dir = material_path / "elastic"
+    assert elastic_dir.exists()
+    elastic_manager = ElasticCalculationManager(
+        material_path=material_path,
+        to_rerun=False,
+        to_submit=False,
+    )
+    assert not elastic_manager.is_done
 
 
 def test_parse_magmom(calc_dir):
