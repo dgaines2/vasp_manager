@@ -8,7 +8,6 @@ from pathlib import Path
 
 import numpy as np
 from pymatgen.core import Structure
-from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
 from vasp_manager.utils import NumpyEncoder, pgrep
 
@@ -36,138 +35,6 @@ class ElasticAnalyzer:
         self._rounding_precision = rounding_precision
         self._results = None
         self._structure = None
-        self._crystal_system = None
-
-    @property
-    def calc_path(self):
-        if self._calc_path is not None:
-            self.calc_path = self._calc_path
-        return self._calc_path
-
-    @calc_path.setter
-    def calc_path(self, value):
-        # make sure cij wasn't already defined
-        # if self._cij is not None:
-        #     raise Exception("Could not set calc_path as cij was already specified")
-        if not value.exists():
-            raise ValueError(f"Could not set calc_path to {value} as it does not exist")
-        self._calc_path = value
-
-    @property
-    def structure(self):
-        if self._structure is None:
-            self._structure = Structure.from_file(self.calc_path / "POSCAR")
-        return self._structure
-
-    @property
-    def density(self):
-        return self.structure.density
-
-    @property
-    def crystal_system(self):
-        if self._crystal_system is None:
-            sga = SpacegroupAnalyzer(self.structure, symprec=1e-3, angle_tolerance=-1.0)
-            self._crystal_system = sga.get_crystal_system()
-        return self._crystal_system
-
-    @property
-    def rounding_precision(self):
-        if self._rounding_precision is not None:
-            self.rounding_precision = self._rounding_precision
-        return self._rounding_precision
-
-    @rounding_precision.setter
-    def rounding_precision(self, value):
-        if not isinstance(value, int):
-            raise ValueError(
-                f"Could not set rounding_precision to {value}, rounding precision must"
-                " be an int"
-            )
-        self._rounding_precision = value
-
-    @cached_property
-    def elastic_file(self):
-        return self.calc_path / "elastic_constants.txt"
-
-    @cached_property
-    def outcar_file(self):
-        # search for OUTCAR or OUTCAR.gz
-        outcar_glob = list(self.calc_path.glob("OUTCAR*"))
-        if len(outcar_glob) == 0:
-            raise Exception(f"No OUTCAR available at {self.calc_path}")
-        return outcar_glob[0]
-
-    @property
-    def cij(self):
-        # assumed to be in GPa
-        if self._cij is None:
-            self.cij = np.round(
-                self._read_stiffness_tensor_file(), self.rounding_precision
-            )
-        else:
-            self.cij = self._cij
-        return self._cij
-
-    @cij.setter
-    def cij(self, values):
-        if np.shape(values) != (6, 6):
-            raise ValueError
-        if np.asarray(values).dtype != float:
-            raise ValueError
-        self._cij = values
-
-    @cached_property
-    def sij(self):
-        # DO NOT ROUND
-        return self.get_compliance_tensor(self.cij)
-
-    @cached_property
-    def b_reuss(self):
-        return np.round(self.get_B_Reuss(self.sij), self.rounding_precision)
-
-    @cached_property
-    def b_voigt(self):
-        return np.round(self.get_B_Voigt(self.cij), self.rounding_precision)
-
-    @cached_property
-    def b_vrh(self):
-        return np.round(
-            self.get_VRH_average(self.b_reuss, self.b_voigt), self.rounding_precision
-        )
-
-    @cached_property
-    def g_reuss(self):
-        return np.round(self.get_G_Reuss(self.sij), self.rounding_precision)
-
-    @cached_property
-    def g_voigt(self):
-        return np.round(self.get_G_Voigt(self.cij), self.rounding_precision)
-
-    @cached_property
-    def g_vrh(self):
-        return np.round(
-            self.get_VRH_average(self.g_reuss, self.g_voigt), self.rounding_precision
-        )
-
-    @cached_property
-    def elastically_unstable(self):
-        return self.check_elastically_unstable(self.cij, self.crystal_system)
-
-    @cached_property
-    def vt(self):
-        return np.round(self.get_vt(self.g_vrh, self.density), self.rounding_precision)
-
-    @cached_property
-    def vl(self):
-        return np.round(
-            self.get_vl(self.b_vrh, self.g_vrh, self.density), self.rounding_precision
-        )
-
-    @cached_property
-    def vs(self):
-        return np.round(
-            self.get_vs(self.b_vrh, self.g_vrh, self.density), self.rounding_precision
-        )
 
     @staticmethod
     def change_elastic_constants_from_vasp(vasp_elastic_tensor):
@@ -300,7 +167,7 @@ class ElasticAnalyzer:
         return vs
 
     @staticmethod
-    def check_elastically_unstable(cij, crystal_system):
+    def check_elastically_unstable(cij):
         "returns True if compound is elastically unstable"
         eigenvalues, eigenvectors = np.linalg.eig(cij)
         born_critera_satisfied = np.all(eigenvalues > 0)
@@ -310,6 +177,129 @@ class ElasticAnalyzer:
             return True
 
         return False
+
+    @property
+    def calc_path(self):
+        if self._calc_path is not None:
+            self.calc_path = self._calc_path
+        return self._calc_path
+
+    @calc_path.setter
+    def calc_path(self, value):
+        # make sure cij wasn't already defined
+        # if self._cij is not None:
+        #     raise Exception("Could not set calc_path as cij was already specified")
+        if not value.exists():
+            raise ValueError(f"Could not set calc_path to {value} as it does not exist")
+        self._calc_path = value
+
+    @property
+    def structure(self):
+        if self._structure is None:
+            self._structure = Structure.from_file(self.calc_path / "POSCAR")
+        return self._structure
+
+    @property
+    def density(self):
+        return self.structure.density
+
+    @property
+    def rounding_precision(self):
+        if self._rounding_precision is not None:
+            self.rounding_precision = self._rounding_precision
+        return self._rounding_precision
+
+    @rounding_precision.setter
+    def rounding_precision(self, value):
+        if not isinstance(value, int):
+            raise ValueError(
+                f"Could not set rounding_precision to {value}, rounding precision must"
+                " be an int"
+            )
+        self._rounding_precision = value
+
+    @cached_property
+    def elastic_file(self):
+        return self.calc_path / "elastic_constants.txt"
+
+    @cached_property
+    def outcar_file(self):
+        # search for OUTCAR or OUTCAR.gz
+        outcar_glob = list(self.calc_path.glob("OUTCAR*"))
+        if len(outcar_glob) == 0:
+            raise Exception(f"No OUTCAR available at {self.calc_path}")
+        return outcar_glob[0]
+
+    @property
+    def cij(self):
+        # assumed to be in GPa
+        if self._cij is None:
+            # VASP only outputs to 4 decimal places
+            self.cij = np.round(self._read_stiffness_tensor_file(), 4)
+        else:
+            self.cij = self._cij
+        return self._cij
+
+    @cij.setter
+    def cij(self, values):
+        if np.shape(values) != (6, 6):
+            raise ValueError
+        if np.asarray(values).dtype != float:
+            raise ValueError
+        self._cij = values
+
+    @cached_property
+    def sij(self):
+        # DO NOT ROUND
+        return self.get_compliance_tensor(self.cij)
+
+    @cached_property
+    def b_reuss(self):
+        return np.round(self.get_B_Reuss(self.sij), self.rounding_precision)
+
+    @cached_property
+    def b_voigt(self):
+        return np.round(self.get_B_Voigt(self.cij), self.rounding_precision)
+
+    @cached_property
+    def b_vrh(self):
+        return np.round(
+            self.get_VRH_average(self.b_reuss, self.b_voigt), self.rounding_precision
+        )
+
+    @cached_property
+    def g_reuss(self):
+        return np.round(self.get_G_Reuss(self.sij), self.rounding_precision)
+
+    @cached_property
+    def g_voigt(self):
+        return np.round(self.get_G_Voigt(self.cij), self.rounding_precision)
+
+    @cached_property
+    def g_vrh(self):
+        return np.round(
+            self.get_VRH_average(self.g_reuss, self.g_voigt), self.rounding_precision
+        )
+
+    @cached_property
+    def elastically_unstable(self):
+        return self.check_elastically_unstable(self.cij)
+
+    @cached_property
+    def vt(self):
+        return np.round(self.get_vt(self.g_vrh, self.density), self.rounding_precision)
+
+    @cached_property
+    def vl(self):
+        return np.round(
+            self.get_vl(self.b_vrh, self.g_vrh, self.density), self.rounding_precision
+        )
+
+    @cached_property
+    def vs(self):
+        return np.round(
+            self.get_vs(self.b_vrh, self.g_vrh, self.density), self.rounding_precision
+        )
 
     def _make_stiffness_tensor_file(self):
         """
@@ -347,29 +337,36 @@ class ElasticAnalyzer:
             elastic_tensor = self.change_elastic_constants_from_vasp(elastic_tensor)
         return elastic_tensor
 
-    def _analyze_elastic(self):
+    def _analyze_elastic(self, properties=None):
         """
         Grabs important quantities from the elastic calculation results
 
         Args:
             elastic_file (str): filepath
+            properties (list): names
         Returns:
             elastic_dict (dict): dict of extracted info from
                 elastic calculation
         """
-        elastic_dict = {}
-        elastic_dict["B_Reuss"] = self.b_reuss
-        elastic_dict["B_Voigt"] = self.b_voigt
-        elastic_dict["B_VRH"] = self.b_vrh
-        elastic_dict["G_Reuss"] = self.g_reuss
-        elastic_dict["G_Voigt"] = self.g_voigt
-        elastic_dict["G_VRH"] = self.g_vrh
-        elastic_dict["unstable"] = self.elastically_unstable
-        elastic_dict["elastic_tensor"] = self.cij
-        elastic_dict["vl"] = self.vl
-        elastic_dict["vt"] = self.vt
-        elastic_dict["vs"] = self.vs
+        properties_map = {
+            "B_Reuss": "b_reuss",
+            "B_Voigt": "b_voigt",
+            "B_VRH": "b_vrh",
+            "G_Reuss": "g_reuss",
+            "G_Voigt": "g_voigt",
+            "G_VRH": "g_vrh",
+            "unstable": "elastically_unstable",
+            "elastic_tensor": "cij",
+            "vl": "vl",
+            "vt": "vt",
+            "vs": "vs",
+        }
+        if properties is None:
+            properties = list(properties_map.keys())
 
+        elastic_dict = {}
+        for property in properties:
+            elastic_dict[property] = getattr(self, properties_map[property])
         logger.debug(json.dumps(elastic_dict, cls=NumpyEncoder, indent=2))
 
         return elastic_dict
