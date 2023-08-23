@@ -1,4 +1,5 @@
 import shutil
+from textwrap import dedent
 
 import importlib_resources
 
@@ -65,6 +66,7 @@ def test_vmg_in_order(tmp_path):
                             assert isinstance(results[material][pc]["B"], float)
                         case _:
                             raise Exception
+
             # check summary
             summary = vmg.summary(as_string=False)
             for pc in previous_calc_types:
@@ -81,6 +83,24 @@ def test_vmg_in_order(tmp_path):
                 symlinks=True,
                 ignore=shutil.ignore_patterns("elastic_constants.txt"),
             )
+
+        # test string summary when unfinished
+        if i == (len(calculation_types) - 1):
+            summary = vmg.summary(as_string=True, print_unfinished=True)
+            correct_summary = dedent(
+                """\
+            Total Materials = 2
+            ------------------------------
+            RLX-COARSE  2/2 completed
+            RLX         2/2 completed
+            STATIC      2/2 completed
+            BULKMOD     2/2 completed
+            ELASTIC     0/2 completed
+                        2 not completed
+            Unfinished ELASTIC: ['material', 'material_spinu']
+            """
+            )
+            assert summary == correct_summary
 
     vmg = VaspManager(
         calculation_types=calculation_types,
