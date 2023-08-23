@@ -14,3 +14,5 @@ done
 find * -name OUTCAR.gz -exec gunzip -v {} \;
 find * -name vasprun.xml.gz -exec gunzip -v {} \;
 find * -name EIGENVAL.gz -exec gunzip -v {} \;
+find * -name PROCAR -exec gunzip -v {} \;
+find * -name vaspout.h5 -exec gunzip -v {} \;

@@ -3,6 +3,8 @@
 find * -name OUTCAR -exec gzip -v {} \;
 find * -name vasprun.xml -exec gzip -v {} \;
 find * -name EIGENVAL -exec gzip -v {} \;
+find * -name PROCAR -exec gzip -v {} \;
+find * -name vaspout.h5 -exec gzip -v {} \;
 
 archive_dirs=$(find * -type d -name archive*)
 for archive_dir in $archive_dirs; do

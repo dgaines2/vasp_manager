@@ -1,0 +1,91 @@
+ ----------------------------------------------------
+    OOO  PPPP  EEEEE N   N M   M PPPP
+   O   O P   P E     NN  N MM MM P   P
+   O   O PPPP  EEEEE N N N M M M PPPP   -- VERSION
+   O   O P     E     N  NN M   M P
+    OOO  P     EEEEE N   N M   M P
+ ----------------------------------------------------
+ running  128 mpi-ranks, with    1 threads/rank
+ distrk:  each k-point on   32 cores,    4 groups
+ distr:  one band on   16 cores,    2 groups
+ vasp.6.3.2 27Jun22 (build Jun 30 2023 15:13:53) complex                         
+ POSCAR found type information on POSCAR NaCl
+ POSCAR found :  2 types and       2 ions
+ Reading from existing POTCAR
+ scaLAPACK will be used
+ Reading from existing POTCAR
+ LDA part: xc-table for Pade appr. of Perdew
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ INCAR ok, starting setup
+ POSCAR ok, starting setup
+ FFT: planning ... GRIDC
+ FFT: planning ... GRID_SOFT
+ FFT: planning ... GRID
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1     0.934552564402E+02    0.93455E+02   -0.66750E+03  1504   0.883E+02
+DAV:   2    -0.595241872290E-01   -0.93515E+02   -0.85262E+02  1640   0.263E+02
+DAV:   3    -0.687724617265E+01   -0.68177E+01   -0.67713E+01  1984   0.608E+01
+DAV:   4    -0.696822424622E+01   -0.90978E-01   -0.90955E-01  1720   0.737E+00
+DAV:   5    -0.696992325721E+01   -0.16990E-02   -0.16989E-02  1944   0.102E+00    0.215E+00
+DAV:   6    -0.677877411726E+01    0.19115E+00   -0.26658E-01  1952   0.287E+00    0.160E+00
+DAV:   7    -0.676744807977E+01    0.11326E-01   -0.73337E-02  2088   0.145E+00    0.111E+00
+DAV:   8    -0.677313266264E+01   -0.56846E-02   -0.10084E-02  1600   0.760E-01    0.337E-01
+DAV:   9    -0.677296309296E+01    0.16957E-03   -0.25235E-04  1880   0.106E-01    0.170E-01
+DAV:  10    -0.677306678320E+01   -0.10369E-03   -0.26343E-04  1712   0.115E-01    0.594E-02
+DAV:  11    -0.677305979514E+01    0.69881E-05   -0.11614E-05  1936   0.309E-02
+   1 F= -.67730598E+01 E0= -.67730598E+01  d E =-.677306E+01
+ curvature:   0.00 expect dE= 0.000E+00 dE for cont linesearch  0.000E+00
+ trial: gam= 0.00000 g(F)=  0.107E-64 g(S)=  0.970E-03 ort = 0.000E+00 (trialstep = 0.100E+01)
+ search vector abs. value=  0.970E-03
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.677516527047E+01   -0.20985E-02   -0.23245E-02  1968   0.177E+00    0.228E-01
+DAV:   2    -0.677415449073E+01    0.10108E-02   -0.12930E-03  1776   0.309E-01    0.923E-02
+DAV:   3    -0.677397293616E+01    0.18155E-03   -0.35628E-04  2008   0.168E-01    0.453E-02
+DAV:   4    -0.677394763160E+01    0.25305E-04   -0.92967E-06  1248   0.299E-02    0.374E-03
+DAV:   5    -0.677394718118E+01    0.45042E-06   -0.21905E-06   792   0.165E-02
+   2 F= -.67739472E+01 E0= -.67739472E+01  d E =-.887386E-03
+ ZBRENT: can't locate minimum, use default step
+ trial-energy change:   -0.000887  1 .order   -0.000896   -0.000970   -0.000822
+ step:   4.0000(harm=  6.5309)  dis= 0.00000  next Energy=    -6.776228 (dE=-0.317E-02)
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.678684635116E+01   -0.12899E-01   -0.20785E-01  1968   0.533E+00    0.677E-01
+DAV:   2    -0.677776587048E+01    0.90805E-02   -0.11686E-02  1784   0.923E-01    0.275E-01
+DAV:   3    -0.677616455356E+01    0.16013E-02   -0.31511E-03  1992   0.500E-01    0.135E-01
+DAV:   4    -0.677597619260E+01    0.18836E-03   -0.10007E-04  2048   0.899E-02    0.122E-02
+DAV:   5    -0.677597170846E+01    0.44841E-05   -0.12338E-05  1408   0.223E-02
+   3 F= -.67759717E+01 E0= -.67759717E+01  d E =-.291191E-02
+ curvature:  -2.58 expect dE=-0.469E-03 dE for cont linesearch -0.469E-03
+ ZBRENT: increasing intervall
+ opt :  10.0000  next Energy=    -6.776080 (dE=-0.302E-02)
+ bond charge predicted
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1    -0.682041949295E+01   -0.44443E-01   -0.82970E-01  1968   0.107E+01    0.134E+00
+DAV:   2    -0.678429526607E+01    0.36124E-01   -0.47466E-02  1760   0.184E+00    0.545E-01
+DAV:   3    -0.677800979738E+01    0.62855E-02   -0.12280E-02  1992   0.983E-01    0.264E-01
+DAV:   4    -0.677729490102E+01    0.71490E-03   -0.38751E-04  2008   0.180E-01    0.237E-02
+DAV:   5    -0.677727844685E+01    0.16454E-04   -0.48875E-05  1776   0.450E-02    0.143E-02
+DAV:   6    -0.677727668990E+01    0.17570E-05   -0.21379E-06   872   0.154E-02
+   4 F= -.67772767E+01 E0= -.67772767E+01  d E =-.421689E-02
+ curvature:  -0.59 expect dE=-0.179E-04 dE for cont linesearch -0.179E-04
+ trial: gam= 0.00000 g(F)=  0.914E-61 g(S)=  0.301E-04 ort =-0.171E-03 (trialstep = 0.280E+01)
+ search vector abs. value=  0.301E-04
+ reached required accuracy - stopping structural energy minimisation
+ PROFILE, used timers:     369

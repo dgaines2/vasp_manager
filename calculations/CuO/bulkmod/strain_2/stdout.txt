@@ -1,0 +1,81 @@
+ ----------------------------------------------------
+    OOO  PPPP  EEEEE N   N M   M PPPP
+   O   O P   P E     NN  N MM MM P   P
+   O   O PPPP  EEEEE N N N M M M PPPP   -- VERSION
+   O   O P     E     N  NN M   M P
+    OOO  P     EEEEE N   N M   M P
+ ----------------------------------------------------
+ running  128 mpi-ranks, with    1 threads/rank
+ distrk:  each k-point on   32 cores,    4 groups
+ distr:  one band on   16 cores,    2 groups
+ vasp.6.3.2 27Jun22 (build Jun 30 2023 15:13:53) complex                         
+ POSCAR found type information on POSCAR CuO 
+ POSCAR found :  2 types and       2 ions
+ Reading from existing POTCAR
+ scaLAPACK will be used
+ Reading from existing POTCAR
+ LDA part: xc-table for Pade appr. of Perdew
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ INCAR ok, starting setup
+ POSCAR ok, starting setup
+ FFT: planning ... GRIDC
+ FFT: planning ... GRID_SOFT
+ FFT: planning ... GRID
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1     0.959151791902E+02    0.95915E+02   -0.92703E+03 13696   0.176E+03
+DAV:   2    -0.235434606932E+00   -0.96151E+02   -0.87004E+02 13248   0.290E+02
+DAV:   3    -0.539448670730E+01   -0.51591E+01   -0.50428E+01 15352   0.677E+01
+DAV:   4    -0.544450550935E+01   -0.50019E-01   -0.49990E-01 14448   0.648E+00
+DAV:   5    -0.544514624649E+01   -0.64074E-03   -0.64067E-03 16248   0.761E-01    0.269E+01
+DAV:   6    -0.992982011607E+01   -0.44847E+01   -0.20738E+01 16512   0.134E+02    0.120E+01
+DAV:   7    -0.810978775249E+01    0.18200E+01   -0.56739E+00 15648   0.892E+01    0.173E+00
+DAV:   8    -0.815391800022E+01   -0.44130E-01   -0.40249E-01 15224   0.751E+00    0.734E-01
+DAV:   9    -0.815576634591E+01   -0.18483E-02   -0.11108E-02 18592   0.410E+00    0.501E-01
+DAV:  10    -0.816147306713E+01   -0.57067E-02   -0.31275E-03 18136   0.153E+00    0.481E-01
+DAV:  11    -0.816276652287E+01   -0.12935E-02   -0.27933E-04 19504   0.411E-01    0.502E-01
+DAV:  12    -0.815542256719E+01    0.73440E-02   -0.37006E-03 17816   0.290E+00    0.380E-01
+DAV:  13    -0.815026097684E+01    0.51616E-02   -0.52307E-03 18792   0.309E+00    0.232E-01
+DAV:  14    -0.814959071261E+01    0.67026E-03   -0.98973E-03 18928   0.419E+00    0.268E-01
+DAV:  15    -0.814907954255E+01    0.51117E-03   -0.43372E-03 17752   0.257E+00    0.138E-01
+DAV:  16    -0.814903520580E+01    0.44337E-04   -0.52600E-04 18104   0.624E-01    0.635E-02
+DAV:  17    -0.814906787568E+01   -0.32670E-04   -0.63501E-04 16920   0.104E+00    0.754E-02
+DAV:  18    -0.814897235156E+01    0.95524E-04   -0.11571E-04 17032   0.397E-01    0.274E-02
+DAV:  19    -0.814897294507E+01   -0.59351E-06   -0.17265E-05 17256   0.884E-02    0.129E-02
+DAV:  20    -0.814897263132E+01    0.31375E-06   -0.19864E-06 18384   0.346E-02    0.990E-03
+DAV:  21    -0.814897236298E+01    0.26834E-06   -0.26953E-06 15760   0.671E-02    0.252E-03
+DAV:  22    -0.814897264303E+01   -0.28005E-06   -0.37355E-07 14888   0.156E-02    0.606E-04
+DAV:  23    -0.814897274163E+01   -0.98605E-07   -0.62508E-08  7424   0.328E-03
+   1 F= -.81489727E+01 E0= -.81489727E+01  d E =0.000000E+00  mag=     0.0001
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     Tetrahedron method does not include variations of the Fermi             |
+|     occupations, so forces and stress will be inaccurate. We suggest        |
+|     using a different smearing scheme ISMEAR = 1 or 2 for metals in         |
+|     relaxations.                                                            |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ PROFILE, used timers:     369
