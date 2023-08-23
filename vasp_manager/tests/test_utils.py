@@ -1,4 +1,5 @@
 import json
+import shutil
 from pathlib import Path
 
 import importlib_resources
@@ -138,3 +139,15 @@ def test_ptail_as_string(tmp_path):
         [line.strip() for line in input_string.split("\n")[-n_lines:]]
     )
     assert tail_output_as_string == matching_lines
+
+
+def test_make_potcar_anonymous(tmp_path):
+    potcar_path = importlib_resources.files("vasp_manager").joinpath(
+        str(Path("tests") / "calculations" / "POTCAR_example")
+    )
+    new_potcar_path = tmp_path / "POTCAR"
+    shutil.copy(potcar_path, new_potcar_path)
+    make_potcar_anonymous(new_potcar_path)
+    with open(new_potcar_path) as fr:
+        anon_potcar_text = fr.read()
+    assert anon_potcar_text == "PAW_PBE P 17Jan2003\nPAW_PBE Pb_d 06Sep2000"

@@ -160,21 +160,25 @@ def ptail(f_name, n_tail=1, as_string=False):
     return tail
 
 
-def make_potcar_anonymous(f_name):
+def make_potcar_anonymous(input_f_name, output_f_name=None):
     """
     Replace full POTCAR with only single POTCAR names
 
     Args:
-        f_name (str): path of POTCAR file
+        input_f_name (str): path of POTCAR file
+        output_f_name (str): path to write anonymized POTCAR
     Returns:
         None
     """
-    with open(f_name, "rt") as fr:
+    if output_f_name is None:
+        output_f_name = input_f_name
+
+    with open(input_f_name, "rt") as fr:
         full_potcar_text = [line.strip() for line in fr.readlines()]
     trimmed_potcar_lines = []
     for line in full_potcar_text:
         if "TITEL" in line:
-            trimmed_potcar_lines.append(line.split("=")[1])
+            trimmed_potcar_lines.append(line.split("=")[1].strip())
     trimmed_potcar_string = "\n".join([line for line in trimmed_potcar_lines])
-    with open(f_name, "w+") as fw:
+    with open(output_f_name, "w+") as fw:
         fw.write(trimmed_potcar_string)
