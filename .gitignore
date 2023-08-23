@@ -4,3 +4,5 @@ dist/
 calculations_test/
 vasp_manager.egg-info
 .vscode/*
+to-do.md
+bump_version_build_deploy.py
