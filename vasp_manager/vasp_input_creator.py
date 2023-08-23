@@ -475,6 +475,11 @@ class VaspInputCreator:
 
                 all_files = [f for f in Path(".").glob("*") if f.is_file()]
                 for f in all_files:
+                    # add if symlink for testing
+                    if f.is_symlink():
+                        f_links_to = f.readlink()
+                        os.remove(f)
+                        shutil.copy2(f_links_to, f)
                     shutil.move(f, archive_name)
 
         self.create()
