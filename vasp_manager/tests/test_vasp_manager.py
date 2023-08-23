@@ -20,6 +20,7 @@ def test_vmg_in_order(tmp_path):
             "static",
             "bulkmod",
             "elastic",
+            "material_hit_errors",
             "material_needs_archive",
             "material_needs_rerun",
         ),
@@ -112,11 +113,12 @@ def test_vmg_with_skipping(tmp_path):
     shutil.copytree(
         original_calculation_folder,
         temp_calculation_folder,
-        dirs_exist_ok=False,
+        dirs_exist_ok=True,
         symlinks=True,
         ignore=shutil.ignore_patterns(
             "static",
             "bulkmod",
+            "material_hit_errors",
             "material_needs_archive",
             "material_needs_rerun",
         ),
