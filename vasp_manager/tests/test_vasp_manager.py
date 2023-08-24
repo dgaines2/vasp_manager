@@ -1,24 +1,31 @@
 import shutil
-import subprocess
-import sys
-from pathlib import Path
+from textwrap import dedent
+
+import importlib_resources
 
 from vasp_manager import VaspManager
-from vasp_manager.utils import change_directory
-
-sys.path.append("../..")
-from run_vasp_calculations import make_calculations_folder
 
 
 def test_vmg_in_order(tmp_path):
-    original_calculations_folder = Path("calculations")
-    temp_calculation_folder = tmp_path
-    if temp_calculation_folder.exists():
-        shutil.rmtree(temp_calculation_folder)
-    make_calculations_folder(calcs_path=temp_calculation_folder)
-
-    for f in ["computing_config.json", "calc_config.json", "unzip_outputs.sh"]:
-        shutil.copy(original_calculations_folder / f, temp_calculation_folder)
+    original_calculation_folder = (
+        importlib_resources.files("vasp_manager") / "tests" / "calculations"
+    )
+    temp_calculation_folder = tmp_path / "calculations"
+    shutil.copytree(
+        original_calculation_folder,
+        temp_calculation_folder,
+        dirs_exist_ok=True,
+        symlinks=True,
+        ignore=shutil.ignore_patterns(
+            "rlx*",
+            "static",
+            "bulkmod",
+            "elastic",
+            "material_hit_errors",
+            "material_needs_archive",
+            "material_needs_rerun",
+        ),
+    )
 
     calculation_types = [
         "rlx-coarse",
@@ -36,7 +43,7 @@ def test_vmg_in_order(tmp_path):
         vmg = VaspManager(
             calculation_types=calculation_type_subset,
             material_paths=material_paths,
-            use_multiprocessing=True,
+            use_multiprocessing=False,
             to_rerun=True,
             to_submit=True,
         )
@@ -59,6 +66,7 @@ def test_vmg_in_order(tmp_path):
                             assert isinstance(results[material][pc]["B"], float)
                         case _:
                             raise Exception
+
             # check summary
             summary = vmg.summary(as_string=False)
             for pc in previous_calc_types:
@@ -66,17 +74,38 @@ def test_vmg_in_order(tmp_path):
 
         for p in material_paths:
             mat_name = p.name
-            orig_mode_path = original_calculations_folder / mat_name / calculation_type
+            orig_mode_path = original_calculation_folder / mat_name / calculation_type
             temp_mode_path = p / calculation_type
-            shutil.rmtree(temp_mode_path)
-            shutil.copytree(orig_mode_path, temp_mode_path)
-        unzip_call = f"bash unzip_outputs.sh"
-        with change_directory(temp_calculation_folder):
-            subprocess.call(unzip_call, shell=True)
+            shutil.copytree(
+                orig_mode_path,
+                temp_mode_path,
+                dirs_exist_ok=True,
+                symlinks=True,
+                ignore=shutil.ignore_patterns("elastic_constants.txt"),
+            )
+
+        # test string summary when unfinished
+        if i == (len(calculation_types) - 1):
+            summary = vmg.summary(as_string=True, print_unfinished=True)
+            correct_summary = dedent(
+                """\
+            Total Materials = 2
+            ------------------------------
+            RLX-COARSE  2/2 completed
+            RLX         2/2 completed
+            STATIC      2/2 completed
+            BULKMOD     2/2 completed
+            ELASTIC     0/2 completed
+                        2 not completed
+            Unfinished ELASTIC: ['material', 'material_spinu']
+            """
+            )
+            assert summary == correct_summary
 
     vmg = VaspManager(
         calculation_types=calculation_types,
         material_paths=material_paths,
+        use_multiprocessing=False,
         to_rerun=True,
         to_submit=True,
     )
@@ -96,14 +125,24 @@ def test_vmg_in_order(tmp_path):
 
 
 def test_vmg_with_skipping(tmp_path):
-    original_calculations_folder = Path("calculations")
-    temp_calculation_folder = tmp_path
-    if temp_calculation_folder.exists():
-        shutil.rmtree(temp_calculation_folder)
-    make_calculations_folder(calcs_path=temp_calculation_folder)
-
-    for f in ["computing_config.json", "calc_config.json", "unzip_outputs.sh"]:
-        shutil.copy(original_calculations_folder / f, temp_calculation_folder)
+    original_calculation_folder = (
+        importlib_resources.files("vasp_manager") / "tests" / "calculations"
+    )
+    temp_calculation_folder = tmp_path / "calculations"
+    # skip static and bulkmod when copying
+    shutil.copytree(
+        original_calculation_folder,
+        temp_calculation_folder,
+        dirs_exist_ok=True,
+        symlinks=True,
+        ignore=shutil.ignore_patterns(
+            "static",
+            "bulkmod",
+            "material_hit_errors",
+            "material_needs_archive",
+            "material_needs_rerun",
+        ),
+    )
 
     calculation_types = [
         "rlx-coarse",
@@ -115,19 +154,6 @@ def test_vmg_with_skipping(tmp_path):
     material_paths = [
         p for p in sorted(list(temp_calculation_folder.glob("*"))) if p.is_dir()
     ]
-
-    # skip static and bulkmod when copying
-    completed_calc_types = ["rlx-coarse", "rlx", "elastic"]
-    for calculation_type in completed_calc_types:
-        for p in material_paths:
-            mat_name = p.name
-            orig_mode_path = original_calculations_folder / mat_name / calculation_type
-            temp_mode_path = p / calculation_type
-            shutil.copytree(orig_mode_path, temp_mode_path)
-
-    unzip_call = f"bash unzip_outputs.sh"
-    with change_directory(temp_calculation_folder):
-        subprocess.call(unzip_call, shell=True)
 
     vmg = VaspManager(
         calculation_types=calculation_types,

@@ -1,0 +1,32 @@
+{
+  "computer": "personal",
+  "personal": {
+    "user_id": "dwg4898",
+    "potcar_dir": "vasp_manager/tests/POTCARS",
+    "queuetype": "regular",
+    "allocation": "m1673",
+    "constraint": "cpu",
+    "vasp_module": "vasp/6.3.2-cpu",
+    "ncore": 16,
+    "ncore_per_node": 128
+  },
+  "quest": {
+    "user_id": "dwg4898",
+    "potcar_dir": "/projects/b1004/potpaw_PBE_OQMD",
+    "queuetype": "short",
+    "allocation": "p31151",
+    "vasp_module": "vasp/5.4.4-openmpi-4.0.5-intel-19.0.5.281",
+    "ncore": 12,
+    "ncore_per_node": 28
+  },
+  "perlmutter": {
+    "user_id": "dwg4898",
+    "potcar_dir": "/global/homes/d/dwg4898/vasp_potentials/54/potpaw_pbe",
+    "queuetype": "regular",
+    "allocation": "m1673",
+    "constraint": "cpu",
+    "vasp_module": "vasp/6.3.2-cpu",
+    "ncore": 16,
+    "ncore_per_node": 128
+  }
+}

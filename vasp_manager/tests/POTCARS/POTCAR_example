@@ -1,0 +1,24 @@
+  PAW_PBE P 17Jan2003
+ 5.00000000000000000
+ parameters from PSCTR are:
+   VRHFIN =P : s2p3
+   LEXCH  = PE
+   EATOM  =   176.0430 eV,   12.9388 Ry
+
+   TITEL  = PAW_PBE P 17Jan2003
+   LULTRA =        F    use ultrasoft PP ?
+   IUNSCR =        1    unscreen: 0-lin 1-nonlin 2-no
+   RPACOR =    1.500    partial core radius
+ End of Dataset
+ PAW_PBE Pb_d 06Sep2000
+ 14.0000000000000000
+ parameters from PSCTR are:
+   VRHFIN =Pb:
+   LEXCH  = PE
+   EATOM  =  1661.2015 eV,  122.0949 Ry
+
+   TITEL  = PAW_PBE Pb_d 06Sep2000
+   LULTRA =        F    use ultrasoft PP ?
+   IUNSCR =        1    unscreen: 0-lin 1-nonlin 2-no
+   RPACOR =    2.200    partial core radius
+ End of Dataset

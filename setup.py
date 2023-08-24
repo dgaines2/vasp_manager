@@ -20,6 +20,7 @@ setup(
         "numpy>=1.22",
         "pandas>=1.4",
         "pymatgen>=2022.5",
+        "importlib_resources",
     ],
     extras_require={"dev": ["black", "coverage", "isort", "pre-commit", "pytest"]},
 )

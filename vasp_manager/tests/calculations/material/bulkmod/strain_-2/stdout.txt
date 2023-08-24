@@ -1,0 +1,57 @@
+ ----------------------------------------------------
+    OOO  PPPP  EEEEE N   N M   M PPPP
+   O   O P   P E     NN  N MM MM P   P
+   O   O PPPP  EEEEE N N N M M M PPPP   -- VERSION
+   O   O P     E     N  NN M   M P
+    OOO  P     EEEEE N   N M   M P
+ ----------------------------------------------------
+ running  128 mpi-ranks, with    1 threads/rank
+ distrk:  each k-point on   32 cores,    4 groups
+ distr:  one band on   16 cores,    2 groups
+ vasp.6.3.2 27Jun22 (build Jun 30 2023 15:13:53) complex                         
+ POSCAR found type information on POSCAR NaCl
+ POSCAR found :  2 types and       2 ions
+ Reading from existing POTCAR
+ scaLAPACK will be used
+ Reading from existing POTCAR
+ LDA part: xc-table for Pade appr. of Perdew
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ INCAR ok, starting setup
+ POSCAR ok, starting setup
+ FFT: planning ... GRIDC
+ FFT: planning ... GRID_SOFT
+ FFT: planning ... GRID
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1     0.902090964309E+02    0.90209E+02   -0.67417E+03  2696   0.873E+02
+DAV:   2    -0.478824953297E+00   -0.90688E+02   -0.83754E+02  3040   0.251E+02
+DAV:   3    -0.689088001240E+01   -0.64121E+01   -0.63765E+01  3560   0.582E+01
+DAV:   4    -0.697123146078E+01   -0.80351E-01   -0.80331E-01  3168   0.714E+00
+DAV:   5    -0.697282133370E+01   -0.15899E-02   -0.15898E-02  3584   0.101E+00    0.215E+00
+DAV:   6    -0.678036115219E+01    0.19246E+00   -0.26856E-01  3448   0.287E+00    0.159E+00
+DAV:   7    -0.676902321785E+01    0.11338E-01   -0.73377E-02  3704   0.145E+00    0.111E+00
+DAV:   8    -0.677476514244E+01   -0.57419E-02   -0.10195E-02  2864   0.760E-01    0.337E-01
+DAV:   9    -0.677459569913E+01    0.16944E-03   -0.25153E-04  3416   0.105E-01    0.173E-01
+DAV:  10    -0.677469901175E+01   -0.10331E-03   -0.27146E-04  2984   0.115E-01    0.603E-02
+DAV:  11    -0.677469185064E+01    0.71611E-05   -0.11819E-05  3752   0.308E-02    0.166E-02
+DAV:  12    -0.677469180427E+01    0.46371E-07   -0.21632E-06  3032   0.124E-02    0.190E-03
+DAV:  13    -0.677469241478E+01   -0.61051E-06   -0.33826E-07  3072   0.342E-03    0.331E-03
+DAV:  14    -0.677469223612E+01    0.17865E-06   -0.25744E-08  2536   0.847E-04    0.264E-04
+DAV:  15    -0.677469222111E+01    0.15012E-07   -0.25287E-09  1688   0.367E-04
+   1 F= -.67746922E+01 E0= -.67746922E+01  d E =0.000000E+00
+ PROFILE, used timers:     367

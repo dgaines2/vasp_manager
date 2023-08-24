@@ -4,13 +4,13 @@
 import json
 import logging
 import os
-import pkgutil
 import shutil
 import warnings
 from datetime import time, timedelta
 from functools import cached_property
 from pathlib import Path
 
+import importlib_resources
 import numpy as np
 from pymatgen.io.vasp import Poscar, Potcar
 
@@ -117,26 +117,28 @@ class VaspInputCreator:
 
     @cached_property
     def incar_template(self):
-        incar_template = pkgutil.get_data(
-            "vasp_manager", str(Path("static_files") / "INCAR_template")
-        ).decode("utf-8")
+        incar_template = (
+            importlib_resources.files("vasp_manager")
+            .joinpath(str(Path("static_files") / "INCAR_template"))
+            .read_text()
+        )
         return incar_template
 
     @cached_property
     def potcar_dict(self):
         potcar_dict = json.loads(
-            pkgutil.get_data(
-                "vasp_manager", str(Path("static_files") / "pot_dict.json")
-            ).decode("utf-8")
+            importlib_resources.files("vasp_manager")
+            .joinpath(str(Path("static_files") / "pot_dict.json"))
+            .read_text()
         )
         return potcar_dict
 
     @cached_property
     def q_mapper(self):
         q_mapper = json.loads(
-            pkgutil.get_data(
-                "vasp_manager", str(Path("static_files") / "q_handles.json")
-            ).decode("utf-8")
+            importlib_resources.files("vasp_manager")
+            .joinpath(str(Path("static_files") / "q_handles.json"))
+            .read_text()
         )
         return q_mapper
 
@@ -202,9 +204,9 @@ class VaspInputCreator:
     @cached_property
     def d_f_block(self):
         d_f_block = json.loads(
-            pkgutil.get_data(
-                "vasp_manager", str(Path("static_files") / "d_f_block.json")
-            ).decode("utf-8")
+            importlib_resources.files("vasp_manager")
+            .joinpath(str(Path("static_files") / "d_f_block.json"))
+            .read_text()
         )
         return d_f_block
 
@@ -234,9 +236,9 @@ class VaspInputCreator:
     @cached_property
     def hubbards(self):
         hubbards = json.loads(
-            pkgutil.get_data(
-                "vasp_manager", os.path.join("static_files", "hubbards.json")
-            ).decode("utf-8")
+            importlib_resources.files("vasp_manager")
+            .joinpath(str(Path("static_files") / "hubbards.json"))
+            .read_text()
         )
         return hubbards
 
@@ -437,9 +439,11 @@ class VaspInputCreator:
         )
 
         q_name = self.q_mapper[self.computer][mode]
-        vaspq_tmp = pkgutil.get_data(
-            "vasp_manager", str(Path("static_files") / q_name)
-        ).decode("utf-8")
+        vaspq_tmp = (
+            importlib_resources.files("vasp_manager")
+            .joinpath(str(Path("static_files") / q_name))
+            .read_text()
+        )
         vaspq = vaspq_tmp.format(**computer_config)
         logger.debug(vaspq)
         with open(vaspq_path, "w+") as fw:
@@ -471,6 +475,11 @@ class VaspInputCreator:
 
                 all_files = [f for f in Path(".").glob("*") if f.is_file()]
                 for f in all_files:
+                    # add if symlink for testing
+                    if f.is_symlink():
+                        f_links_to = f.readlink()
+                        os.remove(f)
+                        shutil.copy2(f_links_to, f)
                     shutil.move(f, archive_name)
 
         self.create()
