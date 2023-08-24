@@ -1,12 +1,12 @@
-name: pre-commit
+name: Tests
 on:
   pull_request:
     branches: [main]
   push:
 jobs:
-  # prevent this action from running on forks
-  pre-commit:
-    # if: github.repository == 'dgaines2/vasp_manager'
+  test:
+    # prevent this action from running on forks
+    if: github.repository == 'dgaines2/vasp_manager'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
