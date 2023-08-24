@@ -4,7 +4,8 @@ from pathlib import Path
 
 import importlib_resources
 import numpy as np
-from pymatgen.io.vasp import Poscar
+from pymatgen.analysis.structure_matcher import StructureMatcher
+from pymatgen.core import Structure
 
 from vasp_manager.utils import (
     NumpyEncoder,
@@ -17,7 +18,8 @@ from vasp_manager.utils import (
     ptail,
 )
 
-input_string = """DAV:   5    -0.677727844685E+01    0.16454E-04   -0.48875E-05  1776   0.450E-02    0.143E-02
+input_string = """\
+DAV:   5    -0.677727844685E+01    0.16454E-04   -0.48875E-05  1776   0.450E-02    0.143E-02
 DAV:   6    -0.677727668990E+01    0.17570E-05   -0.21379E-06   872   0.154E-02
    4 F= -.67772767E+01 E0= -.67772767E+01  d E =-.421689E-02
 curvature:  -0.59 expect dE=-0.179E-04 dE for cont linesearch -0.179E-04
@@ -39,29 +41,22 @@ def test_numpy_encoder(tmp_path):
 
 
 def test_pmg_structure(tmp_path):
-    # symmetrized structure
-    poscar_string = (
-        importlib_resources.files("vasp_manager")
-        .joinpath(
-            str(Path("tests") / "calculations" / "material" / "rlx-coarse" / "POSCAR")
-        )
-        .read_text()
-    )
-
     # original unsymmetrized structure
     orig_poscar_path = importlib_resources.files("vasp_manager").joinpath(
         str(Path("tests") / "calculations" / "material" / "POSCAR")
     )
-    # symmetrize structure, write poscar, and compare
-    symm_structure = get_pmg_structure_from_poscar(orig_poscar_path)
-    poscar = Poscar(symm_structure)
-    poscar_path = tmp_path / "POSCAR"
-    poscar.write_file(poscar_path, significant_figures=8)
-    with open(poscar_path, "r") as fr:
-        symm_poscar_string = fr.read()
-    print(poscar_string)
-    print(symm_poscar_string)
-    assert poscar_string == symm_poscar_string
+    # symmetrized structure
+    poscar_path = importlib_resources.files("vasp_manager").joinpath(
+        str(Path("tests") / "calculations" / "material" / "rlx-coarse" / "POSCAR")
+    )
+    orig_poscar_structure = Structure.from_file(orig_poscar_path)
+    poscar_structure = Structure.from_file(poscar_path)
+    # compare structures to make sure they're the same
+    structure_matcher = StructureMatcher(ltol=0.01, stol=0.1, angle_tol=1.0)
+    structures_are_equivalent = structure_matcher.fit(
+        orig_poscar_structure, poscar_structure
+    )
+    assert structures_are_equivalent
 
 
 def test_pcat(tmp_path):

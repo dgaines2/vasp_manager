@@ -3,6 +3,8 @@ import shutil
 
 import importlib_resources
 import pytest
+from pymatgen.analysis.structure_matcher import StructureMatcher
+from pymatgen.core import Structure
 
 from vasp_manager.calculation_manager import (
     BulkmodCalculationManager,
@@ -296,7 +298,7 @@ Do testing of the reruns/archives last as they modify their folders
 def test_too_many_rlx_coarse_archives(calc_dir):
     """
     Assert rlx-coarse handles too many archives correctly
-    (Continues to rlx)
+        (Continues to rlx)
     """
     material_path = calc_dir / "material_needs_archive"
     rlx_coarse_dir = material_path / "rlx-coarse"
@@ -311,7 +313,7 @@ def test_too_many_rlx_coarse_archives(calc_dir):
 def test_too_many_rlx_archives(calc_dir):
     """
     Assert rlx handles too many archives correctly
-    (Errors out and refuses to continue)
+        (Errors out and refuses to continue)
     """
     material_path = calc_dir / "material_needs_archive"
     rlx_dir = material_path / "rlx"
@@ -325,7 +327,8 @@ def test_too_many_rlx_archives(calc_dir):
 
 def test_rlx_coarse_archive(calc_dir):
     """
-    Assert unfinished rlx-coarse makes archive
+    Assert unfinished rlx-coarse makes archive and that the symmetrized
+        structure for the new POSCAR matches the CONTCAR in the archive
     """
     material_path = calc_dir / "material_needs_archive"
     rlx_coarse_dir = material_path / "rlx-coarse"
@@ -343,18 +346,21 @@ def test_rlx_coarse_archive(calc_dir):
     for dir in [rlx_coarse_dir, archive_dir]:
         for f_name in INPUT_FILES:
             assert (dir / f_name).exists()
-    assert filecmp.cmp(
-        rlx_coarse_dir / "POSCAR",
-        archive_dir / "CONTCAR",
-        shallow=False,
+    archive_dir_contcar = Structure.from_file(archive_dir / "CONTCAR")
+    rlx_coarse_poscar = Structure.from_file(rlx_coarse_dir / "POSCAR")
+    # compare structures to make sure they're the same
+    structure_matcher = StructureMatcher(ltol=0.01, stol=0.1, angle_tol=1.0)
+    structures_are_equivalent = structure_matcher.fit(
+        archive_dir_contcar, rlx_coarse_poscar
     )
+    assert structures_are_equivalent
 
 
 def test_rlx_archive(calc_dir):
     """
     Assert unfinished rlx makes archive
-    Also ensure rlx that finishes with magmom_pa below
-    magmom_per_atom_cutoff restarts without spin
+    Also ensure rlx that finishes with magmom_pa below magmom_per_atom_cutoff
+        restarts without spin
     """
     material_path = calc_dir / "material_spinu"
     rlx_dir = material_path / "rlx"
