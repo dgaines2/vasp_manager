@@ -25,6 +25,7 @@ exclude = '''
 )/
 '''
 
+
 [tool.coverage.run]
 command_line = "-m pytest"
 source = ["vasp_manager"]
@@ -46,6 +47,7 @@ exclude = 'vasp_manager/tests/ | **/*.pyc | .git | __pycache__'
 per-file-ignores = '__init__.py:F401'
 select = 'E, F, W, B9'
 ignore = 'E203, W503'
+
 
 [tool.pytest.ini_options]
 pythonpath = "."
