@@ -5,7 +5,7 @@ with open("README.md") as file:
 
 setup(
     name="vasp_manager",
-    version="1.1.0",
+    version="1.1.1",
     description="A simple package to run and analyze VASP calculations",
     long_description=long_description,
     long_description_content_type="text/markdown",
