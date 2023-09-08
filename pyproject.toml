@@ -2,53 +2,70 @@
 requires =["setuptools"]
 build-backend = "setuptools.build_meta"
 
+[tool.setuptools]
+packages = ["vasp_manager"]
+
+[project]
+name = "vasp_manager"
+description = "A simple package to run and analyze VASP calculations"
+version = "1.1.1"
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {text = "MIT"}
+authors = [{name = "Dale Gaines II", email = "dalegainesii@gmail.com"}]
+maintainers = [{name = "Dale Gaines II", email = "dalegainesii@gmail.com"}]
+keywords = ["vasp", "dft", "high-throughput"]
+requires-python = ">=3.10.0"
+dependencies = [
+    "numpy>=1.22",
+    "pandas>=1.4",
+    "pymatgen>=2022.5",
+    "importlib_resources",
+]
+
+[project.optional-dependencies]
+dev = ["black", "coverage", "isort", "pre-commit", "pytest"]
+
+[project.urls]
+repository = "https://github.com/dgaines2/vasp_manager"
 
 [tool.black]
-target-version = ['py310']
+target-version = ["py310"]
 line-length = 90
 include = '\.pyi?$'
 exclude = '''
 /(
-	\.git
+    \.git
   | \.hg
   | \.mypy_cache
   | \.tox
   | \.venv
   | _build
-  | buck-out
   | build
   | dist
-
-  # The following are specific to Black, you probably don't want those.
-  | blib2to3
-  | tests/data
 )/
+| tests/data
 '''
 
-
-[tool.coverage.run]
-command_line = "-m pytest"
-source = ["vasp_manager"]
-omit = ["*tests*"]
-
-
 [tool.isort]
-profile = 'black'
+profile = "black"
 multi_line_output = 3
 include_trailing_comma = true
 force_grid_wrap = 0
 use_parentheses = true
 line_length = 90
 
-
 [tool.flake8]
 max-line-length = 90
-exclude = 'vasp_manager/tests/ | **/*.pyc | .git | __pycache__'
-per-file-ignores = '__init__.py:F401'
-select = 'E, F, W, B9'
-ignore = 'E203, W503'
-
+exclude = "vasp_manager/tests/ | **/*.pyc | .git | __pycache__"
+per-file-ignores = "__init__.py:F401"
+select = "E, F, W, B9"
+ignore = "E203, W503"
 
 [tool.pytest.ini_options]
 pythonpath = "."
 addopts = "--import-mode=importlib"
+
+[tool.coverage.run]
+command_line = "-m pytest"
+source = ["vasp_manager"]
+omit = ["*tests*"]
