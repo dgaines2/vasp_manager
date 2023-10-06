@@ -28,5 +28,14 @@
     "vasp_module": "vasp/6.3.2-cpu",
     "ncore": 16,
     "ncore_per_node": 128
+  },
+  "bridges2": {
+    "user_id": "daleg",
+    "potcar_dir": "/jet/home/daleg/vasp_potentials/potpaw_PBE_OQMD",
+    "queuetype": "RM",
+    "allocation": "dmr160027p",
+    "vasp_module": "",
+    "ncore": 16,
+    "ncore_per_node": 128
   }
 }

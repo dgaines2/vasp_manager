@@ -16,5 +16,11 @@
     "static": "vasp.yml",
     "bulkmod": "vasp-bulkmod.yml",
     "elastic": "vasp.yml"
+  },
+  "bridges2": {
+    "rlx": "vasp-bridges2.yml",
+    "static": "vasp-bridges2.yml",
+    "bulkmod": "vasp-bulkmod-bridges2.yml",
+    "elastic": "vasp-bridges2.yml"
   }
 }
