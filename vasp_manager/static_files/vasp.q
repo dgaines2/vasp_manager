@@ -1,24 +1,12 @@
-#! /bin/bash
+#!/bin/bash
 
-#SBATCH -N {n_nodes}
-#SBATCH -q {queuetype}
-#SBATCH -J {jobname}
-#SBATCH -A {allocation}
-#SBATCH -t {walltime}
-#SBATCH -C {constraint}
-#SBATCH --mem=0
+{sbatch_params}
 
-#OpenMP settings:
-ulimit -s unlimited
-export OMP_NUM_THREADS=1
-
-#run the application:
-module load {vasp_module}
+{preamble}
 
 starttime=$(date +%s)
 
-mpitasks=$(echo "$SLURM_JOB_NUM_NODES * {ncore_per_node}" |bc)
-srun -t {timeout} -u -n $mpitasks --cpu_bind=cores vasp_std > stdout.txt 2> stderr.txt
+{command}
 
 stoptime=$(date +%s)
 tottime=$(echo "$stoptime - $starttime" | bc -l)

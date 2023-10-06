@@ -1,0 +1,17 @@
+sbatch_params: |-
+  #SBATCH -N {n_nodes}
+  #SBATCH -n {n_procs}
+  #SBATCH -p {queuetype}
+  #SBATCH -J {jobname}
+  #SBATCH -A {allocation}
+  #SBATCH -t {walltime}
+  #SBATCH --mem=0
+
+preamble: |-
+  ulimit -s unlimited
+  export OMP_NUM_THREADS=1
+  module load {vasp_module}
+  mpitasks=$(echo "$SLURM_JOB_NUM_NODES * {ncore_per_node}" |bc)
+
+command: |-
+  mpirun -np $mpi_tasks vasp_std > stdout.txt 2> stderr.txt

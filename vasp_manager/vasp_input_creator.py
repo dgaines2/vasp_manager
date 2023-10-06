@@ -12,6 +12,7 @@ from pathlib import Path
 
 import importlib_resources
 import numpy as np
+import yaml
 from pymatgen.io.vasp import Poscar, Potcar
 
 from vasp_manager.utils import change_directory, get_pmg_structure_from_poscar, pcat
@@ -348,7 +349,7 @@ class VaspInputCreator:
             lmaxmix_line = f"LMAXMIX = {lmaxmix}"
             ldau_string = self._get_ldau_string(calc_config["hubbards"], composition_dict)
 
-        # Add lines to the vaspq file
+        # Add lines to the incar file
         incar_tmp = self.incar_template.split("\n")
         for i, line in enumerate(incar_tmp):
             # add extra flags for spin polarization
@@ -442,12 +443,19 @@ class VaspInputCreator:
             }
         )
 
-        q_name = self.q_mapper[self.computer][mode]
+        vaspq_settings_path = self.q_mapper[self.computer][mode]
+        vaspq_settings = yaml.load(
+            importlib_resources.files("vasp_manager")
+            .joinpath(str(Path("static_files") / vaspq_settings_path))
+            .read_text(),
+            Loader=yaml.SafeLoader,
+        )
         vaspq_tmp = (
             importlib_resources.files("vasp_manager")
-            .joinpath(str(Path("static_files") / q_name))
+            .joinpath(str(Path("static_files") / "vasp.q"))
             .read_text()
         )
+        vaspq_tmp = vaspq_tmp.format(**vaspq_settings)
         vaspq = vaspq_tmp.format(**computing_config)
         logger.debug(vaspq)
         with open(vaspq_path, "w+") as fw:
