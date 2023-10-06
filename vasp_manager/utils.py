@@ -4,6 +4,7 @@
 import gzip
 import json
 import os
+from collections import deque
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -156,8 +157,11 @@ def ptail(f_name, n_tail=1, as_string=False):
         tail (str | list)
     """
     opener = gzip.open if ".gz" in str(f_name) else open
+    tail = deque(maxlen=n_tail)
     with opener(f_name, "rt") as fr:
-        tail = [line.strip() for line in fr.readlines()[-n_tail:]]
+        for line in fr:
+            tail.append(line.strip("\n"))
+    tail = list(tail)
     if as_string:
         tail = "\n".join([line for line in tail])
     return tail
