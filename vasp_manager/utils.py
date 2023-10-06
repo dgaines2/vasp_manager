@@ -4,6 +4,7 @@
 import gzip
 import json
 import os
+from collections import deque
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -107,16 +108,20 @@ def pgrep(
         matches (str | list)
     """
     opener = gzip.open if ".gz" in str(f_name) else open
-    with opener(f_name, "rt") as fr:
-        f_lines = [line.strip() for line in fr.readlines()]
     matches = []
-    for i, line in enumerate(f_lines):
-        if str_to_grep in line:
-            matches.append(line)
-            if after is not None:
-                matches.extend(f_lines[(i + 1) : (i + after + 1)])
+    line_idx_to_include = set()
+    with opener(f_name, "rt") as fr:
+        for i, line in enumerate(fr):
+            if str_to_grep in line:
+                matches.append(line.strip("\n"))
+                if after is not None:
+                    line_idx_to_include.update(range(i + 1, i + after + 1))
+            if i in line_idx_to_include:
+                matches.append(line.strip("\n"))
+                line_idx_to_include.discard(i)
             if stop_after_first_match:
-                break
+                if len(matches) != 0 and len(line_idx_to_include) == 0:
+                    break
     if as_string:
         matches = "\n".join([line for line in matches])
     return matches
@@ -134,8 +139,11 @@ def phead(f_name, n_head=1, as_string=False):
         head (str | list)
     """
     opener = gzip.open if ".gz" in str(f_name) else open
+    head = []
     with opener(f_name, "rt") as fr:
-        head = [line.strip() for line in fr.readlines()[:n_head]]
+        for i, line in enumerate(fr):
+            if i < n_head:
+                head.append(line.strip("\n"))
     if as_string:
         head = "\n".join([line for line in head])
     return head
@@ -153,8 +161,11 @@ def ptail(f_name, n_tail=1, as_string=False):
         tail (str | list)
     """
     opener = gzip.open if ".gz" in str(f_name) else open
+    tail = deque(maxlen=n_tail)
     with opener(f_name, "rt") as fr:
-        tail = [line.strip() for line in fr.readlines()[-n_tail:]]
+        for line in fr:
+            tail.append(line.strip("\n"))
+    tail = list(tail)
     if as_string:
         tail = "\n".join([line for line in tail])
     return tail
