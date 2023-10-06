@@ -90,9 +90,10 @@ folder is provided in `calculations/`.
 2. Configure `computing_config.json` and place it in the `calculations/`
 directory.  You will need to specify your `user_id`, a `potcar_directory`, a
 `queuetype`, your `allocation` and a `vasp_module` (VASP 6 strongly
-recommended). As of now, only Perlmutter at NERSC and QUEST at Northwestern
-University are supported. Any other SLURM based supercomputers can be easily
-added, but modifications could be made for other queue management systems.
+recommended). As of now, only Perlmutter and Bridges2 at NERSC and QUEST at
+Northwestern University are supported. Any other SLURM based supercomputers can
+be easily added, but modifications could be made for other queue management
+systems.
 3. If desired, make modifications to `calc_config.json`. This must also be
 placed in the `calculations/` directory. Each mode has its own configuration
 settings with sensible defaults, but these can be easily customized by the user.
