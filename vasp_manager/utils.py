@@ -108,16 +108,20 @@ def pgrep(
         matches (str | list)
     """
     opener = gzip.open if ".gz" in str(f_name) else open
-    with opener(f_name, "rt") as fr:
-        f_lines = [line.strip() for line in fr.readlines()]
     matches = []
-    for i, line in enumerate(f_lines):
-        if str_to_grep in line:
-            matches.append(line)
-            if after is not None:
-                matches.extend(f_lines[(i + 1) : (i + after + 1)])
+    line_idx_to_include = set()
+    with opener(f_name, "rt") as fr:
+        for i, line in enumerate(fr):
+            if str_to_grep in line:
+                matches.append(line.strip("\n"))
+                if after is not None:
+                    line_idx_to_include.update(range(i + 1, i + after + 1))
+            if i in line_idx_to_include:
+                matches.append(line.strip("\n"))
+                line_idx_to_include.discard(i)
             if stop_after_first_match:
-                break
+                if len(matches) != 0 and len(line_idx_to_include) == 0:
+                    break
     if as_string:
         matches = "\n".join([line for line in matches])
     return matches
