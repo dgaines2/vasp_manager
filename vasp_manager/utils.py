@@ -134,8 +134,11 @@ def phead(f_name, n_head=1, as_string=False):
         head (str | list)
     """
     opener = gzip.open if ".gz" in str(f_name) else open
+    head = []
     with opener(f_name, "rt") as fr:
-        head = [line.strip() for line in fr.readlines()[:n_head]]
+        for i, line in enumerate(fr):
+            if i < n_head:
+                head.append(line.strip("\n"))
     if as_string:
         head = "\n".join([line for line in head])
     return head
