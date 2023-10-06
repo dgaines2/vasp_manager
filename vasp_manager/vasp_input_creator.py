@@ -86,6 +86,10 @@ class VaspInputCreator:
         return calc_config
 
     @cached_property
+    def calc_config(self):
+        return self.calc_config_dict[self.mode]
+
+    @cached_property
     def computing_config_dict(self):
         all_calcs_dir = self.calc_path.parent.parent
         fname = "computing_config.json"
@@ -96,6 +100,10 @@ class VaspInputCreator:
         else:
             raise Exception(f"No {fname} found in path {all_calcs_dir.absolute()}")
         return computing_config
+
+    @cached_property
+    def computing_config(self):
+        return self.computing_config_dict[self.computer]
 
     @cached_property
     def computer(self):
@@ -157,7 +165,7 @@ class VaspInputCreator:
         Create and write a POTCAR
         """
         potcar_path = self.calc_path / "POTCAR"
-        potcar_dir = Path(self.computing_config_dict[self.computer]["potcar_dir"])
+        potcar_dir = Path(self.computing_config["potcar_dir"])
 
         el_names = [el.name for el in self.source_structure.composition]
         logger.debug(f"{self.source_structure.composition.reduced_formula}, {el_names}")
@@ -188,14 +196,12 @@ class VaspInputCreator:
     def n_procs(self):
         # typically request all processors on each node, and then
         # leave some ~4/node empty for memory
-        n_procs = (
-            self.n_nodes * self.computing_config_dict[self.computer]["ncore_per_node"]
-        )
+        n_procs = self.n_nodes * self.computing_config["ncore_per_node"]
         return n_procs
 
     @property
     def n_procs_used(self):
-        ncore_per_node = self.computing_config_dict[self.computer]["ncore_per_node"]
+        ncore_per_node = self.computing_config["ncore_per_node"]
         if self.mode == "elastic":
             if self.computer == "quest":
                 self.ncore_per_node_for_memory += 8
@@ -292,13 +298,12 @@ class VaspInputCreator:
         """
         Create and write an INCAR
 
-        Need to modify this to account for spin/magmom
         Current kpoints coming from the kspacing tag in the INCAR,
             but future versions should include ability to make kpoints from kppra
         """
         incar_path = self.calc_path / "INCAR"
-        ncore = self.computing_config_dict[self.computer]["ncore"]
-        calc_config = self.calc_config_dict[self.mode]
+        ncore = self.computing_config["ncore"]
+        calc_config = self.calc_config.copy()
 
         if calc_config["ispin"] not in [1, "auto"]:
             raise RuntimeError("ISPIN must be set to 1 or auto")
@@ -377,7 +382,6 @@ class VaspInputCreator:
         Create and write vasp.q file
         """
         vaspq_path = self.calc_path / "vasp.q"
-        calc_config = self.calc_config_dict[self.mode]
 
         # create pad string for job naming to differentiate in the queue
         match self.mode:
@@ -408,7 +412,7 @@ class VaspInputCreator:
             jobname = pad_string + self.name
 
         # convert walltime into seconds for increase_walltime_by_factor
-        walltime_iso = time.fromisoformat(calc_config["walltime"])
+        walltime_iso = time.fromisoformat(self.calc_config["walltime"])
         # walltime_duration is in seconds
         walltime_duration = timedelta(
             hours=walltime_iso.hour,
@@ -425,9 +429,9 @@ class VaspInputCreator:
         if not self.computer == "quest":
             timeout = str(timedelta(seconds=timeout))
 
-        computer_config = self.computing_config_dict[self.computer].copy()
+        computing_config = self.computing_config.copy()
         ncore_per_node = self.n_procs_used // self.n_nodes
-        computer_config.update(
+        computing_config.update(
             {
                 "n_nodes": self.n_nodes,
                 "n_procs": self.n_procs,
@@ -444,7 +448,7 @@ class VaspInputCreator:
             .joinpath(str(Path("static_files") / q_name))
             .read_text()
         )
-        vaspq = vaspq_tmp.format(**computer_config)
+        vaspq = vaspq_tmp.format(**computing_config)
         logger.debug(vaspq)
         with open(vaspq_path, "w+") as fw:
             fw.write(vaspq)
