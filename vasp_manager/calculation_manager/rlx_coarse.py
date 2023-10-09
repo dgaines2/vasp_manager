@@ -65,7 +65,12 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             name=self.material_name,
         )
 
-    def setup_calc(self, increase_nodes_by_factor=1, make_archive=False):
+    def setup_calc(
+        self,
+        increase_nodes_by_factor=1,
+        increase_walltime_by_factor=1,
+        make_archive=False,
+    ):
         """
         Sets up a coarse relaxation
         """
@@ -138,7 +143,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             if self.to_rerun:
                 logger.info(f"Rerunning {self.calc_path}")
                 # increase nodes as its likely the calculation failed
-                self.setup_calc(increase_nodes_by_factor=2, make_archive=True)
+                self.setup_calc(increase_walltime_by_factor=2, make_archive=True)
             return False
 
         logger.info(f"{self.mode.upper()} Calculation: reached required accuracy")
