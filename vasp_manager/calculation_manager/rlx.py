@@ -76,7 +76,13 @@ class RlxCalculationManager(BaseCalculationManager):
             name=self.material_name,
         )
 
-    def setup_calc(self, increase_nodes_by_factor=1, make_archive=False, use_spin=True):
+    def setup_calc(
+        self,
+        increase_nodes_by_factor=1,
+        increase_walltime_by_factor=1,
+        make_archive=False,
+        use_spin=True,
+    ):
         """
         Sets up a fine relaxation
         """
@@ -157,7 +163,7 @@ class RlxCalculationManager(BaseCalculationManager):
                 logger.info(f"Rerunning {self.calc_path}")
                 # increase nodes as its likely the calculation failed
                 self.setup_calc(
-                    increase_nodes_by_factor=2, make_archive=True, use_spin=use_spin
+                    increase_walltime_by_factor=2, make_archive=True, use_spin=use_spin
                 )
             return False
 

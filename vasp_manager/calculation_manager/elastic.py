@@ -73,7 +73,11 @@ class ElasticCalculationManager(BaseCalculationManager):
         use_spin = len(rlx_mags) != 0
         return use_spin
 
-    def setup_calc(self, increase_nodes_by_factor=2, increase_walltime_by_factor=1):
+    def setup_calc(
+        self,
+        increase_nodes_by_factor=2,
+        increase_walltime_by_factor=1,
+    ):
         """
         Runs elastic constants routine through VASP
 

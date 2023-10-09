@@ -111,7 +111,11 @@ class BulkmodCalculationManager(BaseCalculationManager):
         use_spin = len(rlx_mags) != 0
         return use_spin
 
-    def setup_calc(self, increase_nodes_by_factor=1):
+    def setup_calc(
+        self,
+        increase_nodes_by_factor=1,
+        increase_walltime_by_factor=1,
+    ):
         """
         Sets up an EOS bulkmod calculation
         """
@@ -182,7 +186,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
                     logger.info(f"Rerunning {self.calc_path}")
                     # increase nodes as its likely the calculation failed
                     self._from_scratch()
-                    self.setup_calc(increase_nodes_by_factor=2)
+                    self.setup_calc(increase_walltime_by_factor=2)
                 return False
         return True
 
