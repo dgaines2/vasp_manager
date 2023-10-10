@@ -17,6 +17,6 @@ preamble: |-
 command: |-
   for p in strain*; do
       cd $p
-      mpirun -np $mpi_tasks $vasp_std > stdout.txt 2> stderr.txt
+      mpirun -np $mpitasks $vasp_std > stdout.txt 2> stderr.txt
       cd ..
   done

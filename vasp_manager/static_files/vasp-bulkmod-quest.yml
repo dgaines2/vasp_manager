@@ -11,11 +11,11 @@ preamble: |-
   ulimit -s unlimited
   export OMP_NUM_THREADS=1
   module load {vasp_module}
-  mpi_tasks=$(echo "$SLURM_NTASKS * 24/28" | bc)
+  mpitasks=$(echo "$SLURM_NTASKS * 24/28" | bc)
 
 command: |-
   for p in strain*; do
       cd $p
-      mpirun -np $mpi_tasks vasp_std > stdout.txt 2> stderr.txt
+      mpirun -np $mpitasks vasp_std > stdout.txt 2> stderr.txt
       cd ..
   done
