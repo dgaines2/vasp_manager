@@ -130,6 +130,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
             use_spin = self._check_use_spin()
 
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
+        self.vasp_input_creator.increase_walltime_by_factor = increase_walltime_by_factor
         self.vasp_input_creator.use_spin = use_spin
         self.vasp_input_creator.create()
         self._make_bulkmod_strains()

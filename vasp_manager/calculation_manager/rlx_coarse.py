@@ -75,6 +75,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
         Sets up a coarse relaxation
         """
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
+        self.vasp_input_creator.increase_walltime_by_factor = increase_walltime_by_factor
 
         if make_archive:
             self.vasp_input_creator.make_archive_and_repopulate()
