@@ -69,13 +69,18 @@ class StaticCalculationManager(BaseCalculationManager):
         use_spin = len(rlx_mags) != 0
         return use_spin
 
-    def setup_calc(self, increase_nodes_by_factor=1):
+    def setup_calc(
+        self,
+        increase_nodes_by_factor=1,
+        increase_walltime_by_factor=1,
+    ):
         """
         Runs a static SCF calculation through VASP
 
         By default, requires previous relaxation run
         """
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
+        self.vasp_input_creator.increase_walltime_by_factor = increase_walltime_by_factor
         self.vasp_input_creator.use_spin = self._check_use_spin()
         self.vasp_input_creator.create()
 
@@ -131,7 +136,7 @@ class StaticCalculationManager(BaseCalculationManager):
                 logger.info(f"Rerunning {self.calc_path}")
                 self._from_scratch()
                 # increase nodes as its likely the calculation failed
-                self.setup_calc(increase_nodes_by_factor=2)
+                self.setup_calc(increase_walltime_by_factor=2)
             return False
 
         self._results = {}

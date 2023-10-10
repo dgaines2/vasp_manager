@@ -87,6 +87,7 @@ class RlxCalculationManager(BaseCalculationManager):
         Sets up a fine relaxation
         """
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
+        self.vasp_input_creator.increase_walltime_by_factor = increase_walltime_by_factor
         self.vasp_input_creator.use_spin = use_spin
 
         if make_archive:
