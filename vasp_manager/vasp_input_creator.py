@@ -378,6 +378,20 @@ class VaspInputCreator:
         with open(incar_path, "w+") as fw:
             fw.write(incar)
 
+    def make_kpoints(self):
+        kpoints_path = self.calc_path / "KPOINTS"
+        kspacing = self.calc_config["kspacing"]
+        reciprocal_lattice = self.source_structure.lattice.reciprocal_lattice
+        abc = np.asarray(reciprocal_lattice.abc)
+        kpoints = [int(k) for k in np.ceil(abc / kspacing)]
+        kpoints_str = " ".join(str(kpoint) for kpoint in kpoints)
+        kpoints_text = f"kpoints generated from kspacing={kspacing}\n"
+        kpoints_text += "0\n"
+        kpoints_text += "Gamma\n"
+        kpoints_text += f"{kpoints_str}\n"
+        with open(kpoints_path, "w+") as fw:
+            fw.write(kpoints_text)
+
     def make_vaspq(self):
         """
         Create and write vasp.q file
@@ -507,5 +521,8 @@ class VaspInputCreator:
             self.calc_path.mkdir()
         self.make_poscar()
         self.make_potcar()
+        if "write_kpoints" in self.calc_config:
+            if self.calc_config["write_kpoints"]:
+                self.make_kpoints()
         self.make_incar()
         self.make_vaspq()
