@@ -159,27 +159,25 @@ class BaseCalculationManager(ABC):
         errors = set()
 
         with open(stdout_path) as fr:
-            stdout = fr.readlines()
-        for line in stdout:
-            # TODO: add NELM and BRMIX
-            for error in [
-                "Sub-Space-Matrix",
-                "num prob",
-                "Inconsistent Bravais",
-            ]:
-                if error in line:
-                    errors.add(error)
+            for line in fr:
+                # TODO: add NELM and BRMIX
+                for error in [
+                    "Sub-Space-Matrix",
+                    "num prob",
+                    "Inconsistent Bravais",
+                ]:
+                    if error in line:
+                        errors.add(error)
 
         with open(stderr_path) as fr:
-            stderr = fr.readlines()
-        for line in stderr:
-            for error in [
-                "oom-kill",
-                "SETYLM",
-                "Segmentation",
-            ]:
-                if error in line:
-                    errors.add(error)
+            for line in fr:
+                for error in [
+                    "oom-kill",
+                    "SETYLM",
+                    "Segmentation",
+                ]:
+                    if error in line:
+                        errors.add(error)
 
         return errors
 
