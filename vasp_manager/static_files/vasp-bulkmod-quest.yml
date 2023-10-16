@@ -1,4 +1,5 @@
 sbatch_params: |-
+  #SBATCH -N {n_nodes}
   #SBATCH -n {n_procs}
   #SBATCH -p {queuetype}
   #SBATCH -J {jobname}
