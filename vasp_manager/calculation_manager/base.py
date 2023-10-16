@@ -157,14 +157,20 @@ class BaseCalculationManager(ABC):
         with open(stdout_path) as fr:
             stdout = fr.readlines()
         for line in stdout:
-            if "Sub-Space-Matrix" in line:
-                errors.add("Sub-Space-Matrix")
+            for error in [
+                "Sub-Space-Matrix",
+                "num prob",
+                "Inconsistent Bravais",
+            ]:
+                if error in line:
+                    errors.add(error)
 
         with open(stderr_path) as fr:
             stderr = fr.readlines()
         for line in stderr:
-            if "oom-kill" in line:
-                errors.add("OOM")
+            for error in ["oom-kill"]:
+                if error in line:
+                    errors.add(error)
 
         return errors
 
