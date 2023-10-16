@@ -189,9 +189,24 @@ class BaseCalculationManager(ABC):
         for error in errors:
             match error:
                 case "Sub-Space-Matrix":
-                    vic.calc_config_dict[self.mode]["algo"] = "Fast"
-                    errors_addressed[error] = True
-                case "OOM":
+                    new_algo = "Fast"
+                    previous_algo = self._parse_incar_tag("ALGO")
+                    if previous_algo == new_algo:
+                        errors_addressed[error] = False
+                    else:
+                        vic.calc_config["algo"] = new_algo
+                        errors_addressed[error] = True
+                case "num prob":
+                    errors_addressed[error] = False
+                case "Inconsistent Bravais":
+                    new_symprec = "1e-08"
+                    previous_symprec = self._parse_incar_tag("SYMPREC")
+                    if previous_symprec == new_symprec:
+                        errors_addressed[error] = False
+                    else:
+                        vic.calc_config["symprec"] = new_symprec
+                        errors_addressed[error] = True
+                case "oom-kill":
                     if vic.computer == "quest":
                         ncore_per_node_for_memory = 8
                     else:
