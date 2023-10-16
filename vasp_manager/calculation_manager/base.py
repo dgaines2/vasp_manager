@@ -99,6 +99,10 @@ class BaseCalculationManager(ABC):
     def stopped(self):
         return (self.material_path / "STOP").exists()
 
+    def stop(self):
+        with open(self.material_path / "STOP", "w+"):
+            pass
+
     def submit_job(self):
         return self.job_manager.submit_job()
 
