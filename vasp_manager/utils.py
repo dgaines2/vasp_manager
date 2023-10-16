@@ -40,17 +40,17 @@ def get_pmg_structure_from_poscar(
     poscar_path,
     to_process=True,
     primitive=True,
-    symprec=1e-3,
-    return_sg=False,
+    symprec=1e-03,
+    return_spacegroup=False,
 ):
     """
     Args:
-        poscar_path (str)
+        poscar_path (str | Path)
         to_process (bool): if True, get standard reduced structure
         primitive (bool): if True, get primitive structure, else get
             conventional structure
         symprec (float): symprec for SpacegroupAnalyzer
-        return_sg (bool): if True, return spacegroup number
+        return_spacegroup (bool): if True, return spacegroup number
     Returns:
         structure (pmg.Structure): structure from POSCAR
     """
@@ -61,34 +61,34 @@ def get_pmg_structure_from_poscar(
             structure = sga.get_primitive_standard_structure()
         else:
             structure = sga.get_conventional_standard_structure()
-        if return_sg:
-            sg = sga.get_space_group_number()
-            return structure, sg
+        if return_spacegroup:
+            spacegroup = sga.get_space_group_number()
+            return structure, spacegroup
     return structure
 
 
-def pcat(f_names):
+def pcat(file_names):
     """
     Custom python-only replacement for cat
 
     Args:
-        f_names (list): names of files to cat together
+        file_names (list): names of files to cat together
     Returns:
         catted (str)
     """
-    f_contents = []
-    if isinstance(f_names, (str, Path)):
-        f_names = [f_names]
-    for f_name in f_names:
-        with open(f_name) as fr:
-            f_content = fr.read()
-        f_contents.append(f_content)
-    catted = "".join(f_content for f_content in f_contents)
+    file_contents = []
+    if isinstance(file_names, (str, Path)):
+        file_names = [file_names]
+    for file_name in file_names:
+        with open(file_name) as fr:
+            file_content = fr.read()
+        file_contents.append(file_content)
+    catted = "".join(file_content for file_content in file_contents)
     return catted
 
 
 def pgrep(
-    f_name,
+    file_name,
     str_to_grep,
     stop_after_first_match=False,
     after=None,
@@ -98,7 +98,7 @@ def pgrep(
     Custom python-only replacement for grep
 
     Args:
-        f_name (str): path of file
+        file_name (str | Path): path of file
         str_to_grep (str): target string
         stop_after_first_match (bool): if True, stop after first found instance of
             str_to_grep
@@ -107,18 +107,18 @@ def pgrep(
     Returns:
         matches (str | list)
     """
-    opener = gzip.open if ".gz" in str(f_name) else open
+    opener = gzip.open if ".gz" in str(file_name) else open
     matches = []
     line_idx_to_include = set()
-    with opener(f_name, "rt") as fr:
-        for i, line in enumerate(fr):
+    with opener(file_name, "rt") as fr:
+        for line_idx, line in enumerate(fr):
             if str_to_grep in line:
                 matches.append(line.strip("\n"))
                 if after is not None:
-                    line_idx_to_include.update(range(i + 1, i + after + 1))
-            if i in line_idx_to_include:
+                    line_idx_to_include.update(range(line_idx + 1, line_idx + after + 1))
+            if line_idx in line_idx_to_include:
                 matches.append(line.strip("\n"))
-                line_idx_to_include.discard(i)
+                line_idx_to_include.discard(line_idx)
             if stop_after_first_match:
                 if len(matches) != 0 and len(line_idx_to_include) == 0:
                     break
@@ -127,20 +127,20 @@ def pgrep(
     return matches
 
 
-def phead(f_name, n_head=1, as_string=False):
+def phead(file_name, n_head=1, as_string=False):
     """
     Custom python-only replacement for head
 
     Args:
-        f_name (str): path of file
-        n_tail (int): n lines to head
+        file_name (str): path of file
+        n_head (int): n lines to head
         as_str (bool): if as_string, return a single string, else return splitlines
     Returns:
         head (str | list)
     """
-    opener = gzip.open if ".gz" in str(f_name) else open
+    opener = gzip.open if ".gz" in str(file_name) else open
     head = []
-    with opener(f_name, "rt") as fr:
+    with opener(file_name, "rt") as fr:
         for i, line in enumerate(fr):
             if i < n_head:
                 head.append(line.strip("\n"))
@@ -149,20 +149,20 @@ def phead(f_name, n_head=1, as_string=False):
     return head
 
 
-def ptail(f_name, n_tail=1, as_string=False):
+def ptail(file_name, n_tail=1, as_string=False):
     """
     Custom python-only replacement for grep
 
     Args:
-        f_name (str): path of file
+        file_name (str): path of file
         n_tail (int): n lines to tail
         as_str (bool): if as_string, return a single string, else return splitlines
     Returns:
         tail (str | list)
     """
-    opener = gzip.open if ".gz" in str(f_name) else open
+    opener = gzip.open if ".gz" in str(file_name) else open
     tail = deque(maxlen=n_tail)
-    with opener(f_name, "rt") as fr:
+    with opener(file_name, "rt") as fr:
         for line in fr:
             tail.append(line.strip("\n"))
     tail = list(tail)
@@ -171,25 +171,26 @@ def ptail(f_name, n_tail=1, as_string=False):
     return tail
 
 
-def make_potcar_anonymous(input_f_name, output_f_name=None):
+def make_potcar_anonymous(input_file_name, output_file_name=None):
     """
     Replace full POTCAR with only single POTCAR names
 
     Args:
-        input_f_name (str): path of POTCAR file
-        output_f_name (str): path to write anonymized POTCAR
+        input_file_name (str | Path): path of POTCAR file
+        output_file_name (str | Path | None): path to write anonymized POTCAR
+            if None, write to the location of input_f_name
     Returns:
         None
     """
-    if output_f_name is None:
-        output_f_name = input_f_name
+    if output_file_name is None:
+        output_file_name = input_file_name
 
-    with open(input_f_name, "rt") as fr:
+    with open(input_file_name, "rt") as fr:
         full_potcar_text = [line.strip() for line in fr.readlines()]
     trimmed_potcar_lines = []
     for line in full_potcar_text:
         if "TITEL" in line:
             trimmed_potcar_lines.append(line.split("=")[1].strip())
     trimmed_potcar_string = "\n".join([line for line in trimmed_potcar_lines])
-    with open(output_f_name, "w+") as fw:
+    with open(output_file_name, "w+") as fw:
         fw.write(trimmed_potcar_string)

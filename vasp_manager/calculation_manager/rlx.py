@@ -195,13 +195,13 @@ class RlxCalculationManager(BaseCalculationManager):
         contcar_path = self.calc_path / "CONTCAR"
         try:
             orig_structure, orig_spacegroup = get_pmg_structure_from_poscar(
-                original_poscar_path, return_sg=True
+                original_poscar_path, return_spacegroup=True
             )
             p_structure, p_spacegroup = get_pmg_structure_from_poscar(
-                poscar_path, return_sg=True
+                poscar_path, return_spacegroup=True
             )
             c_structure, c_spacegroup = get_pmg_structure_from_poscar(
-                contcar_path, return_sg=True
+                contcar_path, return_spacegroup=True
             )
         except Exception as e:
             logger.error(f"  RLX CONTCAR doesn't exist or is empty: {e}")
