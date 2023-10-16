@@ -29,6 +29,7 @@
 |     fallback, which may lead to unwanted results.                           |
 |                                                                             |
  -----------------------------------------------------------------------------
+      Inconsistent Bravais
 
  INCAR ok, starting setup
  POSCAR ok, starting setup
