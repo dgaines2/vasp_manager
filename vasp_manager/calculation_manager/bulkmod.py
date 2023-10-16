@@ -174,7 +174,8 @@ class BulkmodCalculationManager(BaseCalculationManager):
                         "\tRefusing to continue...\n",
                         f"\tVasp Errors: {vasp_errors}\n",
                     )
-                    raise RuntimeError(msg)
+                    logger.error(msg)
+                    self.stop()
                 if self.to_rerun:
                     logger.info(f"Rerunning {self.calc_path}")
                     self._from_scratch()
