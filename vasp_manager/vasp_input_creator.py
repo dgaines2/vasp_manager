@@ -188,24 +188,23 @@ class VaspInputCreator:
         # start with 1 node per 32 atoms
         num_nodes = (len(self.source_structure) // 32) + 1
         if self.computer == "quest":
-            # quest has 4x smaller nodes than perlmutter
+            # quest has ~4x smaller nodes than perlmutter
             num_nodes *= 4
         num_nodes *= self.increase_nodes_by_factor
         return num_nodes
 
     @property
     def n_procs(self):
-        # typically request all processors on each node, and then
-        # leave some ~4/node empty for memory
         n_procs = self.n_nodes * self.computing_config["ncore_per_node"]
         return n_procs
 
     @property
     def n_procs_used(self):
+        # typically request all processors on each node, and then
+        # leave some ~4/node empty for memory
         ncore_per_node = self.computing_config["ncore_per_node"]
-        if self.mode == "elastic":
-            if self.computer == "quest":
-                self.ncore_per_node_for_memory += 8
+        if self.computer == "quest":
+            self.ncore_per_node_for_memory += 4
         return self.n_nodes * (ncore_per_node - self.ncore_per_node_for_memory)
 
     @cached_property

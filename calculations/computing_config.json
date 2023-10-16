@@ -17,7 +17,7 @@
     "allocation": "p31151",
     "vasp_module": "vasp/5.4.4-openmpi-4.0.5-intel-19.0.5.281",
     "ncore": 12,
-    "ncore_per_node": 28
+    "ncore_per_node": 40
   },
   "perlmutter": {
     "user_id": "dwg4898",
