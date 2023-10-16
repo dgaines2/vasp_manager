@@ -174,7 +174,7 @@ Do testing of the errors next as they are independent
 """
 
 
-def test_hit_errors(calc_dir):
+def test_hit_errors_and_restart(calc_dir):
     """
     Test parsing and handling of VASP errors
     """
@@ -190,11 +190,41 @@ def test_hit_errors(calc_dir):
     )
     errors = rlx_coarse_manager._check_vasp_errors(stdout_path, stderr_path)
     all_errors_addressed = rlx_coarse_manager._address_vasp_errors(errors)
-    assert all_errors_addressed
     assert "Sub-Space-Matrix" in errors
-    assert "OOM" in errors
+    assert "Inconsistent Bravais" in errors
+    assert "oom-kill" in errors
+    assert all_errors_addressed
     assert not rlx_coarse_manager.is_done
+    assert not rlx_coarse_manager.stopped
+    assert rlx_coarse_manager.vasp_input_creator.calc_config["algo"] == "Fast"
+    assert rlx_coarse_manager.vasp_input_creator.calc_config["symprec"] == "1e-08"
+    assert rlx_coarse_manager.vasp_input_creator.ncore_per_node_for_memory == 32
     assert rlx_coarse_manager.results == "not finished"
+
+
+def test_hit_errors_and_stop(calc_dir):
+    """
+    Test parsing and handling of VASP errors
+    """
+    material_path = calc_dir / "material_hit_errors"
+    rlx_dir = material_path / "rlx"
+    stdout_path = rlx_dir / "stdout.txt"
+    stderr_path = rlx_dir / "stderr.txt"
+    assert rlx_dir.exists()
+    rlx_manager = RlxCalculationManager(
+        material_path=material_path,
+        to_rerun=False,
+        to_submit=False,
+    )
+    errors = rlx_manager._check_vasp_errors(stdout_path, stderr_path)
+    all_errors_addressed = rlx_manager._address_vasp_errors(errors)
+    assert "num prob" in errors
+    assert "SETYLM" in errors
+    assert "Segmentation" in errors
+    assert not all_errors_addressed
+    assert not rlx_manager.is_done
+    assert rlx_manager.stopped
+    assert rlx_manager.results == None
 
 
 def test_rlx_coarse_hit_errors(calc_dir):

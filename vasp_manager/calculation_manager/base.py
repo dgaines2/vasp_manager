@@ -99,6 +99,10 @@ class BaseCalculationManager(ABC):
     def stopped(self):
         return (self.material_path / "STOP").exists()
 
+    def stop(self):
+        with open(self.material_path / "STOP", "w+"):
+            pass
+
     def submit_job(self):
         return self.job_manager.submit_job()
 
@@ -134,6 +138,16 @@ class BaseCalculationManager(ABC):
         magmom_per_atom = total_magmom / len(structure)
         return magmom_per_atom
 
+    def _parse_incar_tag(self, tag):
+        incar_path = self.calc_path / "INCAR"
+        with open(incar_path) as fr:
+            incar = fr.readlines()
+        tag_value = None
+        for line in incar:
+            if tag in line:
+                tag_value = line.split("=")[1].strip()
+        return tag_value
+
     def _check_vasp_errors(self, stdout_path=None, stderr_path=None):
         """
         Find VASP errors in stdout and stderr
@@ -147,14 +161,25 @@ class BaseCalculationManager(ABC):
         with open(stdout_path) as fr:
             stdout = fr.readlines()
         for line in stdout:
-            if "Sub-Space-Matrix" in line:
-                errors.add("Sub-Space-Matrix")
+            # TODO: add NELM and BRMIX
+            for error in [
+                "Sub-Space-Matrix",
+                "num prob",
+                "Inconsistent Bravais",
+            ]:
+                if error in line:
+                    errors.add(error)
 
         with open(stderr_path) as fr:
             stderr = fr.readlines()
         for line in stderr:
-            if "oom-kill" in line:
-                errors.add("OOM")
+            for error in [
+                "oom-kill",
+                "SETYLM",
+                "Segmentation",
+            ]:
+                if error in line:
+                    errors.add(error)
 
         return errors
 
@@ -173,9 +198,22 @@ class BaseCalculationManager(ABC):
         for error in errors:
             match error:
                 case "Sub-Space-Matrix":
-                    vic.calc_config_dict[self.mode]["algo"] = "Fast"
-                    errors_addressed[error] = True
-                case "OOM":
+                    new_algo = "Fast"
+                    previous_algo = self._parse_incar_tag("ALGO")
+                    if previous_algo == new_algo:
+                        errors_addressed[error] = False
+                    else:
+                        vic.calc_config["algo"] = new_algo
+                        errors_addressed[error] = True
+                case "Inconsistent Bravais":
+                    new_symprec = "1e-08"
+                    previous_symprec = self._parse_incar_tag("SYMPREC")
+                    if previous_symprec == new_symprec:
+                        errors_addressed[error] = False
+                    else:
+                        vic.calc_config["symprec"] = new_symprec
+                        errors_addressed[error] = True
+                case "oom-kill":
                     if vic.computer == "quest":
                         ncore_per_node_for_memory = 8
                     else:

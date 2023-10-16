@@ -1,1 +1,2 @@
-oom-kill
+SETYLM
+Segmentation
