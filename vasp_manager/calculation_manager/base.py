@@ -134,6 +134,16 @@ class BaseCalculationManager(ABC):
         magmom_per_atom = total_magmom / len(structure)
         return magmom_per_atom
 
+    def _parse_incar_tag(self, tag):
+        incar_path = self.calc_path / "INCAR"
+        with open(incar_path) as fr:
+            incar = fr.readlines()
+        tag_value = None
+        for line in incar:
+            if tag in line:
+                tag_value = line.split("=")[1].strip()
+        return tag_value
+
     def _check_vasp_errors(self, stdout_path=None, stderr_path=None):
         """
         Find VASP errors in stdout and stderr
