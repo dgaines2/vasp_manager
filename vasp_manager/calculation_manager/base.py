@@ -157,6 +157,7 @@ class BaseCalculationManager(ABC):
         with open(stdout_path) as fr:
             stdout = fr.readlines()
         for line in stdout:
+            # TODO: add NELM and BRMIX
             for error in [
                 "Sub-Space-Matrix",
                 "num prob",
@@ -168,7 +169,11 @@ class BaseCalculationManager(ABC):
         with open(stderr_path) as fr:
             stderr = fr.readlines()
         for line in stderr:
-            for error in ["oom-kill"]:
+            for error in [
+                "oom-kill",
+                "SETYLM",
+                "Segmentation",
+            ]:
                 if error in line:
                     errors.add(error)
 
@@ -196,8 +201,6 @@ class BaseCalculationManager(ABC):
                     else:
                         vic.calc_config["algo"] = new_algo
                         errors_addressed[error] = True
-                case "num prob":
-                    errors_addressed[error] = False
                 case "Inconsistent Bravais":
                     new_symprec = "1e-08"
                     previous_symprec = self._parse_incar_tag("SYMPREC")
