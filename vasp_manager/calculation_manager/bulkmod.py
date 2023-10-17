@@ -241,5 +241,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
             with change_directory(strain_path):
                 for f in ["POTCAR", "INCAR"]:
+                    if Path(f).exists():
+                        os.remove(f)
                     orig_path = Path("..") / f
                     os.symlink(orig_path, f, target_is_directory=False)
