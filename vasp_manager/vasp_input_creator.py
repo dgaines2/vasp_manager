@@ -302,7 +302,6 @@ class VaspInputCreator:
             but future versions should include ability to make kpoints from kppra
         """
         incar_path = self.calc_path / "INCAR"
-        ncore = self.computing_config["ncore"]
         calc_config = self.calc_config.copy()
 
         if calc_config["ispin"] not in [1, "auto"]:
@@ -328,8 +327,18 @@ class VaspInputCreator:
                 potcar_single.nelectrons * composition_dict[potcar_single.element]
             )
         # make n_bands divisible by NCORE (VASP INCAR tag)
+        # elastic calculation won't run unless NCORE=1
+        if self.mode == "elastic":
+            self.computing_config["ncore"] = 1
+        ncore = self.computing_config["ncore"]
         calc_config["ncore"] = ncore
-        calc_config["nbands"] = int(np.ceil(0.75 * n_electrons / ncore) * ncore)
+        cores_per_group = int(self.n_procs_used / self.calc_config["kpar"])
+        calc_config["nbands"] = np.max(
+            [
+                int(np.ceil(0.75 * n_electrons / ncore) * ncore),
+                cores_per_group,
+            ]
+        )
 
         needs_spin_polarization = self._check_needs_spin_polarization(composition_dict)
         use_spin_polarization = (
@@ -368,9 +377,6 @@ class VaspInputCreator:
                 if "KSPACING" in line:
                     nfree_line = "NFREE = {nfree}"
                     incar_tmp.insert(i + 1, nfree_line)
-                if "NCORE" in line:
-                    # elastic calculation won't run unless NCORE=1
-                    incar_tmp[i] = "NCORE = 1"
         incar_tmp = "\n".join([line for line in incar_tmp])
         incar = incar_tmp.format(**calc_config)
         logger.debug(incar)
