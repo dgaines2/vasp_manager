@@ -143,9 +143,9 @@ class ElasticCalculationManager(BaseCalculationManager):
                 self.setup_calc()
             return False
 
-        last_grep_line = grep_output[-1].strip().split()
-        # last grep line looks something like 'Total: 36/ 36'
-        finished_deformations = int(last_grep_line[-2].replace("/", ""))
+        # last grep line looks something like 'Total: 108/108'
+        last_grep_line = grep_output[-1].replace("/", " ").strip().split()
+        finished_deformations = int(last_grep_line[-2])
         total_deformations = int(last_grep_line[-1])
         logger.debug(last_grep_line)
         if not finished_deformations == total_deformations:
