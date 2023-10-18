@@ -166,7 +166,7 @@ class RlxCalculationManager(BaseCalculationManager):
                 logger.info(f"Rerunning {self.calc_path}")
                 # increase nodes as its likely the calculation failed
                 self.setup_calc(
-                    increase_walltime_by_factor=2, make_archive=True, use_spin=use_spin
+                    increase_nodes_by_factor=2, make_archive=True, use_spin=use_spin
                 )
             return False
 
