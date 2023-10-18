@@ -183,7 +183,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
                     logger.info(f"Rerunning {self.calc_path}")
                     # increase nodes as its likely the calculation failed
                     self._from_scratch()
-                    self.setup_calc(increase_walltime_by_factor=2)
+                    self.setup_calc(increase_nodes_by_factor=2)
                 return False
         return True
 

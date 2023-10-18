@@ -157,7 +157,7 @@ class ElasticCalculationManager(BaseCalculationManager):
                 logger.info(f"Rerunning {self.calc_path}")
                 # increase walltime as its likely the calculation failed
                 self._from_scratch()
-                self.setup_calc(increase_walltime_by_factor=2)
+                self.setup_calc(increase_nodes_by_factor=2)
             return False
 
         logger.info(f"{self.mode.upper()} Calculation: Success")

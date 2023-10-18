@@ -146,7 +146,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             if self.to_rerun:
                 logger.info(f"Rerunning {self.calc_path}")
                 # increase nodes as its likely the calculation failed
-                self.setup_calc(increase_walltime_by_factor=2, make_archive=True)
+                self.setup_calc(increase_nodes_by_factor=2, make_archive=True)
             return False
 
         logger.info(f"{self.mode.upper()} Calculation: reached required accuracy")
