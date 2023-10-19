@@ -213,7 +213,8 @@ class BaseCalculationManager(ABC):
                         errors_addressed[error] = True
                 case "oom-kill":
                     if vic.computer == "quest":
-                        ncore_per_node_for_memory = 8
+                        # total of 16 (as vic adds 4 if on quest)
+                        ncore_per_node_for_memory = 12
                     else:
                         ncore_per_node_for_memory = 32
                     vic.ncore_per_node_for_memory = ncore_per_node_for_memory
