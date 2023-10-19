@@ -183,7 +183,7 @@ class VaspInputCreator:
         with open(potcar_path, "w+") as fw:
             fw.write(potcar)
 
-    @property
+    @cached_property
     def n_nodes(self):
         # start with 1 node per 32 atoms
         num_nodes = (len(self.source_structure) // 32) + 1
@@ -193,12 +193,12 @@ class VaspInputCreator:
         num_nodes *= self.increase_nodes_by_factor
         return num_nodes
 
-    @property
+    @cached_property
     def n_procs(self):
         n_procs = self.n_nodes * self.computing_config["ncore_per_node"]
         return n_procs
 
-    @property
+    @cached_property
     def n_procs_used(self):
         # typically request all processors on each node, and then
         # leave some ~4/node empty for memory
