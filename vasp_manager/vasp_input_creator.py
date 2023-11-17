@@ -494,7 +494,11 @@ class VaspInputCreator:
 
             if contcar_is_empty:
                 # if CONTCAR is empty, don't make an archive and clean up
-                all_files = [f for f in Path(".").glob("*") if f.is_file()]
+                all_files = [
+                    f
+                    for f in Path(".").glob("*")
+                    if f.is_file() and "archive" not in f.name
+                ]
                 for f in all_files:
                     os.remove(f)
             else:
@@ -504,7 +508,11 @@ class VaspInputCreator:
                 logger.info(f"Making {archive_name}...")
                 archive_name.mkdir()
 
-                all_files = [f for f in Path(".").glob("*") if f.is_file()]
+                all_files = [
+                    f
+                    for f in Path(".").glob("*")
+                    if f.is_file() and "archive" not in f.name
+                ]
                 for f in all_files:
                     # add if symlink for testing
                     if f.is_symlink():
