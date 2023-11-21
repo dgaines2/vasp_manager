@@ -23,6 +23,7 @@ class StaticCalculationManager(BaseCalculationManager):
         to_submit,
         primitive=True,
         ignore_personal_errors=True,
+        from_relax=True,
         from_scratch=False,
         tail=5,
     ):
@@ -31,8 +32,10 @@ class StaticCalculationManager(BaseCalculationManager):
         see BaseCalculationManager
 
         Args:
+            from_relax (bool): if True, use CONTCAR from relax
             tail (int): number of last lines to log in debugging if job failed
         """
+        self.from_relax = from_relax
         self.tail = tail
         super().__init__(
             material_path=material_path,
@@ -51,7 +54,11 @@ class StaticCalculationManager(BaseCalculationManager):
 
     @cached_property
     def poscar_source_path(self):
-        return self.material_path / "rlx" / "CONTCAR"
+        if self.from_relax:
+            poscar_source_path = self.material_path / "rlx" / "CONTCAR"
+        else:
+            poscar_source_path = self.material_path / "POSCAR"
+        return poscar_source_path
 
     @cached_property
     def vasp_input_creator(self):
@@ -64,9 +71,12 @@ class StaticCalculationManager(BaseCalculationManager):
         )
 
     def _check_use_spin(self):
-        rlx_stdout = self.material_path / "rlx" / "stdout.txt"
-        rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
-        use_spin = len(rlx_mags) != 0
+        if self.from_relax:
+            rlx_stdout = self.material_path / "rlx" / "stdout.txt"
+            rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
+            use_spin = len(rlx_mags) != 0
+        else:
+            use_spin = True
         return use_spin
 
     def setup_calc(

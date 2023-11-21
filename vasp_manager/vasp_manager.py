@@ -233,10 +233,7 @@ class VaspManager:
                         **self.calculation_manager_kwargs[calc_type],
                     )
                 case "rlx":
-                    if "rlx-coarse" in self.calculation_types:
-                        from_coarse_relax = True
-                    else:
-                        from_coarse_relax = False
+                    from_coarse_relax = "rlx-coarse" in self.calculation_types
                     manager = RlxCalculationManager(
                         material_path=material_path,
                         to_rerun=self.to_rerun,
@@ -249,28 +246,18 @@ class VaspManager:
                         **self.calculation_manager_kwargs[calc_type],
                     )
                 case "static":
-                    if "rlx" not in self.calculation_types:
-                        msg = "Cannot perform static calculation without mode='rlx' first"
-                        raise Exception(msg)
+                    from_relax = "rlx" in self.calculation_types
                     manager = StaticCalculationManager(
                         material_path=material_path,
                         to_rerun=self.to_rerun,
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
+                        from_relax=from_relax,
                         tail=self.tail,
                         **self.calculation_manager_kwargs[calc_type],
                     )
-                case "bulkmod" | "bulkmod_standalone":
-                    if calc_type == "bulkmod" and "rlx" in self.calculation_types:
-                        from_relax = True
-                    else:
-                        from_relax = False
-                        if len(self.calculation_types) > 1:
-                            msg = (
-                                "bulkmod_standalone must be run alone -- remove other"
-                                " calculation types to fix"
-                            )
-                            raise Exception(msg)
+                case "bulkmod":
+                    from_relax = "rlx" in self.calculation_types
                     manager = BulkmodCalculationManager(
                         material_path=material_path,
                         to_rerun=self.to_rerun,
