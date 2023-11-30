@@ -30,6 +30,7 @@ class VaspInputCreator:
         calc_path,
         mode,
         poscar_source_path,
+        config_dir=None,
         primitive=True,
         name=None,
         increase_nodes_by_factor=1,
@@ -43,6 +44,7 @@ class VaspInputCreator:
             calc_path
             mode
             poscar_source_path
+            config_dir
             primitive
             name
             increase_nodes_by_factor
@@ -53,6 +55,7 @@ class VaspInputCreator:
         """
         self.calc_path = Path(calc_path)
         self.poscar_source_path = Path(poscar_source_path)
+        self.config_dir = Path(config_dir) if config_dir else self.calc_path.parent.parent
         self.primitive = primitive
         self.increase_nodes_by_factor = int(increase_nodes_by_factor)
         self.increase_walltime_by_factor = int(increase_walltime_by_factor)
@@ -76,14 +79,13 @@ class VaspInputCreator:
         # first pardir is material_name/
         # second pardir is calculations/
         # config dict should sit in calculations/
-        all_calcs_dir = self.calc_path.parent.parent
         fname = "calc_config.json"
-        fpath = all_calcs_dir / fname
+        fpath = self.config_dir / fname
         if fpath.exists():
             with open(fpath) as fr:
                 calc_config = json.load(fr)
         else:
-            raise Exception(f"No {fname} found in path {all_calcs_dir.absolute()}")
+            raise Exception(f"No {fname} found in path {self.config_dir.absolute()}")
         return calc_config
 
     @cached_property
@@ -92,14 +94,13 @@ class VaspInputCreator:
 
     @cached_property
     def computing_config_dict(self):
-        all_calcs_dir = self.calc_path.parent.parent
         fname = "computing_config.json"
-        fpath = all_calcs_dir / fname
+        fpath = self.config_dir / fname
         if fpath.exists():
             with open(fpath) as fr:
                 computing_config = json.load(fr)
         else:
-            raise Exception(f"No {fname} found in path {all_calcs_dir.absolute()}")
+            raise Exception(f"No {fname} found in path {self.config_dir.absolute()}")
         return computing_config
 
     @cached_property
@@ -469,6 +470,14 @@ class VaspInputCreator:
             .read_text(),
             Loader=yaml.SafeLoader,
         )
+        override_vaspq_settings_path = self.config_dir / f"{self.computer}.yml"
+        if override_vaspq_settings_path.exists():
+            with open(override_vaspq_settings_path) as fr:
+                override_vaspq_settings = yaml.load(
+                    fr,
+                    Loader=yaml.SafeLoader,
+                )
+            vaspq_settings.update(override_vaspq_settings)
         vaspq_tmp = (
             importlib_resources.files("vasp_manager")
             .joinpath(str(Path("static_files") / "vasp.q"))
