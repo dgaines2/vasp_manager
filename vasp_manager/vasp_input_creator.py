@@ -87,7 +87,8 @@ class VaspInputCreator:
         if fpath.exists():
             with open(fpath) as fr:
                 calc_config_dict = json.load(fr)
-                calc_config = calc_config_dict[self.mode]
+                calc_config = calc_config_dict["all"]
+                calc_config.update(calc_config_dict[self.mode])
         else:
             raise Exception(f"No {fname} found in path {self.config_dir.absolute()}")
         # if material_name/mode calc_config.json exists, update with that
