@@ -60,18 +60,10 @@ class VaspInputCreator:
         self.increase_nodes_by_factor = int(increase_nodes_by_factor)
         self.increase_walltime_by_factor = int(increase_walltime_by_factor)
         self.name = name
-        self.mode = self._get_mode(mode)
+        self.mode = mode
         self.poscar_significant_figures = poscar_significant_figures
         self.ncore_per_node_for_memory = ncore_per_node_for_memory
         self.use_spin = use_spin
-
-    def _get_mode(self, mode):
-        # rlx-coarse, rlx, bulkmod, stc, or elastic
-        # needed to add this to ensure bulkmod or bulkmod_standalone
-        # share same config
-        if "bulkmod" in mode:
-            mode = "bulkmod"
-        return mode
 
     @cached_property
     def calc_config_dict(self):

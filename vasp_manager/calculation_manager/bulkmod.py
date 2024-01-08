@@ -45,6 +45,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
                 if None, use default
                 default is np.linspace(start=0.925, stop=1.075, number=11)**(1/3)
                 len(strains) must be odd and strains must be centered around 0
+            tail (int): number of last lines to log in debugging if job failed
         """
         self.from_relax = from_relax
         self.strains = (
@@ -66,10 +67,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
     @cached_property
     def mode(self):
-        mode_str = "bulkmod"
-        if not self.from_relax:
-            mode_str += "_standalone"
-        return mode_str
+        return "bulkmod"
 
     @cached_property
     def poscar_source_path(self):
@@ -102,13 +100,12 @@ class BulkmodCalculationManager(BaseCalculationManager):
         self._strains = values
 
     def _check_use_spin(self):
-        # if not from_relax, use setting from calc_config
-        if not self.from_relax:
-            return True
-        # otherwise, check if relax finished with spin
-        rlx_stdout = self.material_path / "rlx" / "stdout.txt"
-        rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
-        use_spin = len(rlx_mags) != 0
+        if self.from_relax:
+            rlx_stdout = self.material_path / "rlx" / "stdout.txt"
+            rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
+            use_spin = len(rlx_mags) != 0
+        else:
+            use_spin = True
         return use_spin
 
     def setup_calc(
@@ -125,13 +122,10 @@ class BulkmodCalculationManager(BaseCalculationManager):
                 "\n\t starting structure must be fairly close to equilibrium volume!"
             )
             logger.warning(msg)
-            use_spin = True
-        else:
-            use_spin = self._check_use_spin()
 
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
         self.vasp_input_creator.increase_walltime_by_factor = increase_walltime_by_factor
-        self.vasp_input_creator.use_spin = use_spin
+        self.vasp_input_creator.use_spin = self._check_use_spin()
         self.vasp_input_creator.create()
         self._make_bulkmod_strains()
 

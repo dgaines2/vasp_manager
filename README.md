@@ -55,17 +55,17 @@ scripts.
 ### Calculation Modes
 
 We include calculation modes `"rlx-coarse"`, `"rlx"`, `"static"`, `"bulkmod"`,
-`"bulkmod_standalone"`, and `"elastic"`.  The desired modes to calculate are
-specified when initializing a `VaspManager` object.
+and `"elastic"`.  The desired modes to calculate are specified when
+initializing a `VaspManager` object.
 
 * `rlx-coarse`: lower precision energy-based relaxation
 * `rlx`: tighter force-based relaxation
 * `static`: high accuracy static SCF calculation
 * `bulkmod`: bulk modulus calculation using an Equation of State (EOS) fit to an
 energy-volume curve
-  * `bulkmod_standalone`: standalone (no relaxation required) bulk modulus
-    calculation using an EOS (although this is not recommended unless you are
-    sure the cell volume is very close to the equilibrium value)
+  * Can be run as a standalone (no relaxation required) calculation of bulk
+    modulus using an EOS (although this is not recommended unless you are sure
+    the cell volume is very close to the equilibrium value)
 * `elastic`: Determination of elastic constants using the strain/deformation
 method built into `VASP`
 
@@ -73,10 +73,11 @@ I generally recommend starting from `rlx-coarse`, although the functionality is
 there to start a `rlx` calculation from the initially provided POSCAR.
 
 Most users' workflows follow `rlx-coarse` &#8594; `rlx` &#8594; `static`. The
-modes `static`, `bulkmod`, and `elastic` require at least `rlx` preceding it,
-but can all be run independently of each other.  For example, workflows might
-look like `rlx-coarse` &#8594; `rlx` &#8594; `static` &#8594; `bulkmod`, or
-`rlx` &#8594; `elastic`, or simply `bulkmod_standalone`.
+modes `static`, `bulkmod`, and `elastic` can all be run independently of each
+other. For example, workflows might look like `rlx-coarse` &#8594; `rlx` &#8594;
+`static` &#8594; `bulkmod`, or `rlx` &#8594; `elastic`, or simply `bulkmod`.
+The `elastic` mode requires at least `rlx` preceding it in order to guarantee
+converged lattice parameters and atomic positions.
 
 ## Usage Guide
 
