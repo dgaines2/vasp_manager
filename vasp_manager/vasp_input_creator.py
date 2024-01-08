@@ -66,23 +66,23 @@ class VaspInputCreator:
         self.use_spin = use_spin
 
     @cached_property
-    def calc_config_dict(self):
-        # sits in calculation folder like calculations/material_name/mode
-        # first pardir is material_name/
-        # second pardir is calculations/
-        # config dict should sit in calculations/
+    def calc_config(self):
         fname = "calc_config.json"
         fpath = self.config_dir / fname
         if fpath.exists():
             with open(fpath) as fr:
-                calc_config = json.load(fr)
+                calc_config_dict = json.load(fr)
+                calc_config = calc_config_dict[self.mode]
         else:
             raise Exception(f"No {fname} found in path {self.config_dir.absolute()}")
+        # if material_name/mode calc_config.json exists, update with that
+        # This allows for custom settings for a specific material/mode to be used
+        custom_calc_config_path = self.calc_path / fname
+        if custom_calc_config_path.exists():
+            with open(custom_calc_config_path) as fr:
+                custom_calc_config = json.load(fr)
+            calc_config.update(custom_calc_config)
         return calc_config
-
-    @cached_property
-    def calc_config(self):
-        return self.calc_config_dict[self.mode]
 
     @cached_property
     def computing_config_dict(self):
@@ -493,17 +493,17 @@ class VaspInputCreator:
             else:
                 contcar_is_empty = True
 
+            # if CONTCAR is empty, don't make an archive and clean up
             if contcar_is_empty:
-                # if CONTCAR is empty, don't make an archive and clean up
                 all_files = [
                     f
                     for f in Path(".").glob("*")
-                    if f.is_file() and "archive" not in f.name
+                    if f.is_file() and "archive" not in f.name and "json" not in f.name
                 ]
                 for f in all_files:
                     os.remove(f)
+            # else, make the archive
             else:
-                # make the archive
                 num_previous_archives = len(list(Path(".").glob("archive*")))
                 archive_name = Path(f"archive_{num_previous_archives}")
                 logger.info(f"Making {archive_name}...")
@@ -512,7 +512,7 @@ class VaspInputCreator:
                 all_files = [
                     f
                     for f in Path(".").glob("*")
-                    if f.is_file() and "archive" not in f.name
+                    if f.is_file() and "archive" not in f.name and "json" not in f.name
                 ]
                 for f in all_files:
                     # add if symlink for testing
