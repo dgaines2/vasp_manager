@@ -161,7 +161,10 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
     @property
     def results(self):
         if not self.is_done:
-            self._results = "not finished"
+            if self.stopped:
+                return "STOPPED"
+            else:
+                return "not finished"
         else:
             self._results = "done"
         return self._results

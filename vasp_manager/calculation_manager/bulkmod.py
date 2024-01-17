@@ -195,7 +195,10 @@ class BulkmodCalculationManager(BaseCalculationManager):
     @property
     def results(self):
         if not self.is_done:
-            return None
+            if self.stopped:
+                return "STOPPED"
+            else:
+                return None
         try:
             ba = BulkmodAnalyzer(calc_path=self.calc_path)
             self._results = ba.results

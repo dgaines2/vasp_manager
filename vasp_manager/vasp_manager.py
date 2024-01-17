@@ -204,16 +204,19 @@ class VaspManager:
             material_name (str): name of material to check
             calc_type (str): calculation type to check
         Returns:
-            is_done (bool)
+            (is_done (bool), is_stopped (bool))
         """
         match calc_type:
-            case "rlx-coarse":
-                is_done = self.results[material_name][calc_type] == "done"
-            case "rlx" | "static" | "bulkmod" | "elastic":
-                is_done = self.results[material_name][calc_type] is not None
+            case "rlx-coarse" | "rlx" | "static" | "bulkmod" | "elastic":
+                is_done = self.results[material_name][calc_type] not in [
+                    None,
+                    "STOPPED",
+                    "not finished",
+                ]
+                is_stopped = self.results[material_name][calc_type] == "STOPPED"
             case _:
                 raise ValueError("Can't find mode {mode} in result")
-        return is_done
+        return (is_done, is_stopped)
 
     def _get_calculation_managers(self, material_path):
         """
@@ -307,7 +310,7 @@ class VaspManager:
                 break
 
             if calc_manager.mode in self.results[material_name].keys():
-                calc_is_done = self._check_calc_by_result(
+                calc_is_done, calc_is_stopped = self._check_calc_by_result(
                     material_name, calc_manager.mode
                 )
                 if calc_is_done and not calc_manager.from_scratch:
@@ -325,17 +328,22 @@ class VaspManager:
                     case _:
                         pass
 
-            if not calc_manager.is_done:
-                match calc_manager.mode:
-                    case "rlx-coarse" | "rlx" | "elastic":
-                        # don't check further modes as they rely on rlx-coarse
-                        # or rlx to be done
-                        # break if elastic not done to avoid analysis
-                        break
-                    case _:
-                        # go ahead and check the other modes as they are
-                        # independent of each other
-                        pass
+            calc_is_done = calc_manager.is_done
+            calc_is_stopped = calc_manager.stopped
+            if calc_is_stopped:
+                logger.info(f"{material_name} -- STOPPED")
+            else:
+                if not calc_is_done:
+                    match calc_manager.mode:
+                        case "rlx-coarse" | "rlx" | "elastic":
+                            # don't check further modes as they rely on rlx-coarse
+                            # or rlx to be done
+                            # break if elastic not done to avoid analysis
+                            break
+                        case _:
+                            # go ahead and check the other modes as they are
+                            # independent of each other
+                            pass
 
             material_results[calc_manager.mode] = calc_manager.results
         return (material_name, material_results)

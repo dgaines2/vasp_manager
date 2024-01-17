@@ -255,5 +255,8 @@ class RlxCalculationManager(BaseCalculationManager):
     @property
     def results(self):
         if not self.is_done:
-            self._results = None
+            if self.stopped:
+                return "STOPPED"
+            else:
+                return None
         return self._results

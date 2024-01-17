@@ -171,7 +171,10 @@ class ElasticCalculationManager(BaseCalculationManager):
     @property
     def results(self):
         if not self.is_done:
-            return None
+            if self.stopped:
+                return "STOPPED"
+            else:
+                return None
         try:
             self._results = self._analyze_elastic()
         except Exception as e:
