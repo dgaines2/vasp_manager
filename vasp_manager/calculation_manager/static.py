@@ -120,10 +120,15 @@ class StaticCalculationManager(BaseCalculationManager):
                 self.setup_calc()
             return False
 
-        vasp_errors = self._check_vasp_errors()
+        vasp_errors = self._check_vasp_errors(extra_errors=["NELM"])
         if len(vasp_errors) > 0:
             all_errors_addressed = self._address_vasp_errors(vasp_errors)
-            if not all_errors_addressed:
+            if all_errors_addressed:
+                if self.to_rerun:
+                    logger.info(f"Rerunning {self.calc_path}")
+                    self._from_scratch()
+                    self.setup_calc()
+            else:
                 msg = (
                     f"{self.mode.upper()} Calculation: ",
                     "Couldn't address all VASP Errors\n",
@@ -132,10 +137,6 @@ class StaticCalculationManager(BaseCalculationManager):
                 )
                 logger.error(msg)
                 self.stop()
-            if self.to_rerun:
-                logger.info(f"Rerunning {self.calc_path}")
-                self._from_scratch()
-                self.setup_calc()
             return False
 
         tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
@@ -170,5 +171,8 @@ class StaticCalculationManager(BaseCalculationManager):
     @property
     def results(self):
         if not self.is_done:
-            self._results = None
+            if self.stopped:
+                return "STOPPED"
+            else:
+                return None
         return self._results

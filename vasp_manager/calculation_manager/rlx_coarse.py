@@ -114,7 +114,11 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
         vasp_errors = self._check_vasp_errors()
         if len(vasp_errors) > 0:
             all_errors_addressed = self._address_vasp_errors(vasp_errors)
-            if not all_errors_addressed:
+            if all_errors_addressed:
+                if self.to_rerun:
+                    logger.info(f"Rerunning {self.calc_path}")
+                    self.setup_calc(make_archive=True)
+            else:
                 msg = (
                     f"{self.mode.upper()} Calculation: ",
                     "Couldn't address all VASP Errors\n",
@@ -123,9 +127,6 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
                 )
                 logger.error(msg)
                 self.stop()
-            if self.to_rerun:
-                logger.info(f"Rerunning {self.calc_path}")
-                self.setup_calc(make_archive=True)
             return False
 
         tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
@@ -161,7 +162,10 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
     @property
     def results(self):
         if not self.is_done:
-            self._results = "not finished"
+            if self.stopped:
+                return "STOPPED"
+            else:
+                return "not finished"
         else:
             self._results = "done"
         return self._results

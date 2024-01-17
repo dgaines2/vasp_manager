@@ -1,2 +1,3 @@
 SETYLM
 Segmentation
+command not found

@@ -125,7 +125,11 @@ class RlxCalculationManager(BaseCalculationManager):
         vasp_errors = self._check_vasp_errors()
         if len(vasp_errors) > 0:
             all_errors_addressed = self._address_vasp_errors(vasp_errors)
-            if not all_errors_addressed:
+            if all_errors_addressed:
+                if self.to_rerun:
+                    logger.info(f"Rerunning {self.calc_path}")
+                    self.setup_calc(make_archive=True)
+            else:
                 msg = (
                     f"{self.mode.upper()} Calculation: ",
                     "Couldn't address all VASP Errors\n",
@@ -134,9 +138,6 @@ class RlxCalculationManager(BaseCalculationManager):
                 )
                 logger.error(msg)
                 self.stop()
-            if self.to_rerun:
-                logger.info(f"Rerunning {self.calc_path}")
-                self.setup_calc(make_archive=True)
             return False
 
         previous_magmom_per_atom = self._parse_magmom_per_atom()
@@ -255,5 +256,8 @@ class RlxCalculationManager(BaseCalculationManager):
     @property
     def results(self):
         if not self.is_done:
-            self._results = None
+            if self.stopped:
+                return "STOPPED"
+            else:
+                return None
         return self._results
