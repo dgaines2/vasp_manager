@@ -377,7 +377,7 @@ class VaspManager:
         print(f"Dumped to {self.results_path}")
         return self.results
 
-    def summary(self, as_string=True, print_unfinished=False):
+    def summary(self, as_string=True, print_unfinished=False, print_stopped=True):
         """
         Create a string summary of all calculations
 
@@ -398,17 +398,20 @@ class VaspManager:
             summary_dict[calc_type]["n_finished"] = 0
             summary_dict[calc_type]["finished"] = []
             summary_dict[calc_type]["unfinished"] = []
+            summary_dict[calc_type]["stopped"] = []
 
             for material, mat_results in results.items():
                 # need to account for case key doesn't yet exist
                 if calc_type not in mat_results:
                     summary_dict[calc_type]["unfinished"].append(material)
                 else:
-                    is_done = self._check_calc_by_result(material, calc_type)
+                    is_done, is_stopped = self._check_calc_by_result(material, calc_type)
                     if is_done:
                         summary_dict[calc_type]["n_finished"] += 1
                         summary_dict[calc_type]["finished"].append(material)
                     else:
+                        if is_stopped:
+                            summary_dict[calc_type]["stopped"].append(material)
                         summary_dict[calc_type]["unfinished"].append(material)
 
         if as_string:
@@ -429,6 +432,10 @@ class VaspManager:
                         summary_str += (
                             f"Unfinished {calc_type.upper()}: " + f"{unfinished}\n"
                         )
+                if print_stopped:
+                    stopped = summary_dict[calc_type]["stopped"]
+                    if len(stopped) != 0:
+                        summary_str += f"Stopped {calc_type.upper()}: " + f"{stopped}\n"
             return summary_str
         else:
             return summary_dict
