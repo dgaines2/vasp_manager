@@ -6,7 +6,7 @@
     \  / (_| \__ \ |_) | |  | | (_| | | | | (_| | (_| |  __/ |
      \/ \__,_|___/ .__/|_|  |_|\__,_|_| |_|\__,_|\__, |\___|_|
                  | |                              __/ |
-                 |_|                             |___/ v1.1.3
+                 |_|                             |___/ v1.1.4
 ```
 
 <hr/>
@@ -99,7 +99,7 @@ systems.
 placed in the `calculations/` directory. Each mode has its own configuration
 settings with sensible defaults, but these can be easily customized by the user.
     * To include spin polarization, set `"ispin": "auto"` in
-    `calc_config.json`; otherwise set `"ispin": 1` With this setting, all
+    `calc_config.json`; otherwise set `"ispin": 1`. With this setting, all
     elements with valence *d* or *f* electrons will start with initial magnetic
     moments of 5 and 7 $\mu_B$, respectively. `VaspManager` also accepts an
     additional argument `magmom_per_atom_cutoff` which defaults to 0. If this
