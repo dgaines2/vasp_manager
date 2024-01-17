@@ -231,7 +231,7 @@ def test_hit_errors_and_stop(calc_dir):
     assert not all_errors_addressed
     assert not rlx_manager.is_done
     assert rlx_manager.stopped
-    assert rlx_manager.results == None
+    assert rlx_manager.results == "STOPPED"
 
 
 def test_rlx_coarse_hit_errors(calc_dir):
