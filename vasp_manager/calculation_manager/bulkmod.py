@@ -157,7 +157,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
                 return False
 
             vasp_errors = self._check_vasp_errors(
-                stdout_path=stdout_path, stderr_path=stderr_path
+                stdout_path=stdout_path, stderr_path=stderr_path, extra_errors=["NELM"]
             )
             if len(vasp_errors) > 0:
                 all_errors_addressed = self._address_vasp_errors(vasp_errors)

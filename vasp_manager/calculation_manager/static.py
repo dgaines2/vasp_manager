@@ -120,7 +120,7 @@ class StaticCalculationManager(BaseCalculationManager):
                 self.setup_calc()
             return False
 
-        vasp_errors = self._check_vasp_errors()
+        vasp_errors = self._check_vasp_errors(extra_errors=["NELM"])
         if len(vasp_errors) > 0:
             all_errors_addressed = self._address_vasp_errors(vasp_errors)
             if not all_errors_addressed:
