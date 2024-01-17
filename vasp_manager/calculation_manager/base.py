@@ -29,7 +29,7 @@ class BaseCalculationManager(ABC):
     ):
         """
         Args:
-            material_path (str): path for a single material
+            material_path (str | Path): path for a single material
                 ex. calculations/AlAs
             to_rerun (bool): if True, rerun failed calculations
             to_submit (bool): if True, submit calculations to job manager
@@ -148,7 +148,7 @@ class BaseCalculationManager(ABC):
                 tag_value = line.split("=")[1].strip()
         return tag_value
 
-    def _check_vasp_errors(self, stdout_path=None, stderr_path=None):
+    def _check_vasp_errors(self, stdout_path=None, stderr_path=None, extra_errors=None):
         """
         Find VASP errors in stdout and stderr
         """
@@ -156,18 +156,25 @@ class BaseCalculationManager(ABC):
             stdout_path = self.calc_path / "stdout.txt"
         if stderr_path is None:
             stderr_path = self.calc_path / "stderr.txt"
-        errors = set()
+        if extra_errors is None:
+            extra_errors = []
+        errors_found = set()
 
         with open(stdout_path) as fr:
             for line in fr:
-                # TODO: add NELM and BRMIX
-                for error in [
+                errors = [
                     "Sub-Space-Matrix",
-                    "num prob",
                     "Inconsistent Bravais",
-                ]:
+                    "num prob",
+                    "BRMIX",
+                    "SICK JOB",
+                    "VERY BAD NEWS",
+                    "Fatal error",
+                ]
+                errors.extend(extra_errors)
+                for error in errors:
                     if error in line:
-                        errors.add(error)
+                        errors_found.add(error)
 
         with open(stderr_path) as fr:
             for line in fr:
@@ -175,11 +182,12 @@ class BaseCalculationManager(ABC):
                     "oom-kill",
                     "SETYLM",
                     "Segmentation",
+                    "command not found",
                 ]:
                     if error in line:
-                        errors.add(error)
+                        errors_found.add(error)
 
-        return errors
+        return errors_found
 
     def _address_vasp_errors(self, errors):
         """

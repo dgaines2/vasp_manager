@@ -190,9 +190,8 @@ def test_hit_errors_and_restart(calc_dir):
     )
     errors = rlx_coarse_manager._check_vasp_errors(stdout_path, stderr_path)
     all_errors_addressed = rlx_coarse_manager._address_vasp_errors(errors)
-    assert "Sub-Space-Matrix" in errors
-    assert "Inconsistent Bravais" in errors
-    assert "oom-kill" in errors
+    for error in ["Sub-Space-Matrix", "Inconsistent Bravais", "oom-kill"]:
+        assert error in errors
     assert all_errors_addressed
     assert not rlx_coarse_manager.is_done
     assert not rlx_coarse_manager.stopped
@@ -218,9 +217,17 @@ def test_hit_errors_and_stop(calc_dir):
     )
     errors = rlx_manager._check_vasp_errors(stdout_path, stderr_path)
     all_errors_addressed = rlx_manager._address_vasp_errors(errors)
-    assert "num prob" in errors
-    assert "SETYLM" in errors
-    assert "Segmentation" in errors
+    for error in [
+        "num prob",
+        "BRMIX",
+        "SICK JOB",
+        "VERY BAD NEWS",
+        "Fatal error",
+        "SETYLM",
+        "Segmentation",
+        "command not found",
+    ]:
+        assert error in errors
     assert not all_errors_addressed
     assert not rlx_manager.is_done
     assert rlx_manager.stopped
