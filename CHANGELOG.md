@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.4] - 2024-01-17
+
+### Added
+
+- Added ability to run static calculations without a previously existing rlx calculation
+- Added capability to override job preambles/commands by placing a {computer}.yml file in the calculations folder
+- Added capability to override the global calc\_config.json by placing a new calc\_config.json in a material's calculation mode folder.
+
+### Changed
+
+- Major update to error handling, including tracking of STOPPED calculations
+- Changed number of cores reserved for memory when hitting out-of-memory errors as well as for new Quest 9+ nodes
+- Changed default VASP settings for elastic calculations in calc\_config.json. Convergence testing w.r.t. smearing and KPOINTS is still recommended
+- Allow VaspManager to recognize previously zipped archives (for rlx-coarse or rlx calculations)
+- Removed bulkmod\_standalone as a mode and incorporated the behavior into the normal bulkmod manager
+
+### Fixed
+
+- Ensure elastic calculations use a conventional unit cell
+
+
 ## [1.1.3] - 2023-10-19
 
 ### Added
@@ -27,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed Quest computing configuration after Quest8 nodes were retired
 - Fixed automatic NBANDS for ElasticManager when the number of available compute cores is greater than 3/4 the number of electrons
 - Fixed BulkmodManager symlink creation when the symlink already exists
+
 
 ## [1.1.2] - 2023-10-06
 
