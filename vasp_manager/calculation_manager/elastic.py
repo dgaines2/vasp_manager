@@ -75,7 +75,7 @@ class ElasticCalculationManager(BaseCalculationManager):
 
     def setup_calc(
         self,
-        increase_nodes_by_factor=2,
+        increase_nodes_by_factor=1,
         increase_walltime_by_factor=1,
     ):
         """
