@@ -172,9 +172,10 @@ class RlxCalculationManager(BaseCalculationManager):
 
         # in the case that the calculation finishes but results in a spin value lower
         # than the cutoff, rerun it without spin
-        if not use_spin and previous_magmom_per_atom is not None and self.to_rerun:
-            logger.info(f"Rerunning {self.calc_path}")
-            self.setup_calc(make_archive=True, use_spin=False)
+        if not use_spin and previous_magmom_per_atom is not None:
+            if self.to_rerun:
+                logger.info(f"Rerunning {self.calc_path}")
+                self.setup_calc(make_archive=True, use_spin=False)
             return False
 
         logger.info(f"{self.mode.upper()} Calculation: reached required accuracy")
