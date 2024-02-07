@@ -122,7 +122,7 @@ class VaspManager:
         if not isinstance(values, dict):
             raise TypeError("calculation_manager_kwargs must be a dictionary")
 
-        supported_kwargs = ["from_scratch", "strains"]
+        supported_kwargs = ["primitive", "from_scratch", "strains"]
         for calc_type in self.calculation_types:
             if calc_type not in values:
                 values[calc_type] = {}
