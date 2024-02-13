@@ -5,6 +5,7 @@ import json
 import logging
 import subprocess
 from functools import cached_property
+from pathlib import Path
 
 from vasp_manager.utils import change_directory
 
@@ -16,28 +17,36 @@ class JobManager:
     Handles job submission and status monitoring
     """
 
-    def __init__(self, calc_path, ignore_personal_errors=True):
+    def __init__(
+        self,
+        calc_path,
+        config_path=None,
+        ignore_personal_errors=True,
+    ):
         """
         Args:
-            calc_path (str): base directory of job
+            calc_path (str | Path): base directory of job
+            config_path (str | Path): path to configuration files
             ignore_personal_errors (bool): if True, ignore job submission errors
                 if on personal computer
         """
-        self.calc_path = calc_path
+        self.calc_path = Path(calc_path)
+        self.config_path = (
+            Path(config_path) if config_path else self.calc_path.parent.parent
+        )
         self.ignore_personal_errors = ignore_personal_errors
         self._jobid = None
         self._job_complete = None
 
     @property
     def computing_config_dict(self):
-        all_calcs_dir = self.calc_path.parent.parent
         fname = "computing_config.json"
-        fpath = all_calcs_dir / "computing_config.json"
+        fpath = self.config_path / fname
         if fpath.exists():
             with open(fpath) as fr:
                 computing_config = json.load(fr)
         else:
-            raise Exception(f"No {fname} found in path {all_calcs_dir.absolute()}")
+            raise Exception(f"No {fname} found in path {self.config_path.absolute()}")
         return computing_config
 
     @cached_property
