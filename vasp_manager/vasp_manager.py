@@ -41,6 +41,7 @@ class VaspManager:
         calculation_manager_kwargs={},
         max_reruns=3,
         magmom_per_atom_cutoff=0.0,
+        sort_by=str,
     ):
         """
         Args:
@@ -66,7 +67,9 @@ class VaspManager:
             magmom_per_atom_cutoff (float): calculations that result in
                 magmom_per_atom less than this parameter will be automatically
                 rerun without spin-polarization
+            sort_by (callable): function to sort the keys of the result dictionary
         """
+        self.sort_by = sort_by
         self.calculation_types = calculation_types
         self.material_paths = material_paths
         self.to_rerun = to_rerun
@@ -170,7 +173,7 @@ class VaspManager:
                     "material_paths must be a directory name or a list of paths"
                 )
         # Sort the paths by name
-        self._material_paths = sorted(material_paths)
+        self._material_paths = sorted(material_paths, key=lambda x: self.sort_by(x.name))
 
     def _get_material_name_from_path(self, material_path):
         return material_path.name
@@ -192,7 +195,9 @@ class VaspManager:
                 for mat_name in self.material_names:
                     if mat_name not in self._results:
                         self._results[mat_name] = {}
-                self._results = dict(sorted(self._results.items()))
+                self._results = dict(
+                    sorted(self._results.items(), key=lambda kv: self.sort_by(kv[0]))
+                )
             else:
                 self._results = {mat_name: {} for mat_name in self.material_names}
 
