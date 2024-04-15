@@ -131,10 +131,10 @@ class RlxCalculationManager(BaseCalculationManager):
                     self.setup_calc(make_archive=True)
             else:
                 msg = (
-                    f"{self.mode.upper()} Calculation: ",
-                    "Couldn't address all VASP Errors\n",
-                    "\tRefusing to continue...\n",
-                    f"\tVasp Errors: {vasp_errors}\n",
+                    f"{self.mode.upper()} Calculation: "
+                    "Couldn't address all VASP Errors\n"
+                    "\tRefusing to continue...\n"
+                    f"\tVasp Errors: {vasp_errors}\n"
                 )
                 logger.error(msg)
                 self.stop()
