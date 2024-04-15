@@ -130,10 +130,10 @@ class StaticCalculationManager(BaseCalculationManager):
                     self.setup_calc()
             else:
                 msg = (
-                    f"{self.mode.upper()} Calculation: ",
-                    "Couldn't address all VASP Errors\n",
-                    "\tRefusing to continue...\n",
-                    f"\tVasp Errors: {vasp_errors}\n",
+                    f"{self.mode.upper()} Calculation: "
+                    "Couldn't address all VASP Errors\n"
+                    "\tRefusing to continue...\n"
+                    f"\tVasp Errors: {vasp_errors}\n"
                 )
                 logger.error(msg)
                 self.stop()
