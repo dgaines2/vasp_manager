@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import shutil
+import stat
 import warnings
 from datetime import time, timedelta
 from functools import cached_property
@@ -480,6 +481,7 @@ class VaspInputCreator:
         logger.debug(vaspq)
         with open(vaspq_path, "w+") as fw:
             fw.write(vaspq)
+        vaspq_path.chmod(vaspq_path.stat().st_mode | stat.S_IEXEC)
 
     def make_archive_and_repopulate(self):
         """
