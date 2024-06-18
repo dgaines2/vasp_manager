@@ -20,6 +20,8 @@ class JobManager:
     def __init__(
         self,
         calc_path,
+        exe_name="vasp.q",
+        jobid_name="jobid",
         config_path=None,
         ignore_personal_errors=True,
     ):
@@ -27,6 +29,8 @@ class JobManager:
         Args:
             calc_path (str | Path): base directory of job
             config_path (str | Path): path to configuration files
+            exe_name (str): filename for slurm job submission
+            jobid_name (str): filename for storing slurm jobid
             ignore_personal_errors (bool): if True, ignore job submission errors
                 if on personal computer
         """
@@ -35,6 +39,8 @@ class JobManager:
             Path(config_path) if config_path else self.calc_path.parent.parent
         )
         self.ignore_personal_errors = ignore_personal_errors
+        self.exe_name = exe_name
+        self.jobid_name = jobid_name
         self._jobid = None
         self._job_complete = None
 
@@ -63,7 +69,7 @@ class JobManager:
 
     @property
     def job_exists(self):
-        jobid_path = self.calc_path / "jobid"
+        jobid_path = self.calc_path / self.jobid_name
         if not jobid_path.exists():
             return False
         if jobid_path.stat().st_size == 0:
@@ -104,15 +110,15 @@ class JobManager:
             logger.debug(error_msg)
             return True
 
-        vaspq_path = self.calc_path / "vasp.q"
-        if not vaspq_path.exists():
-            logger.info(f"No vasp.q file in {self.calc_path}")
+        qpath = self.calc_path / self.exe_name
+        if not qpath.exists():
+            logger.info(f"No {self.exe_name} file in {self.calc_path}")
             # return False here instead of catching an exception
             # This enables job resubmission by letting the calling function
             # know that the calculation needs to be restarted
             return False
 
-        submission_call = "sbatch vasp.q | awk '{ print $4 }'"
+        submission_call = f"sbatch {self.exe_name} | awk '{{ print $4 }}'"
         with change_directory(self.calc_path):
             jobid = (
                 subprocess.check_output(submission_call, shell=True)
@@ -120,7 +126,7 @@ class JobManager:
                 .strip()
             )
             self.jobid = jobid
-            with open("jobid", "w+") as fw:
+            with open(self.jobid_name, "w+") as fw:
                 fw.write(jobid)
         logger.info(f"Submitted job {jobid}")
         return True
