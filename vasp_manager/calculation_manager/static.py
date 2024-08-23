@@ -4,6 +4,8 @@
 import logging
 from functools import cached_property
 
+from pymatgen.core import Structure
+
 from vasp_manager.calculation_manager.base import BaseCalculationManager
 from vasp_manager.utils import pgrep, ptail
 from vasp_manager.vasp_input_creator import VaspInputCreator
@@ -153,7 +155,7 @@ class StaticCalculationManager(BaseCalculationManager):
 
         self._results = {}
         final_energy = float(grep_output[0].split()[2])
-        num_atoms = len(self.vasp_input_creator.source_structure)
+        num_atoms = len(Structure.from_file(self.calc_path / "POSCAR"))
         magmom_per_atom = self._parse_magmom_per_atom()
         self._results["final_energy"] = final_energy
         self._results["final_energy_pa"] = final_energy / num_atoms
