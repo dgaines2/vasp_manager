@@ -333,6 +333,8 @@ class VaspInputCreator:
                 cores_per_group,
             ]
         )
+        for write_tag in ["lcharge", "lwave", "lvtot"]:
+            calc_config[write_tag] = calc_config.get(write_tag, ".FALSE.")
 
         needs_spin_polarization = self._check_needs_spin_polarization(composition_dict)
         use_spin_polarization = (

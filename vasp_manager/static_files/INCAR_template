@@ -28,9 +28,9 @@ LASPH = .TRUE.
 #= DFT+U =#
 
 #= Write flags =#
-LCHARG = .FALSE.
-LWAVE = .FALSE.
-LVTOT = .FALSE.
+LCHARG = {lcharge}
+LWAVE = {lwave}
+LVTOT = {lvtot}
 
 #= DOS =#
 ISMEAR = {ismear}
