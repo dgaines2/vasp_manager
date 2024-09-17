@@ -127,7 +127,7 @@ class JobManager:
             )
             self.jobid = jobid
             with open(self.jobid_name, "w+") as fw:
-                fw.write(jobid)
+                fw.write(f"{jobid}\n")
         logger.info(f"Submitted job {jobid}")
         return True
 
