@@ -13,25 +13,25 @@ logger = logging.getLogger(__name__)
 
 
 class BulkmodAnalyzer:
-    def __init__(self, calc_path=None, rounding_precision=3):
+    def __init__(self, calc_dir, rounding_precision=3):
         """
         Args:
-            calc_path (str): path to bulkmod calculation folder
+            calc_dir (str): path to bulkmod calculation directory
             rounding_precision (int): precision to round calculated quantities
         """
-        self.calc_path = Path(calc_path) if calc_path else calc_path
+        self.calc_dir = Path(calc_dir)
         self.rounding_precision = rounding_precision
         self._results = None
 
     @property
-    def calc_path(self):
-        return self._calc_path
+    def calc_dir(self):
+        return self._calc_dir
 
-    @calc_path.setter
-    def calc_path(self, value):
+    @calc_dir.setter
+    def calc_dir(self, value):
         if not value.exists():
-            raise ValueError(f"Could not set calc_path to {value} as it does not exist")
-        self._calc_path = value
+            raise ValueError(f"Could not set calc_dir to {value} as it does not exist")
+        self._calc_dir = value
 
     @property
     def rounding_precision(self):
@@ -47,20 +47,20 @@ class BulkmodAnalyzer:
         self._rounding_precision = value
 
     @staticmethod
-    def analyze_bulkmod(calc_path, rounding_precision):
+    def analyze_bulkmod(calc_dir, rounding_precision):
         """
         Fit an EOS to calculate the bulk modulus from a finished bulkmod calculation
         """
-        strain_paths = [path for path in calc_path.glob("strain*") if path.is_dir()]
-        strain_paths = sorted(strain_paths, key=lambda d: int(d.name.split("_")[-1]))
+        strain_dirs = [path for path in calc_dir.glob("strain*") if path.is_dir()]
+        strain_dirs = sorted(strain_dirs, key=lambda d: int(d.name.split("_")[-1]))
         volumes = []
         final_energies = []
-        for i, strain_path in enumerate(strain_paths):
-            poscar_path = strain_path / "POSCAR"
+        for i, strain_dir in enumerate(strain_dirs):
+            poscar_path = strain_dir / "POSCAR"
             # search for vasprun.xml or vasprun.xml.gz
-            vasprun_glob = list(strain_path.glob("vasprun.xml*"))
+            vasprun_glob = list(strain_dir.glob("vasprun.xml*"))
             if len(vasprun_glob) == 0:
-                raise Exception(f"No vasprun.xml available at {strain_path}")
+                raise Exception(f"No vasprun.xml available at {strain_dir}")
             vasprun_path = vasprun_glob[0]
             volume = Structure.from_file(poscar_path).volume
             vasprun = Vasprun(
@@ -84,5 +84,5 @@ class BulkmodAnalyzer:
     @property
     def results(self):
         if self._results is None:
-            self._results = self.analyze_bulkmod(self.calc_path, self.rounding_precision)
+            self._results = self.analyze_bulkmod(self.calc_dir, self.rounding_precision)
         return self._results

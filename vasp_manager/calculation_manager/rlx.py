@@ -20,7 +20,7 @@ class RlxCalculationManager(BaseCalculationManager):
 
     def __init__(
         self,
-        material_path,
+        material_dir,
         to_rerun,
         to_submit,
         primitive=True,
@@ -32,7 +32,7 @@ class RlxCalculationManager(BaseCalculationManager):
         magmom_per_atom_cutoff=0.0,
     ):
         """
-        For material_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
+        For material_dir, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
         see BaseCalculationManager
 
         Args:
@@ -44,7 +44,7 @@ class RlxCalculationManager(BaseCalculationManager):
         self.max_reruns = max_reruns
         self.magmom_per_atom_cutoff = magmom_per_atom_cutoff
         super().__init__(
-            material_path=material_path,
+            material_dir=material_dir,
             to_rerun=to_rerun,
             to_submit=to_submit,
             primitive=primitive,
@@ -62,15 +62,15 @@ class RlxCalculationManager(BaseCalculationManager):
     @cached_property
     def poscar_source_path(self):
         if self.from_coarse_relax:
-            poscar_source_path = self.material_path / "rlx-coarse" / "CONTCAR"
+            poscar_source_path = self.material_dir / "rlx-coarse" / "CONTCAR"
         else:
-            poscar_source_path = self.material_path / "POSCAR"
+            poscar_source_path = self.material_dir / "POSCAR"
         return poscar_source_path
 
     @cached_property
     def vasp_input_creator(self):
         return VaspInputCreator(
-            self.calc_path,
+            self.calc_dir,
             mode=self.mode,
             poscar_source_path=self.poscar_source_path,
             primitive=self.primitive,
@@ -112,7 +112,7 @@ class RlxCalculationManager(BaseCalculationManager):
             self.logger.info(f"{self.mode.upper()} not finished")
             return False
 
-        stdout_path = self.calc_path / "stdout.txt"
+        stdout_path = self.calc_dir / "stdout.txt"
         if not stdout_path.exists():
             # calculation never actually ran
             # shouldn't get here unless function was called with submit=False
@@ -128,7 +128,7 @@ class RlxCalculationManager(BaseCalculationManager):
             all_errors_addressed = self._address_vasp_errors(vasp_errors)
             if all_errors_addressed:
                 if self.to_rerun:
-                    self.logger.info(f"Rerunning {self.calc_path}")
+                    self.logger.info(f"Rerunning {self.calc_dir}")
                     self.setup_calc(make_archive=True)
             else:
                 msg = (
@@ -152,7 +152,7 @@ class RlxCalculationManager(BaseCalculationManager):
             stdout_path, "reached required accuracy", stop_after_first_match=True
         )
         if len(grep_output) == 0:
-            archive_dirs = list(self.calc_path.glob("archive*"))
+            archive_dirs = list(self.calc_dir.glob("archive*"))
             if len(archive_dirs) >= self.max_reruns - 1:
                 msg = (
                     "Many archives exist, calculations may not be converging\n"
@@ -164,7 +164,7 @@ class RlxCalculationManager(BaseCalculationManager):
             self.logger.warning(f"{self.mode.upper()} FAILED")
             self.logger.debug(tail_output)
             if self.to_rerun:
-                self.logger.info(f"Rerunning {self.calc_path}")
+                self.logger.info(f"Rerunning {self.calc_dir}")
                 # increase nodes as its likely the calculation failed
                 self.setup_calc(
                     increase_walltime_by_factor=2, make_archive=True, use_spin=use_spin
@@ -175,7 +175,7 @@ class RlxCalculationManager(BaseCalculationManager):
         # than the cutoff, rerun it without spin
         if not use_spin and previous_magmom_per_atom is not None:
             if self.to_rerun:
-                self.logger.info(f"Rerunning {self.calc_path}")
+                self.logger.info(f"Rerunning {self.calc_dir}")
                 self.setup_calc(make_archive=True, use_spin=False)
             return False
 
@@ -193,9 +193,9 @@ class RlxCalculationManager(BaseCalculationManager):
         Returns:
             volume_converged (bool): if True, relaxation completed successfully
         """
-        original_poscar_path = self.material_path / "POSCAR"
-        poscar_path = self.calc_path / "POSCAR"
-        contcar_path = self.calc_path / "CONTCAR"
+        original_poscar_path = self.material_dir / "POSCAR"
+        poscar_path = self.calc_dir / "POSCAR"
+        contcar_path = self.calc_dir / "CONTCAR"
         try:
             orig_structure, orig_spacegroup = get_pmg_structure_from_poscar(
                 original_poscar_path, return_spacegroup=True

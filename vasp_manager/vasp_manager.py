@@ -39,13 +39,13 @@ ASCII_LOGO = r"""
 class VaspManager:
     """
     Handles set up and execution of each CalculationManager
-        (rlx-coarse, rlx, bulkmod, elastic)
+        (rlx-coarse, rlx, static, bulkmod, elastic)
     """
 
     def __init__(
         self,
         calculation_types,
-        material_paths=None,
+        material_dirs=None,
         to_rerun=True,
         to_submit=True,
         ignore_personal_errrors=True,
@@ -60,8 +60,8 @@ class VaspManager:
         """
         Args:
             calculation_types (list[str]): list of calculation types
-            material_paths (list[str] | str): list of material paths OR
-                name of calculations dir
+            material_dirs (list[str] | str): list of material directory paths OR
+                name of calculations directory
             to_rerun (bool): if True, rerun failed calculations
             to_submit (bool): if True, submit calculations
             ignore_personal_errors (bool): if True, ignore job submission errors
@@ -86,7 +86,7 @@ class VaspManager:
         print(ASCII_LOGO)
         self.sort_by = sort_by
         self.calculation_types = calculation_types
-        self.material_paths = material_paths
+        self.material_dirs = material_dirs
         self.to_rerun = to_rerun
         self.to_submit = to_submit
         self.ignore_personal_errors = ignore_personal_errrors
@@ -98,8 +98,8 @@ class VaspManager:
         self.magmom_per_atom_cutoff = magmom_per_atom_cutoff
 
         self.calculation_managers = self._get_all_calculation_managers()
-        # self.base_path is set in material_paths.setter
-        self.results_path = self.base_path / "results.json"
+        # self.base_dir is set in material_dirs.setter
+        self.results_path = self.base_dir / "results.json"
         self.results = None
 
     @property
@@ -119,7 +119,7 @@ class VaspManager:
     @ncore.setter
     def ncore(self, value):
         if value is None:
-            value = int(np.min([len(self.material_paths), 4]))
+            value = int(min(len(self.material_dirs), 4))
             if self.use_multiprocessing:
                 print(
                     "WARNING: setting default ncore for multiprocessing to "
@@ -153,49 +153,46 @@ class VaspManager:
         self._calculation_manager_kwargs = values
 
     @property
-    def material_paths(self):
-        return self._material_paths
+    def material_dirs(self):
+        return self._material_dirs
 
-    @material_paths.setter
-    def material_paths(self, values):
+    @material_dirs.setter
+    def material_dirs(self, values):
         """
         Sets paths for all materials
 
         Args:
-            values (list[str] | str): list of material paths OR name
-                of calculations dir
+            values (list[str | Path] | str | Path): list of material directory
+                paths OR name of calculations dir
 
                 if is list, use that list directly
-                if is string, find folders inside of that directory named
-                    {_material_paths}
+                if is string, find folders inside of that directory
         """
         match values:
             case str():
-                self.base_path = values
-                material_paths = [d for d in Path(values).glob("*") if d.is_dir()]
+                self.base_dir = values
+                material_dirs = [d for d in Path(values).glob("*") if d.is_dir()]
             case list() | np.array():
                 values = [Path(p) for p in values]
-                base_path = values[0].parent
-                for mat_path in values:
-                    if not mat_path.parent == base_path:
-                        raise Exception(
-                            "All material paths must be in the same directory"
-                        )
-                self.base_path = base_path
-                material_paths = values
+                base_dir = values[0].parent
+                for mat_dir in values:
+                    if not mat_dir.parent == base_dir:
+                        raise Exception("All material_dirs must be in the same directory")
+                self.base_dir = base_dir
+                material_dirs = values
             case _:
                 raise TypeError(
-                    "material_paths must be a directory name or a list of paths"
+                    "material_dirs must be a directory name or a list of directories"
                 )
         # Sort the paths by name
-        self._material_paths = sorted(material_paths, key=lambda x: self.sort_by(x.name))
+        self._material_dirs = sorted(material_dirs, key=lambda x: self.sort_by(x.name))
 
-    def _get_material_name_from_path(self, material_path):
-        return material_path.name
+    def _get_material_name_from_path(self, material_dir):
+        return material_dir.name
 
     @cached_property
     def material_names(self):
-        return [self._get_material_name_from_path(mpath) for mpath in self.material_paths]
+        return [self._get_material_name_from_path(mpath) for mpath in self.material_dirs]
 
     @property
     def results(self):
@@ -238,7 +235,7 @@ class VaspManager:
                 raise ValueError("Can't find mode {mode} in result")
         return (is_done, is_stopped)
 
-    def _get_calculation_managers(self, material_path):
+    def _get_calculation_managers(self, material_dir):
         """
         Gets calculation managers for a single material
         """
@@ -247,7 +244,7 @@ class VaspManager:
             match calc_type:
                 case "rlx-coarse":
                     manager = RlxCoarseCalculationManager(
-                        material_path=material_path,
+                        material_dir=material_dir,
                         to_rerun=self.to_rerun,
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
@@ -258,7 +255,7 @@ class VaspManager:
                 case "rlx":
                     from_coarse_relax = "rlx-coarse" in self.calculation_types
                     manager = RlxCalculationManager(
-                        material_path=material_path,
+                        material_dir=material_dir,
                         to_rerun=self.to_rerun,
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
@@ -271,7 +268,7 @@ class VaspManager:
                 case "static":
                     from_relax = "rlx" in self.calculation_types
                     manager = StaticCalculationManager(
-                        material_path=material_path,
+                        material_dir=material_dir,
                         to_rerun=self.to_rerun,
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
@@ -282,7 +279,7 @@ class VaspManager:
                 case "bulkmod":
                     from_relax = "rlx" in self.calculation_types
                     manager = BulkmodCalculationManager(
-                        material_path=material_path,
+                        material_dir=material_dir,
                         to_rerun=self.to_rerun,
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
@@ -297,7 +294,7 @@ class VaspManager:
                         )
                         raise Exception(msg)
                     manager = ElasticCalculationManager(
-                        material_path=material_path,
+                        material_dir=material_dir,
                         to_rerun=self.to_rerun,
                         to_submit=self.to_submit,
                         ignore_personal_errors=self.ignore_personal_errors,
@@ -315,8 +312,8 @@ class VaspManager:
         Gets calculation managers for all materials
         """
         calc_managers = {}
-        for material_name, material_path in zip(self.material_names, self.material_paths):
-            calc_managers[material_name] = self._get_calculation_managers(material_path)
+        for material_name, material_dir in zip(self.material_names, self.material_dirs):
+            calc_managers[material_name] = self._get_calculation_managers(material_dir)
         return calc_managers
 
     def _manage_calculations(self, material_name):

@@ -20,7 +20,7 @@ class BaseCalculationManager(ABC):
 
     def __init__(
         self,
-        material_path,
+        material_dir,
         to_rerun,
         to_submit,
         primitive=True,
@@ -29,23 +29,23 @@ class BaseCalculationManager(ABC):
     ):
         """
         Args:
-            material_path (str | Path): path for a single material
+            material_dir (str | Path): path to a directory for a single material
                 ex. calculations/AlAs
             to_rerun (bool): if True, rerun failed calculations
             to_submit (bool): if True, submit calculations to job manager
             primitive (bool): if True, find primitive cell, else find conventional cell
             ignore_personal_errors (bool): if True, ignore job submission errors
                 if on personal computer
-            from_scratch (bool): if True, remove the calculation's folder and
+            from_scratch (bool): if True, remove the calculation's directory and
                 restart
                 note: DANGEROUS
         """
-        self.material_path = Path(material_path)
+        self.material_dir = Path(material_dir)
         self.to_rerun = to_rerun
         self.to_submit = to_submit
         self.primitive = primitive
         self.job_manager = JobManager(
-            calc_path=self.calc_path,
+            calc_dir=self.calc_dir,
             manager_name=f"{self.material_name} {self.mode.upper()}",
             ignore_personal_errors=ignore_personal_errors,
         )
@@ -70,12 +70,12 @@ class BaseCalculationManager(ABC):
         pass
 
     @cached_property
-    def calc_path(self):
-        return self.material_path / self.mode
+    def calc_dir(self):
+        return self.material_dir / self.mode
 
     @cached_property
     def material_name(self):
-        return self.material_path.name
+        return self.material_dir.name
 
     @abstractmethod
     def poscar_source_path(self):
@@ -99,17 +99,17 @@ class BaseCalculationManager(ABC):
 
     @property
     def stopped(self):
-        return (self.material_path / "STOP").exists()
+        return (self.material_dir / "STOP").exists()
 
     def stop(self):
-        with open(self.material_path / "STOP", "w+"):
+        with open(self.material_dir / "STOP", "w+"):
             pass
 
     def submit_job(self):
         return self.job_manager.submit_job()
 
     def _cancel_previous_job(self):
-        jobid_path = self.calc_path / "jobid"
+        jobid_path = self.calc_dir / "jobid"
         if jobid_path.exists():
             with open(jobid_path) as fr:
                 jobid = fr.read().strip()
@@ -119,10 +119,10 @@ class BaseCalculationManager(ABC):
 
     def _from_scratch(self):
         self._cancel_previous_job()
-        shutil.rmtree(self.calc_path)
+        shutil.rmtree(self.calc_dir)
 
     def _parse_magmom(self):
-        stdout_path = self.calc_path / "stdout.txt"
+        stdout_path = self.calc_dir / "stdout.txt"
         mag_lines = pgrep(stdout_path, "mag=")
         # if "mag=" not found in stdout, set magmom=None
         if len(mag_lines) == 0:
@@ -141,7 +141,7 @@ class BaseCalculationManager(ABC):
         return magmom_per_atom
 
     def _parse_incar_tag(self, tag):
-        incar_path = self.calc_path / "INCAR"
+        incar_path = self.calc_dir / "INCAR"
         with open(incar_path) as fr:
             incar = fr.readlines()
         tag_value = None
@@ -155,9 +155,9 @@ class BaseCalculationManager(ABC):
         Find VASP errors in stdout and stderr
         """
         if stdout_path is None:
-            stdout_path = self.calc_path / "stdout.txt"
+            stdout_path = self.calc_dir / "stdout.txt"
         if stderr_path is None:
-            stderr_path = self.calc_path / "stderr.txt"
+            stderr_path = self.calc_dir / "stderr.txt"
         if extra_errors is None:
             extra_errors = []
         errors_found = set()

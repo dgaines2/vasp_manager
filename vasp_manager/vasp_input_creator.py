@@ -33,7 +33,7 @@ class VaspInputCreator:
 
     def __init__(
         self,
-        calc_path,
+        calc_dir,
         mode,
         poscar_source_path,
         config_dir=None,
@@ -47,7 +47,7 @@ class VaspInputCreator:
     ):
         """
         Args:
-            calc_path (str | Path)
+            calc_dir (str | Path)
             mode (str)
             poscar_source_path (str | Path)
             config_dir (str | Path)
@@ -59,10 +59,10 @@ class VaspInputCreator:
             ncore_per_node_for_memory (int)
             use_spin (bool): pass False to suppress spin polarization
         """
-        self.calc_path = Path(calc_path)
+        self.calc_dir = Path(calc_dir)
         self.mode = mode
         self.poscar_source_path = Path(poscar_source_path)
-        self.config_dir = Path(config_dir) if config_dir else self.calc_path.parent.parent
+        self.config_dir = Path(config_dir) if config_dir else self.calc_dir.parents[1]
         self.primitive = primitive
         self.increase_nodes_by_factor = int(increase_nodes_by_factor)
         self.increase_walltime_by_factor = int(increase_walltime_by_factor)
@@ -84,7 +84,7 @@ class VaspInputCreator:
             raise Exception(f"No {fname} found in path {self.config_dir.absolute()}")
         # if material_name/mode calc_config.json exists, update with that
         # This allows for custom settings for a specific material/mode to be used
-        custom_calc_config_path = self.calc_path / fname
+        custom_calc_config_path = self.calc_dir / fname
         if custom_calc_config_path.exists():
             with open(custom_calc_config_path) as fr:
                 custom_calc_config = json.load(fr)
@@ -118,10 +118,10 @@ class VaspInputCreator:
 
     @cached_property
     def source_structure(self):
-        num_archives = len(list(self.calc_path.glob("archive*")))
+        num_archives = len(list(self.calc_dir.glob("archive*")))
         if num_archives > 0:
             archive_name = f"archive_{num_archives-1}"
-            self.poscar_source_path = self.calc_path / archive_name / "CONTCAR"
+            self.poscar_source_path = self.calc_dir / archive_name / "CONTCAR"
         try:
             structure = get_pmg_structure_from_poscar(
                 self.poscar_source_path, primitive=self.primitive
@@ -162,7 +162,7 @@ class VaspInputCreator:
         Create and write a POSCAR
         """
         poscar = Poscar(self.source_structure)
-        poscar_path = self.calc_path / "POSCAR"
+        poscar_path = self.calc_dir / "POSCAR"
         poscar.write_file(
             poscar_path, significant_figures=self.poscar_significant_figures
         )
@@ -171,7 +171,7 @@ class VaspInputCreator:
         """
         Create and write a POTCAR
         """
-        potcar_path = self.calc_path / "POTCAR"
+        potcar_path = self.calc_dir / "POTCAR"
         potcar_dir = Path(self.computing_config["potcar_dir"])
 
         el_names = [el.name for el in self.source_structure.composition]
@@ -312,7 +312,7 @@ class VaspInputCreator:
         Current kpoints coming from the kspacing tag in the INCAR,
             but future versions should include ability to make kpoints from kppra
         """
-        incar_path = self.calc_path / "INCAR"
+        incar_path = self.calc_dir / "INCAR"
         calc_config = self.calc_config.copy()
 
         if calc_config["ispin"] not in [1, "auto"]:
@@ -328,7 +328,7 @@ class VaspInputCreator:
 
         composition_dict = self.source_structure.composition.as_dict()
         # read POTCAR
-        potcar_path = self.calc_path / "POTCAR"
+        potcar_path = self.calc_dir / "POTCAR"
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=UserWarning)
             potcar = Potcar.from_file(potcar_path)
@@ -397,7 +397,7 @@ class VaspInputCreator:
             fw.write(incar)
 
     def make_kpoints(self):
-        kpoints_path = self.calc_path / "KPOINTS"
+        kpoints_path = self.calc_dir / "KPOINTS"
         kspacing = self.calc_config["kspacing"]
         reciprocal_lattice = self.source_structure.lattice.reciprocal_lattice
         abc = np.asarray(reciprocal_lattice.abc)
@@ -414,7 +414,7 @@ class VaspInputCreator:
         """
         Create and write vasp.q file
         """
-        vaspq_path = self.calc_path / "vasp.q"
+        vaspq_path = self.calc_dir / "vasp.q"
 
         # create pad string for job naming to differentiate in the queue
         match self.mode:
@@ -502,7 +502,7 @@ class VaspInputCreator:
         """
         Make an archive of a VASP calculation and copy back over relevant files
         """
-        with change_directory(self.calc_path):
+        with change_directory(self.calc_dir):
             contcar_path = Path("CONTCAR")
             contcar_exists = contcar_path.exists()
             if contcar_exists:
@@ -548,8 +548,8 @@ class VaspInputCreator:
         Don't touch the order! make_incar and make_vaspq rely on the poscar and
         potcar existing already
         """
-        if not self.calc_path.exists():
-            self.calc_path.mkdir()
+        if not self.calc_dir.exists():
+            self.calc_dir.mkdir()
         self.make_poscar()
         self.make_potcar()
         if "write_kpoints" in self.calc_config:

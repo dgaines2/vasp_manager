@@ -10,7 +10,6 @@ from pymatgen.core import Structure
 from vasp_manager.utils import (
     NumpyEncoder,
     change_directory,
-    get_pmg_structure_from_poscar,
     make_potcar_anonymous,
     pcat,
     pgrep,
