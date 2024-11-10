@@ -19,14 +19,12 @@ class BulkmodAnalyzer:
             calc_path (str): path to bulkmod calculation folder
             rounding_precision (int): precision to round calculated quantities
         """
-        self._calc_path = Path(calc_path) if calc_path else calc_path
-        self._rounding_precision = rounding_precision
+        self.calc_path = Path(calc_path) if calc_path else calc_path
+        self.rounding_precision = rounding_precision
         self._results = None
 
     @property
     def calc_path(self):
-        if self._calc_path is not None:
-            self.calc_path = self._calc_path
         return self._calc_path
 
     @calc_path.setter
@@ -38,8 +36,6 @@ class BulkmodAnalyzer:
 
     @property
     def rounding_precision(self):
-        if self._rounding_precision is not None:
-            self.rounding_precision = self._rounding_precision
         return self._rounding_precision
 
     @rounding_precision.setter

@@ -32,9 +32,8 @@ class ElasticAnalyzer:
         self._cij = cij
         self._calc_path = Path(calc_path) if calc_path else calc_path
         self.change_from_vasp = change_from_vasp
-        self._rounding_precision = rounding_precision
+        self.rounding_precision = rounding_precision
         self._results = None
-        self._structure = None
 
     @staticmethod
     def change_elastic_constants_from_vasp(vasp_elastic_tensor):
@@ -193,11 +192,9 @@ class ElasticAnalyzer:
             raise ValueError(f"Could not set calc_path to {value} as it does not exist")
         self._calc_path = value
 
-    @property
+    @cached_property
     def structure(self):
-        if self._structure is None:
-            self._structure = Structure.from_file(self.calc_path / "POSCAR")
-        return self._structure
+        return Structure.from_file(self.calc_path / "POSCAR")
 
     @property
     def density(self):
@@ -205,8 +202,6 @@ class ElasticAnalyzer:
 
     @property
     def rounding_precision(self):
-        if self._rounding_precision is not None:
-            self.rounding_precision = self._rounding_precision
         return self._rounding_precision
 
     @rounding_precision.setter
