@@ -93,7 +93,7 @@ class JobManager:
         try:
             jobid_int = int(job_value)
         except Exception as e:
-            raise Exception(f"Tried to set jobid={job_value}\n{e}")
+            raise RuntimeError(f"Tried to set jobid={job_value}\n{e}")
         self._jobid = jobid_int
 
     def submit_job(self):
@@ -118,13 +118,14 @@ class JobManager:
             # know that the calculation needs to be restarted
             return False
 
-        submission_call = f"sbatch {self.exe_name} | awk '{{ print $4 }}'"
+        submission_call = f"sbatch {self.exe_name}"
         with change_directory(self.calc_path):
-            jobid = (
+            submission_call_output = (
                 subprocess.check_output(submission_call, shell=True)
                 .decode("utf-8")
                 .strip()
             )
+            jobid = submission_call_output.split(" ")[3]
             self.jobid = jobid
             with open(self.jobid_name, "w+") as fw:
                 fw.write(f"{jobid}\n")
