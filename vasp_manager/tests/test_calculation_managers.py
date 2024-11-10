@@ -19,7 +19,7 @@ from vasp_manager.utils import pgrep
 Four material paths exist in calculations/
 1) material: NaCl completed successfully
 2) material_needs_rerun: NaCl with failed runs to rerun from scratch
-3) material_needs_archive: NaCl with failed runs to make archive folders
+3) material_needs_archive: NaCl with failed runs to make archive directories
 4) material_hit_erros: NaCl with errors in stdout.txt and stderr.txt
 5) material_spinu: CuO with spin and DFT+U completed sucessfully
 """
@@ -28,56 +28,56 @@ INPUT_FILES = ["POSCAR", "POTCAR", "INCAR", "vasp.q"]
 
 
 @pytest.fixture(scope="session")
-def calc_dir(tmp_path_factory):
+def calcs_dir(tmp_path_factory):
     """
-    Complete calculations folder
+    Complete calculations directory
     """
-    calculation_folder = (
+    calculations_dir = (
         importlib_resources.files("vasp_manager") / "tests" / "calculations"
     )
-    new_calculation_folder = tmp_path_factory.mktemp("calculations")
+    new_calculations_dir = tmp_path_factory.mktemp("calculations")
     shutil.copytree(
-        calculation_folder,
-        new_calculation_folder,
+        calculations_dir,
+        new_calculations_dir,
         dirs_exist_ok=True,
         symlinks=True,
     )
-    return new_calculation_folder
+    return new_calculations_dir
 
 
 @pytest.fixture(scope="session")
-def base_calc_dir(tmp_path_factory):
+def base_calcs_dir(tmp_path_factory):
     """
-    Calculations folder that needs each run type to be set up
+    Calculations directory that needs each run type to be set up
     """
-    calculation_folder = (
+    calculations_dir = (
         importlib_resources.files("vasp_manager") / "tests" / "calculations"
     )
-    new_calculation_folder = tmp_path_factory.mktemp("calculations")
+    new_calculations_dir = tmp_path_factory.mktemp("calculations")
     shutil.copytree(
-        calculation_folder,
-        new_calculation_folder,
+        calculations_dir,
+        new_calculations_dir,
         dirs_exist_ok=True,
         symlinks=True,
         ignore=shutil.ignore_patterns("rlx*", "static", "bulkmod", "elastic"),
     )
-    return new_calculation_folder
+    return new_calculations_dir
 
 
 """
-Do testing of the results first as they don't modify the folders
+Do testing of the results first as they don't modify the directories
 """
 
 
-def test_rlx_coarse_results(calc_dir):
+def test_rlx_coarse_results(calcs_dir):
     """
     Assert rlx-coarse results are parsed properly
     """
-    material_path = calc_dir / "material"
-    rlx_coarse_path = material_path / "rlx-coarse"
-    assert rlx_coarse_path.exists()
+    material_dir = calcs_dir / "material"
+    rlx_coarse_dir = material_dir / "rlx-coarse"
+    assert rlx_coarse_dir.exists()
     rlx_coarse_manager = RlxCoarseCalculationManager(
-        material_path=material_path,
+        material_dir=material_dir,
         to_rerun=True,
         to_submit=False,
     )
@@ -85,15 +85,15 @@ def test_rlx_coarse_results(calc_dir):
     assert rlx_coarse_manager.results == "done"
 
 
-def test_rlx_results(calc_dir):
+def test_rlx_results(calcs_dir):
     """
     Assert rlx results are parsed properly
     """
-    material_path = calc_dir / "material"
-    rlx_dir = material_path / "rlx"
+    material_dir = calcs_dir / "material"
+    rlx_dir = material_dir / "rlx"
     assert rlx_dir.exists()
     rlx_manager = RlxCalculationManager(
-        material_path=material_path,
+        material_dir=material_dir,
         to_rerun=True,
         to_submit=False,
     )
@@ -103,15 +103,15 @@ def test_rlx_results(calc_dir):
     assert rlx_manager.results["total_dV"] == 0.0379
 
 
-def test_static_results(calc_dir):
+def test_static_results(calcs_dir):
     """
     Assert static results are parsed properly
     """
-    material_path = calc_dir / "material"
-    static_dir = material_path / "static"
+    material_dir = calcs_dir / "material"
+    static_dir = material_dir / "static"
     assert static_dir.exists()
     static_manager = StaticCalculationManager(
-        material_path=material_path,
+        material_dir=material_dir,
         to_rerun=True,
         to_submit=False,
     )
@@ -121,15 +121,15 @@ def test_static_results(calc_dir):
     assert static_manager.results["magmom_pa"] == None
 
 
-def test_static_spin_results(calc_dir):
+def test_static_spin_results(calcs_dir):
     """
     Assert static results w/ spin are parsed properly
     """
-    material_path = calc_dir / "material_spinu"
-    static_dir = material_path / "static"
+    material_dir = calcs_dir / "material_spinu"
+    static_dir = material_dir / "static"
     assert static_dir.exists()
     static_manager = StaticCalculationManager(
-        material_path=material_path,
+        material_dir=material_dir,
         to_rerun=True,
         to_submit=False,
     )
@@ -139,30 +139,30 @@ def test_static_spin_results(calc_dir):
     assert static_manager.results["magmom_pa"] == 0.0001
 
 
-def test_bulkmod_results(calc_dir):
+def test_bulkmod_results(calcs_dir):
     """
     Assert bulkmod results are parsed properly
     """
-    material_path = calc_dir / "material"
-    bulkmod_dir = material_path / "bulkmod"
+    material_dir = calcs_dir / "material"
+    bulkmod_dir = material_dir / "bulkmod"
     assert bulkmod_dir.exists()
     bulkmod_manager = BulkmodCalculationManager(
-        material_path=material_path,
+        material_dir=material_dir,
         to_rerun=True,
         to_submit=False,
     )
     assert bulkmod_manager.is_done
 
 
-def test_elastic_results(calc_dir):
+def test_elastic_results(calcs_dir):
     """
     Assert elastic results are parsed properly
     """
-    material_path = calc_dir / "material"
-    elastic_dir = material_path / "elastic"
+    material_dir = calcs_dir / "material"
+    elastic_dir = material_dir / "elastic"
     assert elastic_dir.exists()
     elastic_manager = ElasticCalculationManager(
-        material_path=material_path,
+        material_dir=material_dir,
         to_rerun=True,
         to_submit=False,
     )
@@ -174,17 +174,17 @@ Do testing of the errors next as they are independent
 """
 
 
-def test_hit_errors_and_restart(calc_dir):
+def test_hit_errors_and_restart(calcs_dir):
     """
     Test parsing and handling of VASP errors
     """
-    material_path = calc_dir / "material_hit_errors"
-    rlx_coarse_dir = material_path / "rlx-coarse"
+    material_dir = calcs_dir / "material_hit_errors"
+    rlx_coarse_dir = material_dir / "rlx-coarse"
     stdout_path = rlx_coarse_dir / "stdout.txt"
     stderr_path = rlx_coarse_dir / "stderr.txt"
     assert rlx_coarse_dir.exists()
     rlx_coarse_manager = RlxCoarseCalculationManager(
-        material_path=material_path,
+        material_dir=material_dir,
         to_rerun=False,
         to_submit=False,
     )
@@ -201,17 +201,17 @@ def test_hit_errors_and_restart(calc_dir):
     assert rlx_coarse_manager.results == "not finished"
 
 
-def test_hit_errors_and_stop(calc_dir):
+def test_hit_errors_and_stop(calcs_dir):
     """
     Test parsing and handling of VASP errors
     """
-    material_path = calc_dir / "material_hit_errors"
-    rlx_dir = material_path / "rlx"
+    material_dir = calcs_dir / "material_hit_errors"
+    rlx_dir = material_dir / "rlx"
     stdout_path = rlx_dir / "stdout.txt"
     stderr_path = rlx_dir / "stderr.txt"
     assert rlx_dir.exists()
     rlx_manager = RlxCalculationManager(
-        material_path=material_path,
+        material_dir=material_dir,
         to_rerun=False,
         to_submit=False,
     )
@@ -234,93 +234,93 @@ def test_hit_errors_and_stop(calc_dir):
     assert rlx_manager.results == "STOPPED"
 
 
-def test_rlx_coarse_hit_errors(calc_dir):
+def test_rlx_coarse_hit_errors(calcs_dir):
     """
     Test parsing and handling of VASP errors for rlx-coarse
     """
-    material_path = calc_dir / "material_hit_errors"
-    rlx_coarse_dir = material_path / "rlx-coarse"
+    material_dir = calcs_dir / "material_hit_errors"
+    rlx_coarse_dir = material_dir / "rlx-coarse"
     assert rlx_coarse_dir.exists()
     rlx_coarse_manager = RlxCoarseCalculationManager(
-        material_path=material_path,
+        material_dir=material_dir,
         to_rerun=False,
         to_submit=False,
     )
     assert not rlx_coarse_manager.is_done
 
 
-def test_rlx_hit_errors(calc_dir):
+def test_rlx_hit_errors(calcs_dir):
     """
     Test parsing and handling of VASP errors for rlx
     """
-    material_path = calc_dir / "material_hit_errors"
-    rlx_dir = material_path / "rlx"
+    material_dir = calcs_dir / "material_hit_errors"
+    rlx_dir = material_dir / "rlx"
     assert rlx_dir.exists()
     rlx_manager = RlxCalculationManager(
-        material_path=material_path,
+        material_dir=material_dir,
         to_rerun=False,
         to_submit=False,
     )
     assert not rlx_manager.is_done
 
 
-def test_static_hit_errors(calc_dir):
+def test_static_hit_errors(calcs_dir):
     """
     Test parsing and handling of VASP errors for static
     """
-    material_path = calc_dir / "material_hit_errors"
-    static_dir = material_path / "static"
+    material_dir = calcs_dir / "material_hit_errors"
+    static_dir = material_dir / "static"
     assert static_dir.exists()
     static_manager = StaticCalculationManager(
-        material_path=material_path,
+        material_dir=material_dir,
         to_rerun=False,
         to_submit=False,
     )
     assert not static_manager.is_done
 
 
-def test_bulkmod_hit_errors(calc_dir):
+def test_bulkmod_hit_errors(calcs_dir):
     """
     Test parsing and handling of VASP errors for bulkmod
     """
-    material_path = calc_dir / "material_hit_errors"
-    bulkmod_dir = material_path / "bulkmod"
+    material_dir = calcs_dir / "material_hit_errors"
+    bulkmod_dir = material_dir / "bulkmod"
     assert bulkmod_dir.exists()
     bulkmod_manager = BulkmodCalculationManager(
-        material_path=material_path,
+        material_dir=material_dir,
         to_rerun=False,
         to_submit=False,
     )
     assert not bulkmod_manager.is_done
 
 
-def test_elastic_hit_errors(calc_dir):
+def test_elastic_hit_errors(calcs_dir):
     """
     Test parsing and handling of VASP errors for elastic
     """
-    material_path = calc_dir / "material_hit_errors"
-    elastic_dir = material_path / "elastic"
+    material_dir = calcs_dir / "material_hit_errors"
+    elastic_dir = material_dir / "elastic"
     assert elastic_dir.exists()
     elastic_manager = ElasticCalculationManager(
-        material_path=material_path,
+        material_dir=material_dir,
         to_rerun=False,
         to_submit=False,
     )
     assert not elastic_manager.is_done
 
 
-def test_parse_magmom(calc_dir):
+def test_parse_magmom(calcs_dir):
     """
     Test parsing of magmom
     """
     for material_name, expected_magmom_pa in zip(
         ["material", "material_spinu"], [None, -0.0]
     ):
-        material_path = calc_dir / material_name
-        rlx_dir = material_path / "rlx"
+        material_dir = calcs_dir / material_name
+        rlx_dir = material_dir / "rlx"
         assert rlx_dir.exists()
         rlx_manager = RlxCalculationManager(
-            material_path=material_path,
+            material_dir=material_dir,
             to_rerun=True,
             to_submit=False,
         )
@@ -328,50 +328,50 @@ def test_parse_magmom(calc_dir):
 
 
 """
-Do testing of the reruns/archives last as they modify their folders
+Do testing of the reruns/archives last as they modify their directories
 """
 
 
-def test_too_many_rlx_coarse_archives(calc_dir):
+def test_too_many_rlx_coarse_archives(calcs_dir):
     """
     Assert rlx-coarse handles too many archives correctly
         (Continues to rlx)
     """
-    material_path = calc_dir / "material_needs_archive"
-    rlx_coarse_dir = material_path / "rlx-coarse"
+    material_dir = calcs_dir / "material_needs_archive"
+    rlx_coarse_dir = material_dir / "rlx-coarse"
     assert rlx_coarse_dir.exists()
     rlx_coarse_manager = RlxCoarseCalculationManager(
-        material_path=material_path, to_rerun=True, to_submit=False, max_reruns=2
+        material_dir=material_dir, to_rerun=True, to_submit=False, max_reruns=2
     )
     # archive_0 already exists but allow material to continue to rlx instead
     assert rlx_coarse_manager.is_done
 
 
-def test_too_many_rlx_archives(calc_dir):
+def test_too_many_rlx_archives(calcs_dir):
     """
     Assert rlx handles too many archives correctly
         (Errors out and refuses to continue)
     """
-    material_path = calc_dir / "material_needs_archive"
-    rlx_dir = material_path / "rlx"
+    material_dir = calcs_dir / "material_needs_archive"
+    rlx_dir = material_dir / "rlx"
     assert rlx_dir.exists()
     rlx_manager = RlxCalculationManager(
-        material_path=material_path, to_rerun=True, to_submit=False, max_reruns=2
+        material_dir=material_dir, to_rerun=True, to_submit=False, max_reruns=2
     )
     # archive_0 already exists
     assert not rlx_manager.is_done
 
 
-def test_rlx_coarse_archive(calc_dir):
+def test_rlx_coarse_archive(calcs_dir):
     """
     Assert unfinished rlx-coarse makes archive and that the symmetrized
         structure for the new POSCAR matches the CONTCAR in the archive
     """
-    material_path = calc_dir / "material_needs_archive"
-    rlx_coarse_dir = material_path / "rlx-coarse"
+    material_dir = calcs_dir / "material_needs_archive"
+    rlx_coarse_dir = material_dir / "rlx-coarse"
     assert rlx_coarse_dir.exists()
     rlx_coarse_manager = RlxCoarseCalculationManager(
-        material_path=material_path,
+        material_dir=material_dir,
         to_rerun=True,
         to_submit=False,
     )
@@ -393,17 +393,17 @@ def test_rlx_coarse_archive(calc_dir):
     assert structures_are_equivalent
 
 
-def test_rlx_archive(calc_dir):
+def test_rlx_archive(calcs_dir):
     """
     Assert unfinished rlx makes archive
     Also ensure rlx that finishes with magmom_pa below magmom_per_atom_cutoff
         restarts without spin
     """
-    material_path = calc_dir / "material_spinu"
-    rlx_dir = material_path / "rlx"
+    material_dir = calcs_dir / "material_spinu"
+    rlx_dir = material_dir / "rlx"
     assert rlx_dir.exists()
     rlx_manager = RlxCalculationManager(
-        material_path=material_path,
+        material_dir=material_dir,
         to_rerun=True,
         to_submit=False,
         magmom_per_atom_cutoff=1.0,
@@ -423,15 +423,15 @@ def test_rlx_archive(calc_dir):
     assert ispin_setting == 1
 
 
-def test_static_rerun(calc_dir):
+def test_static_rerun(calcs_dir):
     """
     Assert static reruns from scratch if failed
     """
-    material_path = calc_dir / "material_needs_rerun"
-    static_dir = material_path / "static"
+    material_dir = calcs_dir / "material_needs_rerun"
+    static_dir = material_dir / "static"
     assert static_dir.exists()
     static_manager = StaticCalculationManager(
-        material_path=material_path,
+        material_dir=material_dir,
         to_rerun=True,
         to_submit=False,
     )
@@ -443,15 +443,15 @@ def test_static_rerun(calc_dir):
         assert file.name in INPUT_FILES
 
 
-def test_bulkmod_rerun(calc_dir):
+def test_bulkmod_rerun(calcs_dir):
     """
     Assert bulkmod reruns from scratch if failed
     """
-    material_path = calc_dir / "material_needs_rerun"
-    bulkmod_dir = material_path / "bulkmod"
+    material_dir = calcs_dir / "material_needs_rerun"
+    bulkmod_dir = material_dir / "bulkmod"
     assert bulkmod_dir.exists()
     bulkmod_manager = BulkmodCalculationManager(
-        material_path=material_path,
+        material_dir=material_dir,
         to_rerun=True,
         to_submit=False,
     )
@@ -460,28 +460,28 @@ def test_bulkmod_rerun(calc_dir):
 
     bulkmod_dir_contents = list(bulkmod_dir.glob("*"))
     bulkmod_dir_files = [f for f in bulkmod_dir_contents if f.is_file()]
-    strain_folders = [d for d in bulkmod_dir_contents if d.is_dir()]
+    strain_dirs = [d for d in bulkmod_dir_contents if d.is_dir()]
     assert len(bulkmod_dir_files) == 4
     for file in bulkmod_dir_files:
         assert file.name in INPUT_FILES
-    assert len(strain_folders) == len(bulkmod_manager.strains)
-    for folder in strain_folders:
-        strain_folder_files = list(folder.glob("*"))
+    assert len(strain_dirs) == len(bulkmod_manager.strains)
+    for strain_dir in strain_dirs:
+        strain_dir_files = list(strain_dir.glob("*"))
         # no vasp.q
-        assert len(strain_folder_files) == 3
-        for file in strain_folder_files:
+        assert len(strain_dir_files) == 3
+        for file in strain_dir_files:
             assert file.name in INPUT_FILES
 
 
-def test_elastic_rerun(calc_dir):
+def test_elastic_rerun(calcs_dir):
     """
     Assert elastic reruns from scratch if failed
     """
-    material_path = calc_dir / "material_needs_rerun"
-    elastic_dir = material_path / "elastic"
+    material_dir = calcs_dir / "material_needs_rerun"
+    elastic_dir = material_dir / "elastic"
     assert elastic_dir.exists()
     elastic_manager = ElasticCalculationManager(
-        material_path=material_path,
+        material_dir=material_dir,
         to_rerun=True,
         to_submit=False,
     )

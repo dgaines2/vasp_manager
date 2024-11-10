@@ -16,21 +16,21 @@ logger = logging.getLogger(__name__)
 
 class ElasticAnalyzer:
     def __init__(
-        self, calc_path=None, cij=None, change_from_vasp=True, rounding_precision=3
+        self, calc_dir=None, cij=None, change_from_vasp=True, rounding_precision=3
     ):
         """
-        If calc_path is specified, read cij from the OUTCAR in calc path
+        If calc_dir is specified, read cij from the OUTCAR in calc path
         If cij is specified, use it directly
         Args:
             cij (6x6 array-like[float]): stiffness tensor in Voigt notation
                 -- careful! VASP does not output stiffness tensors in this notation
-            calc_path (str): path to elastic calculation folder
+            calc_dir (str): path to elastic calculation directory
             change_from_vasp (bool): if True, convert stiffness tensor from
                 VASP's elastic tensor notation to Voigt notation
             rounding_precision (int): precision to round calculated quantities
         """
         self._cij = cij
-        self._calc_path = Path(calc_path) if calc_path else calc_path
+        self._calc_dir = Path(calc_dir) if calc_dir else calc_dir
         self.change_from_vasp = change_from_vasp
         self.rounding_precision = rounding_precision
         self._results = None
@@ -178,23 +178,23 @@ class ElasticAnalyzer:
         return False
 
     @property
-    def calc_path(self):
-        if self._calc_path is not None:
-            self.calc_path = self._calc_path
-        return self._calc_path
+    def calc_dir(self):
+        if self._calc_dir is not None:
+            self.calc_dir = self._calc_dir
+        return self._calc_dir
 
-    @calc_path.setter
-    def calc_path(self, value):
+    @calc_dir.setter
+    def calc_dir(self, value):
         # make sure cij wasn't already defined
         # if self._cij is not None:
-        #     raise Exception("Could not set calc_path as cij was already specified")
+        #     raise Exception("Could not set calc_dir as cij was already specified")
         if not value.exists():
-            raise ValueError(f"Could not set calc_path to {value} as it does not exist")
-        self._calc_path = value
+            raise ValueError(f"Could not set calc_dir to {value} as it does not exist")
+        self._calc_dir = value
 
     @cached_property
     def structure(self):
-        return Structure.from_file(self.calc_path / "POSCAR")
+        return Structure.from_file(self.calc_dir / "POSCAR")
 
     @property
     def density(self):
@@ -215,14 +215,14 @@ class ElasticAnalyzer:
 
     @cached_property
     def elastic_file(self):
-        return self.calc_path / "elastic_constants.txt"
+        return self.calc_dir / "elastic_constants.txt"
 
     @cached_property
     def outcar_file(self):
         # search for OUTCAR or OUTCAR.gz
-        outcar_glob = list(self.calc_path.glob("OUTCAR*"))
+        outcar_glob = list(self.calc_dir.glob("OUTCAR*"))
         if len(outcar_glob) == 0:
-            raise Exception(f"No OUTCAR available at {self.calc_path}")
+            raise Exception(f"No OUTCAR available at {self.calc_dir}")
         return outcar_glob[0]
 
     @property
@@ -337,7 +337,6 @@ class ElasticAnalyzer:
         Grabs important quantities from the elastic calculation results
 
         Args:
-            elastic_file (str): filepath
             properties (list): names
         Returns:
             elastic_dict (dict): dict of extracted info from
