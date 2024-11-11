@@ -4,6 +4,7 @@
 import json
 import logging
 from functools import cached_property
+from importlib.metadata import version
 from multiprocessing import Pool
 from pathlib import Path
 
@@ -20,6 +21,19 @@ from vasp_manager.calculation_manager import (
 from vasp_manager.utils import NumpyEncoder
 
 logger = logging.getLogger(__name__)
+
+ASCII_LOGO = """\
+ __      __             __  __
+ \ \    / /            |  \/  |
+  \ \  / /_ _ ___ _ __ | \  / | __ _ _ __   __ _  __ _  ___ _ __
+   \ \/ / _` / __| '_ \| |\/| |/ _` | '_ \ / _` |/ _` |/ _ \ '__|
+    \  / (_| \__ \ |_) | |  | | (_| | | | | (_| | (_| |  __/ |
+     \/ \__,_|___/ .__/|_|  |_|\__,_|_| |_|\__,_|\__, |\___|_|
+                 | |                              __/ |
+                 |_|                             |___/ v{}
+""".format(  # noqa: W605
+    version("vasp_manager")
+)
 
 
 class VaspManager:
@@ -69,6 +83,7 @@ class VaspManager:
                 rerun without spin-polarization
             sort_by (callable): function to sort the keys of the result dictionary
         """
+        print(ASCII_LOGO)
         self.sort_by = sort_by
         self.calculation_types = calculation_types
         self.material_paths = material_paths
