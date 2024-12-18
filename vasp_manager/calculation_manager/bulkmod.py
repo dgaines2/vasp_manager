@@ -11,7 +11,7 @@ import numpy as np
 
 from vasp_manager.analyzer.bulkmod_analyzer import BulkmodAnalyzer
 from vasp_manager.calculation_manager.base import BaseCalculationManager
-from vasp_manager.utils import change_directory, pgrep
+from vasp_manager.utils import LoggerAdapter, change_directory, pgrep
 from vasp_manager.vasp_input_creator import VaspInputCreator
 
 logger = logging.getLogger(__name__)
@@ -64,6 +64,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
         )
         self._is_done = None
         self._results = None
+        self.logger = LoggerAdapter(logging.getLogger(__name__), self.material_name)
 
     @cached_property
     def mode(self):
@@ -121,7 +122,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
                 "Running bulk modulus calculation without previous relaxation"
                 "\n\t starting structure must be fairly close to equilibrium volume!"
             )
-            logger.warning(msg)
+            self.logger.warning(msg)
 
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
         self.vasp_input_creator.increase_walltime_by_factor = increase_walltime_by_factor
@@ -143,7 +144,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
             bulkmod_sucessful (bool): if True, bulkmod calculation completed successfully
         """
         if not self.job_complete:
-            logger.info(f"{self.mode.upper()} job not finished")
+            self.logger.info(f"{self.mode.upper()} job not finished")
             return False
 
         for i, strain in enumerate(self.strains):
@@ -163,7 +164,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
                 all_errors_addressed = self._address_vasp_errors(vasp_errors)
                 if all_errors_addressed:
                     if self.to_rerun:
-                        logger.info(f"Rerunning {self.calc_path}")
+                        self.logger.info(f"Rerunning {self.calc_path}")
                         self._from_scratch()
                         self.setup_calc()
                 else:
@@ -173,14 +174,14 @@ class BulkmodCalculationManager(BaseCalculationManager):
                         "\tRefusing to continue...\n"
                         f"\tVasp Errors: {vasp_errors}\n"
                     )
-                    logger.error(msg)
+                    self.logger.error(msg)
                     self.stop()
                 return False
 
             grep_output = pgrep(stdout_path, "1 F=", stop_after_first_match=True)
             if len(grep_output) == 0:
                 if self.to_rerun:
-                    logger.info(f"Rerunning {self.calc_path}")
+                    self.logger.info(f"Rerunning {self.calc_path}")
                     # increase nodes as its likely the calculation failed
                     self._from_scratch()
                     self.setup_calc(increase_walltime_by_factor=2)
@@ -204,7 +205,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
             ba = BulkmodAnalyzer(calc_path=self.calc_path)
             self._results = ba.results
         except Exception as e:
-            logger.warning(e)
+            self.logger.warning(e)
             self._results = None
         return self._results
 
@@ -215,13 +216,13 @@ class BulkmodCalculationManager(BaseCalculationManager):
         Args:
             strains (iterable of floats)
         """
-        logger.info("Making strain directories")
+        self.logger.info("Making strain directories")
         for i, strain in enumerate(self.strains):
             middle = int(len(self.strains) / 2)
             strain_index = i - middle
             strain_name = f"strain_{strain_index}"
             strain_path = self.calc_path / strain_name
-            logger.info(strain_path)
+            self.logger.info(strain_path)
 
             if not strain_path.exists():
                 strain_path.mkdir()
@@ -233,7 +234,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
             with open(strain_poscar_path, "r") as fr:
                 strain_poscar = fr.read().splitlines()
             strain_poscar[1] = f"{strain}"
-            logger.debug(f"{strain}")
+            self.logger.debug(f"{strain}")
             with open(strain_poscar_path, "w+") as fw:
                 fw.write("\n".join(strain_poscar))
 

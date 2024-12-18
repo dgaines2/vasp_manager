@@ -7,7 +7,7 @@ from functools import cached_property
 import numpy as np
 
 from vasp_manager.calculation_manager.base import BaseCalculationManager
-from vasp_manager.utils import get_pmg_structure_from_poscar, pgrep, ptail
+from vasp_manager.utils import LoggerAdapter, get_pmg_structure_from_poscar, pgrep, ptail
 from vasp_manager.vasp_input_creator import VaspInputCreator
 
 logger = logging.getLogger(__name__)
@@ -53,6 +53,7 @@ class RlxCalculationManager(BaseCalculationManager):
         )
         self._is_done = None
         self._results = None
+        self.logger = LoggerAdapter(logging.getLogger(__name__), self.material_name)
 
     @cached_property
     def mode(self):
@@ -108,7 +109,7 @@ class RlxCalculationManager(BaseCalculationManager):
             relaxation_successful (bool): if True, relaxation completed successfully
         """
         if not self.job_complete:
-            logger.info(f"{self.mode.upper()} not finished")
+            self.logger.info(f"{self.mode.upper()} not finished")
             return False
 
         stdout_path = self.calc_path / "stdout.txt"
@@ -116,7 +117,7 @@ class RlxCalculationManager(BaseCalculationManager):
             # calculation never actually ran
             # shouldn't get here unless function was called with submit=False
             # or job was manually cancelled
-            logger.info(f"{self.mode.upper()} Calculation: No stdout.txt available")
+            self.logger.info(f"{self.mode.upper()} Calculation: No stdout.txt available")
             if self.to_rerun:
                 self._cancel_previous_job()
                 self.setup_calc()
@@ -127,7 +128,7 @@ class RlxCalculationManager(BaseCalculationManager):
             all_errors_addressed = self._address_vasp_errors(vasp_errors)
             if all_errors_addressed:
                 if self.to_rerun:
-                    logger.info(f"Rerunning {self.calc_path}")
+                    self.logger.info(f"Rerunning {self.calc_path}")
                     self.setup_calc(make_archive=True)
             else:
                 msg = (
@@ -136,7 +137,7 @@ class RlxCalculationManager(BaseCalculationManager):
                     "\tRefusing to continue...\n"
                     f"\tVasp Errors: {vasp_errors}\n"
                 )
-                logger.error(msg)
+                self.logger.error(msg)
                 self.stop()
             return False
 
@@ -157,13 +158,13 @@ class RlxCalculationManager(BaseCalculationManager):
                     "Many archives exist, calculations may not be converging\n"
                     "\t Refusing to continue..."
                 )
-                logger.error(msg)
+                self.logger.error(msg)
                 return False
 
-            logger.warning(f"{self.mode.upper()} FAILED")
-            logger.debug(tail_output)
+            self.logger.warning(f"{self.mode.upper()} FAILED")
+            self.logger.debug(tail_output)
             if self.to_rerun:
-                logger.info(f"Rerunning {self.calc_path}")
+                self.logger.info(f"Rerunning {self.calc_path}")
                 # increase nodes as its likely the calculation failed
                 self.setup_calc(
                     increase_walltime_by_factor=2, make_archive=True, use_spin=use_spin
@@ -174,12 +175,12 @@ class RlxCalculationManager(BaseCalculationManager):
         # than the cutoff, rerun it without spin
         if not use_spin and previous_magmom_per_atom is not None:
             if self.to_rerun:
-                logger.info(f"Rerunning {self.calc_path}")
+                self.logger.info(f"Rerunning {self.calc_path}")
                 self.setup_calc(make_archive=True, use_spin=False)
             return False
 
-        logger.info(f"{self.mode.upper()} Calculation: reached required accuracy")
-        logger.debug(tail_output)
+        self.logger.info(f"{self.mode.upper()} Calculation: reached required accuracy")
+        self.logger.debug(tail_output)
         return True
 
     def check_volume_difference(self):
@@ -206,22 +207,22 @@ class RlxCalculationManager(BaseCalculationManager):
                 contcar_path, return_spacegroup=True
             )
         except Exception as e:
-            logger.error(f"  RLX CONTCAR doesn't exist or is empty: {e}")
+            self.logger.error(f"  RLX CONTCAR doesn't exist or is empty: {e}")
             return False
 
         if orig_spacegroup == c_spacegroup:
-            logger.debug(
+            self.logger.debug(
                 f"  Spacegroups match orig-{orig_spacegroup} == rlx-{c_spacegroup}"
             )
         else:
-            logger.warning(
+            self.logger.warning(
                 "   Warning: spacegroups do not match "
                 + f"orig-{orig_spacegroup} != rlx-{c_spacegroup}"
             )
 
         volume_diff = (c_structure.volume - p_structure.volume) / p_structure.volume
         if np.abs(volume_diff) >= 0.05:
-            logger.warning(f"  NEED TO RE-RELAX: dV = {volume_diff:.4f}")
+            self.logger.warning(f"  NEED TO RE-RELAX: dV = {volume_diff:.4f}")
             volume_converged = False
             previous_magmom_per_atom = self._parse_magmom_per_atom()
             if previous_magmom_per_atom is None:
@@ -231,8 +232,8 @@ class RlxCalculationManager(BaseCalculationManager):
             if self.to_rerun:
                 self.setup_calc(make_archive=True, use_spin=use_spin)
         else:
-            logger.info("  RLX volume converged")
-            logger.debug(f"  dV = {volume_diff:.4f}")
+            self.logger.info("  RLX volume converged")
+            self.logger.debug(f"  dV = {volume_diff:.4f}")
             volume_converged = True
         orig_volume_diff = (
             c_structure.volume - orig_structure.volume
