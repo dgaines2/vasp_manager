@@ -129,8 +129,8 @@ class ElasticCalculationManager(BaseCalculationManager):
                 msg = (
                     f"{self.mode.upper()} Calculation: "
                     "Couldn't address all VASP Errors\n"
+                    f"\tVASP Errors: {vasp_errors}\n"
                     "\tRefusing to continue...\n"
-                    f"\tVasp Errors: {vasp_errors}\n"
                 )
                 self.logger.error(msg)
                 self.stop()

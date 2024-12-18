@@ -105,9 +105,11 @@ class JobManager:
             return True
 
         if "personal" in self.computer:
-            error_msg = f"Cannot submit {self.mode.upper()} job for on personal computer"
-            error_msg += "\n\tIgnoring job submission..."
-            logger.debug(error_msg)
+            msg = (
+                f"Cannot submit {self.mode.upper()} job for on personal computer\n"
+                "\tIgnoring job submission..."
+            )
+            logger.debug(msg)
             return True
 
         qpath = self.calc_path / self.exe_name
@@ -141,9 +143,8 @@ class JobManager:
     def _check_job_complete(self):
         """Returns True if job done"""
         if self.computer == "personal":
-            error_msg = "Cannot check job on personal computer"
-            error_msg += "\n\tIgnoring job status check..."
-            logger.debug(error_msg)
+            msg = "Cannot check job on personal computer\n\tIgnoring job status check..."
+            logger.debug(msg)
             # This enables job resubmission by letting the calling function
             # continue anyways
             return True

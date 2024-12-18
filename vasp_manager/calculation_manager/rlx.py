@@ -134,8 +134,8 @@ class RlxCalculationManager(BaseCalculationManager):
                 msg = (
                     f"{self.mode.upper()} Calculation: "
                     "Couldn't address all VASP Errors\n"
+                    f"\tVASP Errors: {vasp_errors}\n"
                     "\tRefusing to continue...\n"
-                    f"\tVasp Errors: {vasp_errors}\n"
                 )
                 self.logger.error(msg)
                 self.stop()
@@ -156,7 +156,7 @@ class RlxCalculationManager(BaseCalculationManager):
             if len(archive_dirs) >= self.max_reruns - 1:
                 msg = (
                     "Many archives exist, calculations may not be converging\n"
-                    "\t Refusing to continue..."
+                    "\tRefusing to continue..."
                 )
                 self.logger.error(msg)
                 return False
@@ -207,22 +207,22 @@ class RlxCalculationManager(BaseCalculationManager):
                 contcar_path, return_spacegroup=True
             )
         except Exception as e:
-            self.logger.error(f"  RLX CONTCAR doesn't exist or is empty: {e}")
+            self.logger.error(f"RLX CONTCAR doesn't exist or is empty: {e}")
             return False
 
         if orig_spacegroup == c_spacegroup:
             self.logger.debug(
-                f"  Spacegroups match orig-{orig_spacegroup} == rlx-{c_spacegroup}"
+                f"Spacegroups match orig-{orig_spacegroup} == rlx-{c_spacegroup}"
             )
         else:
             self.logger.warning(
-                "   Warning: spacegroups do not match "
+                "Warning: spacegroups do not match "
                 + f"orig-{orig_spacegroup} != rlx-{c_spacegroup}"
             )
 
         volume_diff = (c_structure.volume - p_structure.volume) / p_structure.volume
         if np.abs(volume_diff) >= 0.05:
-            self.logger.warning(f"  NEED TO RE-RELAX: dV = {volume_diff:.4f}")
+            self.logger.warning(f"NEED TO RE-RELAX: dV = {volume_diff:.4f}")
             volume_converged = False
             previous_magmom_per_atom = self._parse_magmom_per_atom()
             if previous_magmom_per_atom is None:
@@ -232,8 +232,8 @@ class RlxCalculationManager(BaseCalculationManager):
             if self.to_rerun:
                 self.setup_calc(make_archive=True, use_spin=use_spin)
         else:
-            self.logger.info("  RLX volume converged")
-            self.logger.debug(f"  dV = {volume_diff:.4f}")
+            self.logger.info("RLX volume converged")
+            self.logger.debug(f"dV = {volume_diff:.4f}")
             volume_converged = True
         orig_volume_diff = (
             c_structure.volume - orig_structure.volume

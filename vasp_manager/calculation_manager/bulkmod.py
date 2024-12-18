@@ -119,8 +119,8 @@ class BulkmodCalculationManager(BaseCalculationManager):
         """
         if not self.from_relax:
             msg = (
-                "Running bulk modulus calculation without previous relaxation"
-                "\n\t starting structure must be fairly close to equilibrium volume!"
+                "Running bulk modulus calculation without previous relaxation\n"
+                "\tStarting structure must be fairly close to equilibrium volume!"
             )
             self.logger.warning(msg)
 
@@ -171,8 +171,8 @@ class BulkmodCalculationManager(BaseCalculationManager):
                     msg = (
                         f"{self.mode.upper()} Calculation: "
                         "Couldn't address all VASP Errors\n"
+                        f"\tVASP Errors: {vasp_errors}\n"
                         "\tRefusing to continue...\n"
-                        f"\tVasp Errors: {vasp_errors}\n"
                     )
                     self.logger.error(msg)
                     self.stop()
