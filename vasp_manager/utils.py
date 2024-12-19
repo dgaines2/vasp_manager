@@ -3,6 +3,7 @@
 
 import gzip
 import json
+import logging
 import os
 from collections import deque
 from contextlib import contextmanager
@@ -34,6 +35,16 @@ class NumpyEncoder(json.JSONEncoder):
         elif isinstance(obj, np.ndarray):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
+
+
+class LoggerAdapter(logging.LoggerAdapter):
+    def __init__(self, logger, prefix, separator=" -- "):
+        super(LoggerAdapter, self).__init__(logger, {})
+        self.prefix = prefix
+        self.separator = separator
+
+    def process(self, msg, kwargs):
+        return f"{self.prefix}{self.separator}{msg}", kwargs
 
 
 def get_pmg_structure_from_poscar(

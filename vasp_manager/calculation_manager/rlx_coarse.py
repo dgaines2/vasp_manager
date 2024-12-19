@@ -5,7 +5,7 @@ import logging
 from functools import cached_property
 
 from vasp_manager.calculation_manager.base import BaseCalculationManager
-from vasp_manager.utils import pgrep, ptail
+from vasp_manager.utils import LoggerAdapter, pgrep, ptail
 from vasp_manager.vasp_input_creator import VaspInputCreator
 
 logger = logging.getLogger(__name__)
@@ -46,6 +46,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
         )
         self._is_done = None
         self._results = None
+        self.logger = LoggerAdapter(logging.getLogger(__name__), self.material_name)
 
     @cached_property
     def mode(self):
@@ -97,7 +98,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             relaxation_successful (bool): if True, relaxation completed successfully
         """
         if not self.job_complete:
-            logger.info(f"{self.mode.upper()} not finished")
+            self.logger.info(f"{self.mode.upper()} not finished")
             return False
 
         stdout_path = self.calc_path / "stdout.txt"
@@ -105,7 +106,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             # calculation never actually ran
             # shouldn't get here unless function was called with submit=False
             # or job was manually cancelled
-            logger.info(f"{self.mode.upper()} Calculation: No stdout.txt available")
+            self.logger.info(f"{self.mode.upper()} Calculation: No stdout.txt available")
             if self.to_rerun:
                 self._cancel_previous_job()
                 self.setup_calc()
@@ -116,16 +117,16 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             all_errors_addressed = self._address_vasp_errors(vasp_errors)
             if all_errors_addressed:
                 if self.to_rerun:
-                    logger.info(f"Rerunning {self.calc_path}")
+                    self.logger.info(f"Rerunning {self.calc_path}")
                     self.setup_calc(make_archive=True)
             else:
                 msg = (
                     f"{self.mode.upper()} Calculation: "
                     "Couldn't address all VASP Errors\n"
+                    f"\tVASP Errors: {vasp_errors}\n"
                     "\tRefusing to continue...\n"
-                    f"\tVasp Errors: {vasp_errors}\n"
                 )
-                logger.error(msg)
+                self.logger.error(msg)
                 self.stop()
             return False
 
@@ -136,21 +137,21 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
         if len(grep_output) == 0:
             archive_dirs = list(self.calc_path.glob("archive*"))
             if len(archive_dirs) >= self.max_reruns - 1:
-                logger.warning(
+                self.logger.warning(
                     "Many archives exist, continuing to force based relaxation..."
                 )
                 return True
 
-            logger.warning(f"{self.mode.upper()} FAILED")
-            logger.debug(tail_output)
+            self.logger.warning(f"{self.mode.upper()} FAILED")
+            self.logger.debug(tail_output)
             if self.to_rerun:
-                logger.info(f"Rerunning {self.calc_path}")
+                self.logger.info(f"Rerunning {self.calc_path}")
                 # increase nodes as its likely the calculation failed
                 self.setup_calc(increase_walltime_by_factor=2, make_archive=True)
             return False
 
-        logger.info(f"{self.mode.upper()} Calculation: reached required accuracy")
-        logger.debug(tail_output)
+        self.logger.info(f"{self.mode.upper()} Calculation: reached required accuracy")
+        self.logger.debug(tail_output)
         return True
 
     @property

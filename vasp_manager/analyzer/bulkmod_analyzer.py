@@ -29,7 +29,6 @@ class BulkmodAnalyzer:
 
     @calc_path.setter
     def calc_path(self, value):
-        # make sure cij wasn't already defined
         if not value.exists():
             raise ValueError(f"Could not set calc_path to {value} as it does not exist")
         self._calc_path = value
@@ -73,14 +72,12 @@ class BulkmodAnalyzer:
             final_energy = vasprun.final_energy
             volumes.append(volume)
             final_energies.append(final_energy)
-        logger.debug("Volumes")
-        logger.debug(f"{volumes}")
-        logger.debug("Final Energies")
-        logger.debug(f"{final_energies}")
+        logger.debug(f"Volumes:\n\t{volumes}")
+        logger.debug(f"Final Energies:\n\t{final_energies}")
         eos_analyzer = BirchMurnaghan(volumes, final_energies)
         eos_analyzer.fit()
         bulk_modulus = np.round(eos_analyzer.b0_GPa, rounding_precision)
-        logger.info(f"BULK MODULUS: {bulk_modulus}")
+        logger.debug(f"BULK MODULUS: {bulk_modulus}")
         b_dict = {"B": bulk_modulus}
         return b_dict
 

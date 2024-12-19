@@ -1,12 +1,13 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
+import json
 import logging
 from functools import cached_property
 
 from vasp_manager.analyzer import ElasticAnalyzer
 from vasp_manager.calculation_manager.base import BaseCalculationManager
-from vasp_manager.utils import pgrep, ptail
+from vasp_manager.utils import LoggerAdapter, NumpyEncoder, pgrep, ptail
 from vasp_manager.vasp_input_creator import VaspInputCreator
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         )
         self._is_done = None
         self._results = None
+        self.logger = LoggerAdapter(logging.getLogger(__name__), self.material_name)
 
     @cached_property
     def mode(self):
@@ -104,13 +106,13 @@ class ElasticCalculationManager(BaseCalculationManager):
                 successfully
         """
         if not self.job_complete:
-            logger.info(f"{self.mode.upper()} job not finished")
+            self.logger.info(f"{self.mode.upper()} job not finished")
             return False
 
         stdout_path = self.calc_path / "stdout.txt"
         if not stdout_path.exists():
             # shouldn't get here unless function was called with submit=False
-            logger.info(f"{self.mode.upper()} Calculation: No stdout.txt available")
+            self.logger.info(f"{self.mode.upper()} Calculation: No stdout.txt available")
             if self.to_rerun:
                 self._from_scratch()
                 self.setup_calc()
@@ -121,24 +123,24 @@ class ElasticCalculationManager(BaseCalculationManager):
             all_errors_addressed = self._address_vasp_errors(vasp_errors)
             if all_errors_addressed:
                 if self.to_rerun:
-                    logger.info(f"Rerunning {self.calc_path}")
+                    self.logger.info(f"Rerunning {self.calc_path}")
                     self._from_scratch()
                     self.setup_calc()
             else:
                 msg = (
                     f"{self.mode.upper()} Calculation: "
                     "Couldn't address all VASP Errors\n"
+                    f"\tVASP Errors: {vasp_errors}\n"
                     "\tRefusing to continue...\n"
-                    f"\tVasp Errors: {vasp_errors}\n"
                 )
-                logger.error(msg)
+                self.logger.error(msg)
                 self.stop()
             return False
 
         grep_output = pgrep(stdout_path, str_to_grep="Total")
         if len(grep_output) == 0:
             if self.to_rerun:
-                logger.info(f"Rerunning {self.calc_path}")
+                self.logger.info(f"Rerunning {self.calc_path}")
                 # calculation failed before end of first SCF cycle
                 self._from_scratch()
                 self.setup_calc()
@@ -148,19 +150,19 @@ class ElasticCalculationManager(BaseCalculationManager):
         last_grep_line = grep_output[-1].replace("/", " ").strip().split()
         finished_deformations = int(last_grep_line[-2])
         total_deformations = int(last_grep_line[-1])
-        logger.debug(last_grep_line)
+        self.logger.debug(last_grep_line)
         if not finished_deformations == total_deformations:
             tail_output = ptail(stdout_path, n_tail=self.tail, as_string=True)
-            logger.info(tail_output)
-            logger.info(f"{self.mode.upper()} Calculation: FAILED")
+            self.logger.info(tail_output)
+            self.logger.info(f"{self.mode.upper()} Calculation: FAILED")
             if self.to_rerun:
-                logger.info(f"Rerunning {self.calc_path}")
+                self.logger.info(f"Rerunning {self.calc_path}")
                 # increase walltime as its likely the calculation failed
                 self._from_scratch()
                 self.setup_calc(increase_walltime_by_factor=2)
             return False
 
-        logger.info(f"{self.mode.upper()} Calculation: Success")
+        self.logger.info(f"{self.mode.upper()} Calculation: Success")
         return True
 
     @property
@@ -179,7 +181,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         try:
             self._results = self._analyze_elastic()
         except Exception as e:
-            logger.warning(e)
+            self.logger.warning(e)
             self._results = None
         return self._results
 
@@ -188,4 +190,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         Gets results from elastic calculation
         """
         ea = ElasticAnalyzer.from_calc_dir(self.calc_path)
+        if ea.results.get("elastically_unstable"):
+            self.logger.warning("-" * 10 + " WARNING: Elastically Unstable " + "-" * 10)
+        self.logger.debug(json.dumps(ea.results, cls=NumpyEncoder, indent=2))
         return ea.results

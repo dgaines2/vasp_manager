@@ -7,7 +7,7 @@ import subprocess
 from functools import cached_property
 from pathlib import Path
 
-from vasp_manager.utils import change_directory
+from vasp_manager.utils import LoggerAdapter, change_directory
 
 logger = logging.getLogger(__name__)
 
@@ -23,14 +23,16 @@ class JobManager:
         exe_name="vasp.q",
         jobid_name="jobid",
         config_path=None,
+        manager_name=None,
         ignore_personal_errors=True,
     ):
         """
         Args:
             calc_path (str | Path): base directory of job
-            config_path (str | Path): path to configuration files
             exe_name (str): filename for slurm job submission
             jobid_name (str): filename for storing slurm jobid
+            config_path (str | Path): path to configuration files
+            manager_name (str): name for logging purposes
             ignore_personal_errors (bool): if True, ignore job submission errors
                 if on personal computer
         """
@@ -41,8 +43,10 @@ class JobManager:
         self.ignore_personal_errors = ignore_personal_errors
         self.exe_name = exe_name
         self.jobid_name = jobid_name
+        self.manager_name = manager_name if manager_name else str(calc_path)
         self._jobid = None
         self._job_complete = None
+        self.logger = LoggerAdapter(logging.getLogger(__name__), self.manager_name)
 
     @property
     def computing_config_dict(self):
@@ -101,18 +105,20 @@ class JobManager:
         Submits job, making sure to not make duplicate jobs
         """
         if self.job_exists:
-            logger.info(f"{self.mode.upper()} Job already exists")
+            self.logger.info(f"{self.mode.upper()} job already exists")
             return True
 
         if "personal" in self.computer:
-            error_msg = f"Cannot submit {self.mode.upper()} job for on personal computer"
-            error_msg += "\n\tIgnoring job submission..."
-            logger.debug(error_msg)
+            msg = (
+                f"Cannot submit {self.mode.upper()} job for on personal computer\n"
+                "\tIgnoring job submission..."
+            )
+            self.logger.debug(msg)
             return True
 
         qpath = self.calc_path / self.exe_name
         if not qpath.exists():
-            logger.info(f"No {self.exe_name} file in {self.calc_path}")
+            self.logger.info(f"No {self.exe_name} file in {self.calc_path}")
             # return False here instead of catching an exception
             # This enables job resubmission by letting the calling function
             # know that the calculation needs to be restarted
@@ -129,7 +135,7 @@ class JobManager:
             self.jobid = jobid
             with open(self.jobid_name, "w+") as fw:
                 fw.write(f"{jobid}\n")
-        logger.info(f"Submitted job {jobid}")
+        self.logger.info(f"Submitted job {jobid}")
         return True
 
     @property
@@ -141,9 +147,8 @@ class JobManager:
     def _check_job_complete(self):
         """Returns True if job done"""
         if self.computer == "personal":
-            error_msg = "Cannot check job on personal computer"
-            error_msg += "\n\tIgnoring job status check..."
-            logger.debug(error_msg)
+            msg = "Cannot check job on personal computer\n\tIgnoring job status check..."
+            self.logger.debug(msg)
             # This enables job resubmission by letting the calling function
             # continue anyways
             return True
