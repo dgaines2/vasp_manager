@@ -45,7 +45,9 @@ class BaseCalculationManager(ABC):
         self.to_submit = to_submit
         self.primitive = primitive
         self.job_manager = JobManager(
-            calc_path=self.calc_path, ignore_personal_errors=ignore_personal_errors
+            calc_path=self.calc_path,
+            manager_name=f"{self.material_name} {self.mode.upper()}",
+            ignore_personal_errors=ignore_personal_errors,
         )
 
         self.from_scratch = from_scratch
