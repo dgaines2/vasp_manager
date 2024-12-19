@@ -187,5 +187,5 @@ class ElasticCalculationManager(BaseCalculationManager):
         """
         Gets results from elastic calculation
         """
-        ea = ElasticAnalyzer(calc_path=self.calc_path)
+        ea = ElasticAnalyzer.from_calc_dir(self.calc_path)
         return ea.results

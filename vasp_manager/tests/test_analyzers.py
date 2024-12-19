@@ -21,43 +21,6 @@ SUPPORTED_ELASTIC_PROPERTIES = [
 ]
 
 
-def test_elastic_analyzer_from_cij():
-    cij = np.array(
-        [
-            [103.8763, 49.0681, 49.0681, -0.0, 0.0, -0.0],
-            [49.0681, 103.8763, 49.0681, -0.0, -0.0, 0.0],
-            [49.0681, 49.0681, 103.8763, 0.0, -0.0, -0.0],
-            [-0.0, -0.0, 0.0, 50.9768, 0.0, 0.0],
-            [0.0, -0.0, -0.0, 0.0, 50.9768, -0.0],
-            [-0.0, 0.0, -0.0, 0.0, -0.0, 50.9768],
-        ]
-    )
-
-    ea = ElasticAnalyzer(cij=cij, rounding_precision=1)
-    results = ea._analyze_elastic(
-        properties=[
-            "B_Reuss",
-            "B_Voigt",
-            "B_VRH",
-            "G_Reuss",
-            "G_Voigt",
-            "G_VRH",
-            "unstable",
-            "elastic_tensor",
-        ]
-    )
-    for property in results:
-        assert property in SUPPORTED_ELASTIC_PROPERTIES
-
-    assert results["B_Reuss"] == 67.3
-    assert results["B_Voigt"] == 67.3
-    assert results["B_VRH"] == 67.3
-    assert results["G_Reuss"] == 37.9
-    assert results["G_Voigt"] == 41.5
-    assert results["G_VRH"] == 39.7
-    assert results["unstable"] == False
-
-
 @pytest.fixture(scope="session")
 def stable_material_dir(tmp_path_factory):
     material_folder = (
@@ -99,7 +62,7 @@ def test_elastic_analyzer_stable(stable_material_dir):
     """
     elastic_dir = stable_material_dir / "elastic"
     assert elastic_dir.exists()
-    ea = ElasticAnalyzer(elastic_dir, cij=None)
+    ea = ElasticAnalyzer.from_calc_dir(elastic_dir)
     results = ea.results
     for property in results:
         assert property in SUPPORTED_ELASTIC_PROPERTIES
@@ -133,7 +96,7 @@ def test_elastic_analyzer_unstable(unstable_material_dir):
     """
     elastic_dir = unstable_material_dir / "elastic"
     assert elastic_dir.exists()
-    ea = ElasticAnalyzer(elastic_dir, cij=None)
+    ea = ElasticAnalyzer.from_calc_dir(elastic_dir)
     results = ea.results
     for property in results:
         assert property in SUPPORTED_ELASTIC_PROPERTIES

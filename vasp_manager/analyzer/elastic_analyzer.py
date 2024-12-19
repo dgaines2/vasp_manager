@@ -16,24 +16,70 @@ logger = logging.getLogger(__name__)
 
 class ElasticAnalyzer:
     def __init__(
-        self, calc_path=None, cij=None, change_from_vasp=True, rounding_precision=3
+        self,
+        cij,
+        structure,
+        rounding_precision=3,
     ):
         """
-        If calc_path is specified, read cij from the OUTCAR in calc path
-        If cij is specified, use it directly
         Args:
-            cij (6x6 array-like[float]): stiffness tensor in Voigt notation
+            cij (6x6 array-like[float]): stiffness tensor in Voigt notation in
+                units of GPa
                 -- careful! VASP does not output stiffness tensors in this notation
-            calc_path (str): path to elastic calculation folder
-            change_from_vasp (bool): if True, convert stiffness tensor from
-                VASP's elastic tensor notation to Voigt notation
+            structure (pmg.Structure)
             rounding_precision (int): precision to round calculated quantities
         """
-        self._cij = cij
-        self._calc_path = Path(calc_path) if calc_path else calc_path
-        self.change_from_vasp = change_from_vasp
+        self.cij = cij
+        self.structure = structure
         self.rounding_precision = rounding_precision
         self._results = None
+
+    @property
+    def cij(self):
+        return self._cij
+
+    @cij.setter
+    def cij(self, values):
+        values = np.asarray(values)
+        if values.shape != (6, 6):
+            raise ValueError(
+                "cij must be a 6x6 array," f"found shape={values.shape} instead"
+            )
+        if values.dtype != float:
+            raise TypeError(
+                "cij must be a 6x6 array of floats," f" found type={values.dtype} instead"
+            )
+        self._cij = values
+
+    @property
+    def structure(self):
+        return self._structure
+
+    @structure.setter
+    def structure(self, value):
+        if not isinstance(value, Structure):
+            raise TypeError(
+                "Structure must be pymatgen Structure object,"
+                f" found type={type(value)} instead"
+            )
+        self._structure = value
+
+    @property
+    def density(self):
+        return self.structure.density
+
+    @property
+    def rounding_precision(self):
+        return self._rounding_precision
+
+    @rounding_precision.setter
+    def rounding_precision(self, value):
+        if not isinstance(value, int):
+            raise TypeError(
+                f"Could not set rounding_precision to {value}. rounding_precision must"
+                " be an int, found type={type(value)} instead)"
+            )
+        self._rounding_precision = value
 
     @staticmethod
     def change_elastic_constants_from_vasp(vasp_elastic_tensor):
@@ -86,7 +132,7 @@ class ElasticAnalyzer:
         """
         Args:
             mod1 (float):  B or G Voigt
-            mode2 (float): B or G Reuss
+            mod2 (float): B or G Reuss
         Returns:
             VRH_average (float)
         """
@@ -177,72 +223,6 @@ class ElasticAnalyzer:
 
         return False
 
-    @property
-    def calc_path(self):
-        if self._calc_path is not None:
-            self.calc_path = self._calc_path
-        return self._calc_path
-
-    @calc_path.setter
-    def calc_path(self, value):
-        # make sure cij wasn't already defined
-        # if self._cij is not None:
-        #     raise Exception("Could not set calc_path as cij was already specified")
-        if not value.exists():
-            raise ValueError(f"Could not set calc_path to {value} as it does not exist")
-        self._calc_path = value
-
-    @cached_property
-    def structure(self):
-        return Structure.from_file(self.calc_path / "POSCAR")
-
-    @property
-    def density(self):
-        return self.structure.density
-
-    @property
-    def rounding_precision(self):
-        return self._rounding_precision
-
-    @rounding_precision.setter
-    def rounding_precision(self, value):
-        if not isinstance(value, int):
-            raise ValueError(
-                f"Could not set rounding_precision to {value}, rounding precision must"
-                " be an int"
-            )
-        self._rounding_precision = value
-
-    @cached_property
-    def elastic_file(self):
-        return self.calc_path / "elastic_constants.txt"
-
-    @cached_property
-    def outcar_file(self):
-        # search for OUTCAR or OUTCAR.gz
-        outcar_glob = list(self.calc_path.glob("OUTCAR*"))
-        if len(outcar_glob) == 0:
-            raise Exception(f"No OUTCAR available at {self.calc_path}")
-        return outcar_glob[0]
-
-    @property
-    def cij(self):
-        # assumed to be in GPa
-        if self._cij is None:
-            # VASP only outputs to 4 decimal places
-            self.cij = np.round(self._read_stiffness_tensor_file(), 4)
-        else:
-            self.cij = self._cij
-        return self._cij
-
-    @cij.setter
-    def cij(self, values):
-        if np.shape(values) != (6, 6):
-            raise ValueError
-        if np.asarray(values).dtype != float:
-            raise ValueError
-        self._cij = values
-
     @cached_property
     def sij(self):
         # DO NOT ROUND
@@ -296,52 +276,15 @@ class ElasticAnalyzer:
             self.get_vs(self.b_vrh, self.g_vrh, self.density), self.rounding_precision
         )
 
-    def _make_stiffness_tensor_file(self):
-        """
-        Utility function that scrapes OUTCAR for elastic constants
-        Writes to elastic_constants.txt
-        """
-        # need to get elastic dir
-        elastic_table = pgrep(
-            self.outcar_file,
-            str_to_grep="TOTAL ELASTIC MOD",
-            stop_after_first_match=True,
-            after=8,
-            as_string=True,
-        )
-        with open(self.elastic_file, "w+") as fw:
-            fw.write(elastic_table)
-
-    def _read_stiffness_tensor_file(self):
-        """
-        Reads vasp stiffness tensor from elastic_file
-
-        Returns:
-            elastic_tensor (6x6 np.array[float]): stiffness tensor
-        """
-        self._make_stiffness_tensor_file()
-
-        with open(self.elastic_file, "r") as fr:
-            raw_elastic_data = fr.readlines()
-        # Skip first 3 rows as they are just header
-        # Skip the first column as it contains xx, xy, etc
-        elastic_data = [line.strip().split()[1:] for line in raw_elastic_data[3:]]
-        # Divide by 10 to get GPa instead of kBar
-        elastic_tensor = np.array(elastic_data, dtype=float) / 10.0
-        if self.change_from_vasp:
-            elastic_tensor = self.change_elastic_constants_from_vasp(elastic_tensor)
-        return elastic_tensor
-
     def _analyze_elastic(self, properties=None):
         """
         Grabs important quantities from the elastic calculation results
 
         Args:
-            elastic_file (str): filepath
-            properties (list): names
+            properties (list): names of properties to calculate
         Returns:
             elastic_dict (dict): dict of extracted info from
-                elastic calculation
+                elastic constants
         """
         properties_map = {
             "B_Reuss": "b_reuss",
@@ -371,3 +314,57 @@ class ElasticAnalyzer:
         if self._results is None:
             self._results = self._analyze_elastic()
         return self._results
+
+    @classmethod
+    def from_calc_dir(cls, calc_dir, **kwargs):
+        """
+        Method to construct ElasticAnalyzer from a calculation directory
+        The directory should contain a POSCAR and an OUTCAR with elastic constants
+
+        Args:
+            calc_dir (str | Path)
+        """
+        calc_dir = Path(calc_dir)
+        if not calc_dir.exists():
+            raise ValueError(f"Could not set calc_dir to {calc_dir} as it does not exist")
+
+        structure = Structure.from_file(calc_dir / "POSCAR")
+        outcar_glob = list(calc_dir.glob("OUTCAR*"))
+        if len(outcar_glob) == 0:
+            raise FileNotFoundError(f"No OUTCAR available in {calc_dir}")
+        outcar_filepath = outcar_glob[0]
+
+        elastic_filepath = calc_dir / "elastic_constants.txt"
+        if not elastic_filepath.exists():
+            # Scrapes OUTCAR for elastic constants and write to elastic_constants.txt
+            elastic_table = pgrep(
+                outcar_filepath,
+                str_to_grep="TOTAL ELASTIC MOD",
+                stop_after_first_match=True,
+                after=8,
+                as_string=True,
+            )
+            with open(elastic_filepath, "w+") as fw:
+                fw.write(elastic_table)
+
+        # Read the elastic constants and construct the stiffness tensor
+        with open(elastic_filepath) as fr:
+            raw_elastic_data = fr.readlines()
+        try:
+            # Skip first 3 rows as they are just header
+            # Skip the first column as it contains xx, xy, etc
+            elastic_data = [line.strip().split()[1:] for line in raw_elastic_data[3:]]
+            # Divide by 10 to get GPa instead of kBar
+            elastic_tensor = np.array(elastic_data, dtype=float) / 10.0
+            # VASP only outputs the stiffness tensor to 4 places
+            elastic_tensor = np.round(elastic_tensor, 4)
+            elastic_tensor = ElasticAnalyzer.change_elastic_constants_from_vasp(
+                elastic_tensor
+            )
+        except Exception as e:
+            raise RuntimeError(
+                "Could not construct elastic tensor from OUTCAR. Please verify the"
+                " OUTCAR contains a full elastic tensor.\n"
+                f"{e}"
+            )
+        return cls(cij=elastic_tensor, structure=structure, **kwargs)
