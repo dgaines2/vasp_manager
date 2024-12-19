@@ -1,12 +1,13 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
+import json
 import logging
 from functools import cached_property
 
 from vasp_manager.analyzer import ElasticAnalyzer
 from vasp_manager.calculation_manager.base import BaseCalculationManager
-from vasp_manager.utils import LoggerAdapter, pgrep, ptail
+from vasp_manager.utils import LoggerAdapter, NumpyEncoder, pgrep, ptail
 from vasp_manager.vasp_input_creator import VaspInputCreator
 
 logger = logging.getLogger(__name__)
@@ -189,4 +190,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         Gets results from elastic calculation
         """
         ea = ElasticAnalyzer.from_calc_dir(self.calc_path)
+        if ea.results.get("elastically_unstable"):
+            self.logger.warning("-" * 10 + " WARNING: Elastically Unstable " + "-" * 10)
+        self.logger.debug(json.dumps(ea.results, cls=NumpyEncoder, indent=2))
         return ea.results

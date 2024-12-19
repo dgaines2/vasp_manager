@@ -204,6 +204,8 @@ class BulkmodCalculationManager(BaseCalculationManager):
         try:
             ba = BulkmodAnalyzer(calc_path=self.calc_path)
             self._results = ba.results
+            self.logger.info(f"{self.mode.upper()} Calculation: Success")
+            self.logger.info(f"BULK MODULUS: {ba.results.get('B')}")
         except Exception as e:
             self.logger.warning(e)
             self._results = None

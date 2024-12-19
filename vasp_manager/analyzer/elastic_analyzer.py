@@ -1,17 +1,13 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
-import json
-import logging
 from functools import cached_property
 from pathlib import Path
 
 import numpy as np
 from pymatgen.core import Structure
 
-from vasp_manager.utils import NumpyEncoder, pgrep
-
-logger = logging.getLogger(__name__)
+from vasp_manager.utils import pgrep
 
 
 class ElasticAnalyzer:
@@ -216,12 +212,8 @@ class ElasticAnalyzer:
         "returns True if compound is elastically unstable"
         eigenvalues, eigenvectors = np.linalg.eig(cij)
         born_critera_satisfied = np.all(eigenvalues > 0)
-
-        if not born_critera_satisfied:
-            logger.warning("-" * 10 + " WARNING: Elastically Unstable " + "-" * 10)
-            return True
-
-        return False
+        elastically_unstable = not born_critera_satisfied
+        return elastically_unstable
 
     @cached_property
     def sij(self):
@@ -305,8 +297,6 @@ class ElasticAnalyzer:
         elastic_dict = {}
         for property in properties:
             elastic_dict[property] = getattr(self, properties_map[property])
-        logger.debug(json.dumps(elastic_dict, cls=NumpyEncoder, indent=2))
-
         return elastic_dict
 
     @property
