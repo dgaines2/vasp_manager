@@ -22,7 +22,7 @@ from vasp_manager.utils import NumpyEncoder
 
 logger = logging.getLogger(__name__)
 
-ASCII_LOGO = """\
+ASCII_LOGO = r"""
  __      __             __  __
  \ \    / /            |  \/  |
   \ \  / /_ _ ___ _ __ | \  / | __ _ _ __   __ _  __ _  ___ _ __
@@ -31,7 +31,7 @@ ASCII_LOGO = """\
      \/ \__,_|___/ .__/|_|  |_|\__,_|_| |_|\__,_|\__, |\___|_|
                  | |                              __/ |
                  |_|                             |___/ v{}
-""".format(  # noqa: W605
+""".format(
     version("vasp_manager")
 )
 
