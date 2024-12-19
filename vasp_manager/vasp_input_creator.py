@@ -16,7 +16,12 @@ import numpy as np
 import yaml
 from pymatgen.io.vasp import Poscar, Potcar
 
-from vasp_manager.utils import change_directory, get_pmg_structure_from_poscar, pcat
+from vasp_manager.utils import (
+    LoggerAdapter,
+    change_directory,
+    get_pmg_structure_from_poscar,
+    pcat,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,29 +47,30 @@ class VaspInputCreator:
     ):
         """
         Args:
-            calc_path
-            mode
-            poscar_source_path
-            config_dir
-            primitive
-            name
-            increase_nodes_by_factor
-            increase_walltime_by_factor
-            poscar_significant_figures
-            ncore_per_node_for_memory
-            use_spin -- pass False to supress spin polarization
+            calc_path (str | Path)
+            mode (str)
+            poscar_source_path (str | Path)
+            config_dir (str | Path)
+            primitive (bool)
+            name (bool)
+            increase_nodes_by_factor (int)
+            increase_walltime_by_factor (int)
+            poscar_significant_figures (int)
+            ncore_per_node_for_memory (int)
+            use_spin (bool): pass False to suppress spin polarization
         """
         self.calc_path = Path(calc_path)
+        self.mode = mode
         self.poscar_source_path = Path(poscar_source_path)
         self.config_dir = Path(config_dir) if config_dir else self.calc_path.parent.parent
         self.primitive = primitive
         self.increase_nodes_by_factor = int(increase_nodes_by_factor)
         self.increase_walltime_by_factor = int(increase_walltime_by_factor)
-        self.name = name
-        self.mode = mode
+        self.name = name if name else self.source_structure.composition.reduced_formula
         self.poscar_significant_figures = poscar_significant_figures
         self.ncore_per_node_for_memory = ncore_per_node_for_memory
         self.use_spin = use_spin
+        self.logger = LoggerAdapter(logging.getLogger(__name__), self.name)
 
     @cached_property
     def calc_config(self):
@@ -87,17 +93,23 @@ class VaspInputCreator:
 
     @cached_property
     def computing_config_dict(self):
+        """
+        Dict containing all computing configs
+        """
         fname = "computing_config.json"
         fpath = self.config_dir / fname
         if fpath.exists():
             with open(fpath) as fr:
-                computing_config = json.load(fr)
+                computing_config_dict = json.load(fr)
         else:
             raise Exception(f"No {fname} found in path {self.config_dir.absolute()}")
-        return computing_config
+        return computing_config_dict
 
     @cached_property
     def computing_config(self):
+        """
+        Dict containing only the computing config for the specified computer
+        """
         return self.computing_config_dict[self.computer]
 
     @cached_property
@@ -163,14 +175,15 @@ class VaspInputCreator:
         potcar_dir = Path(self.computing_config["potcar_dir"])
 
         el_names = [el.name for el in self.source_structure.composition]
-        logger.debug(f"{self.source_structure.composition.reduced_formula}, {el_names}")
+        self.logger.debug(
+            f"{self.source_structure.composition.reduced_formula}, {el_names}"
+        )
         pot_singles = [
             potcar_dir / self.potcar_dict[el_name] / "POTCAR" for el_name in el_names
         ]
         for pot_single in pot_singles:
             if not pot_single.exists():
-                msg = "Unable to create POTCAR"
-                msg += f"\n\t POTCAR not found at path {pot_single}"
+                msg = f"Unable to create POTCAR\n\tPOTCAR not found at path {pot_single}"
                 raise Exception(msg)
 
         potcar = pcat(pot_singles)
@@ -194,8 +207,12 @@ class VaspInputCreator:
 
     @cached_property
     def n_procs_used(self):
-        # typically request all processors on each node, and then
-        # leave some ~4/node empty for memory
+        """
+        Total number of actual processors to run VASP, which may be different
+        than the total number of processors requested in SLURM
+            Typically request all available processors on each node, and then
+            (optionally) leave some empty for memory or ease of division
+        """
         ncore_per_node = self.computing_config["ncore_per_node"]
         if self.computer == "quest":
             self.ncore_per_node_for_memory += 4
@@ -375,7 +392,7 @@ class VaspInputCreator:
                     incar_tmp.insert(i + 1, nfree_line)
         incar_tmp = "\n".join([line for line in incar_tmp])
         incar = incar_tmp.format(**calc_config)
-        logger.debug(incar)
+        self.logger.debug(incar)
         with open(incar_path, "w+") as fw:
             fw.write(incar)
 
@@ -422,11 +439,7 @@ class VaspInputCreator:
                     "of VaspInputCreator"
                 )
 
-        if self.name is None:
-            jobname = pad_string + self.source_structure.composition.reduced_formula
-        else:
-            jobname = pad_string + self.name
-
+        jobname = pad_string + self.name
         # convert walltime into seconds for increase_walltime_by_factor
         walltime_iso = time.fromisoformat(self.calc_config["walltime"])
         # walltime_duration is in seconds
@@ -480,7 +493,7 @@ class VaspInputCreator:
         )
         vaspq_tmp = vaspq_tmp.format(**vaspq_settings)
         vaspq = vaspq_tmp.format(**computing_config)
-        logger.debug(vaspq)
+        self.logger.debug(vaspq)
         with open(vaspq_path, "w+") as fw:
             fw.write(vaspq)
         vaspq_path.chmod(vaspq_path.stat().st_mode | stat.S_IEXEC)
@@ -510,7 +523,7 @@ class VaspInputCreator:
             else:
                 num_previous_archives = len(list(Path(".").glob("archive*")))
                 archive_name = Path(f"archive_{num_previous_archives}")
-                logger.info(f"Making {archive_name}...")
+                self.logger.info(f"Making {archive_name}...")
                 archive_name.mkdir()
 
                 all_files = [
