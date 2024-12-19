@@ -98,7 +98,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             relaxation_successful (bool): if True, relaxation completed successfully
         """
         if not self.job_complete:
-            self.self.logger.info(f"{self.mode.upper()} not finished")
+            self.logger.info(f"{self.mode.upper()} not finished")
             return False
 
         stdout_path = self.calc_path / "stdout.txt"

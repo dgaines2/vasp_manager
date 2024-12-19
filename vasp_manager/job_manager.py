@@ -101,7 +101,7 @@ class JobManager:
         Submits job, making sure to not make duplicate jobs
         """
         if self.job_exists:
-            logger.info(f"{self.mode.upper()} Job already exists")
+            logger.info(f"{self.mode.upper()} job already exists")
             return True
 
         if "personal" in self.computer:

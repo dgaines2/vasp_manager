@@ -38,12 +38,13 @@ class NumpyEncoder(json.JSONEncoder):
 
 
 class LoggerAdapter(logging.LoggerAdapter):
-    def __init__(self, logger, prefix):
+    def __init__(self, logger, prefix, separator=" -- "):
         super(LoggerAdapter, self).__init__(logger, {})
         self.prefix = prefix
+        self.separator = separator
 
     def process(self, msg, kwargs):
-        return f"[{self.prefix}] {msg}", kwargs
+        return f"{self.prefix}{self.separator}{msg}", kwargs
 
 
 def get_pmg_structure_from_poscar(
