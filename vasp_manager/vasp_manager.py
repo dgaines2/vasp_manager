@@ -336,12 +336,12 @@ class VaspManager:
                     continue
 
             if calc_manager.stopped:
-                logger.info(f"{material_name} -- STOPPED")
+                logger.info(f"{material_name} -- {calc_manager.mode.upper()} STOPPED")
                 material_results[calc_manager.mode] = "STOPPED"
                 break
 
             if not calc_manager.job_exists:
-                logger.info(f"{material_name} Setting up" f" {calc_manager.mode.upper()}")
+                logger.info(f"{material_name} -- Setting up {calc_manager.mode.upper()}")
                 calc_manager.setup_calc()
                 match calc_manager.mode:
                     case "rlx-coarse" | "rlx":
@@ -445,13 +445,11 @@ class VaspManager:
                         summary_str += (
                             " " * 12 + f"{n_materials - n_finished} not completed\n"
                         )
-                        summary_str += (
-                            f"Unfinished {calc_type.upper()}: " + f"{unfinished}\n"
-                        )
+                        summary_str += f"Unfinished {calc_type.upper()}: {unfinished}\n"
                 if print_stopped:
                     stopped = summary_dict[calc_type]["stopped"]
                     if len(stopped) != 0:
-                        summary_str += f"Stopped {calc_type.upper()}: " + f"{stopped}\n"
+                        summary_str += f"\tStopped {calc_type.upper()}: {stopped}\n"
             return summary_str
         else:
             return summary_dict
