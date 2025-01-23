@@ -16,8 +16,6 @@ maintainers = [{name = "Dale Gaines II", email = "dalegainesii@gmail.com"}]
 keywords = ["vasp", "dft", "high-throughput"]
 requires-python = ">=3.10.0"
 dependencies = [
-    "numpy>=1.25.0,<2.0.0",
-    "pandas>=1.4",
     "pymatgen>=2022.5",
     "importlib_resources",
 ]
