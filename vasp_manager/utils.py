@@ -52,6 +52,8 @@ def get_pmg_structure_from_poscar(
     to_process=True,
     primitive=True,
     symprec=1e-03,
+    angle_tolerance=-1.0,
+    international_monoclinic=False,
     return_spacegroup=False,
 ):
     """
@@ -61,17 +63,27 @@ def get_pmg_structure_from_poscar(
         primitive (bool): if True, get primitive structure, else get
             conventional structure
         symprec (float): symprec for SpacegroupAnalyzer
+        angle_tolerance (float): angle tolerance for SpacegroupAnalyzer
+        international_monoclinic (bool): if True, convert to proper
+            international convention such that beta is the non-right angle.
+            WARNING: setting True is not compatible with pymatgen kpaths
         return_spacegroup (bool): if True, return spacegroup number
     Returns:
         structure (pmg.Structure): structure from POSCAR
     """
     structure = Structure.from_file(poscar_path)
     if to_process:
-        sga = SpacegroupAnalyzer(structure, symprec=symprec, angle_tolerance=-1.0)
+        sga = SpacegroupAnalyzer(
+            structure, symprec=symprec, angle_tolerance=angle_tolerance
+        )
         if primitive:
-            structure = sga.get_primitive_standard_structure()
+            structure = sga.get_primitive_standard_structure(
+                international_monoclinic=international_monoclinic
+            )
         else:
-            structure = sga.get_conventional_standard_structure()
+            structure = sga.get_conventional_standard_structure(
+                international_monoclinic=international_monoclinic
+            )
         if return_spacegroup:
             spacegroup = sga.get_space_group_number()
             return structure, spacegroup
