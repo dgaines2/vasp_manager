@@ -5,13 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-03-23
+
+### Added
+
+- Added oqmd psuedopotentials json, oqmd-settings branch now uses these psuedopotentials by default
+- Added primitive to be passed in calculation manager kwargs
+- Allow custom calculation configs for individual job managers
+- Added sort\_by callable for sorting results by keys
+- Allow other filenames for slurm exe and jobid files
+- Added (optional) write tags LCHARG, LWAVE, and LVTOT to calc config
+- Catch sbatch errors with subprocess.check\_output()
+- Added ASCII logo to VaspManager init
+- Add international\_monoclinic argument to get\_pmg\_structure\_from\_poscar
+
+### Changed
+
+- Changed vasp.q permissions to executable executable
+- Added newline to end of jobid file
+- Updated property setters in Analyzers
+- Updated github actions versions
+- [BREAKING] ElasticAnalyzer is now a better standalone analyzer, and all of the associated processing of VASP outputs is now in the from\_calc\_dir method. This makes it easier to use ElasticAnalyzer as a utility if you only have the elastic constants and a structure
+- Updated managers with named loggers. Each manager should now print the material name when logging, which should make things easier to track when using multiprocessing
+- Stopped pinning versions, track pymatgen master instead
+- [BREAKING] Unify path naming conventions. Use \_dir for directories and \_path for filepaths for clarity
+
+### Fixed
+
+- Fixed rlx restart behavior if to\_rerun is False
+- Fixed spacing in VASP error handling message
+- Fixed github actions coverage
+- Fixed static post-hoc analysis
+- Fixed stopping behavior for better status tracking
+
+
 ## [1.1.4] - 2024-01-17
 
 ### Added
 
 - Added ability to run static calculations without a previously existing rlx calculation
 - Added capability to override job preambles/commands by placing a {computer}.yml file in the calculations folder
-- Added capability to override the global calc\_config.json by placing a new calc\_config.json in a material's calculation mode folder.
+- Added capability to override the global calc\_config.json by placing a new calc\_config.json in a material's calculation mode folder
 
 ### Changed
 

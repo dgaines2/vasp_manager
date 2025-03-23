@@ -8,7 +8,7 @@ packages = ["vasp_manager"]
 [project]
 name = "vasp_manager"
 description = "A simple package to run and analyze VASP calculations"
-version = "1.1.4"
+version = "1.2.0"
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {text = "MIT"}
 authors = [{name = "Dale Gaines II", email = "dalegainesii@gmail.com"}]

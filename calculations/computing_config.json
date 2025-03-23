@@ -6,7 +6,7 @@
     "queuetype": "regular",
     "allocation": "m1673",
     "constraint": "cpu",
-    "vasp_module": "vasp/6.3.2-cpu",
+    "vasp_module": "vasp/6.4.3-cpu",
     "ncore": 16,
     "ncore_per_node": 128
   },
@@ -25,7 +25,7 @@
     "queuetype": "regular",
     "allocation": "m1673",
     "constraint": "cpu",
-    "vasp_module": "vasp/6.3.2-cpu",
+    "vasp_module": "vasp/6.4.3-cpu",
     "ncore": 16,
     "ncore_per_node": 128
   },
