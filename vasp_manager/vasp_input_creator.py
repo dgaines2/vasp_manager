@@ -42,7 +42,7 @@ class VaspInputCreator:
         increase_nodes_by_factor=1,
         increase_walltime_by_factor=1,
         poscar_significant_figures=8,
-        ncore_per_node_for_memory=0,
+        ncore_per_node_for_memory=None,
         use_spin=True,
     ):
         """
@@ -52,7 +52,7 @@ class VaspInputCreator:
             poscar_source_path (str | Path)
             config_dir (str | Path)
             primitive (bool)
-            name (bool)
+            name (str)
             increase_nodes_by_factor (int)
             increase_walltime_by_factor (int)
             poscar_significant_figures (int)
@@ -195,8 +195,8 @@ class VaspInputCreator:
         # start with 1 node per 32 atoms
         num_nodes = (len(self.source_structure) // 32) + 1
         if self.computer == "quest":
-            # quest has ~4x smaller nodes than perlmutter
-            num_nodes *= 4
+            # quest has ~2x smaller nodes than perlmutter
+            num_nodes *= 2
         num_nodes *= self.increase_nodes_by_factor
         return num_nodes
 
@@ -204,6 +204,18 @@ class VaspInputCreator:
     def n_procs(self):
         n_procs = self.n_nodes * self.computing_config["ncore_per_node"]
         return n_procs
+
+    @property
+    def ncore_per_node_for_memory(self):
+        return self._ncore_per_node_for_memory
+
+    @ncore_per_node_for_memory.setter
+    def ncore_per_node_for_memory(self, value):
+        if value is None:
+            value = 4 if self.computer == "quest" else 0
+        if not isinstance(value, int):
+            raise TypeError("ncore_per_node_for_memory must be an int")
+        self._ncore_per_node_for_memory = value
 
     @cached_property
     def n_procs_used(self):
@@ -214,8 +226,6 @@ class VaspInputCreator:
             (optionally) leave some empty for memory or ease of division
         """
         ncore_per_node = self.computing_config["ncore_per_node"]
-        if self.computer == "quest":
-            self.ncore_per_node_for_memory += 4
         return self.n_nodes * (ncore_per_node - self.ncore_per_node_for_memory)
 
     @cached_property
