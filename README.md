@@ -124,9 +124,6 @@ be accessed through `logging.getLogger("vasp_manager")`.
 * *At this point, KPOINT generation is handled through the KSPACING tag in the
   INCAR, but future versions will be able to specify KPPRA or a manual grid
   instead. Spin-orbit coupling calculations are also not currently supported.*
-* *For those using Quest, I recommend using you own pre-compiled version of
- `VASP` rather than the Quest `VASP` module. For those in the Wolverton Group,
-  consider using the `quest-hotfix` branch.*
 
 \\\ TODO: Implement `band-structure` calculations and possibly `phonopy`
 calculations

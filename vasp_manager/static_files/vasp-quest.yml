@@ -5,6 +5,7 @@ sbatch_params: |-
   #SBATCH -J {jobname}
   #SBATCH -A {allocation}
   #SBATCH -t {walltime}
+  #SBATCH --constraint="[quest10|quest11|quest12]"
   #SBATCH --mem=0
 
 preamble: |-

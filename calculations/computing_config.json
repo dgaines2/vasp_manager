@@ -15,9 +15,9 @@
     "potcar_dir": "/projects/b1004/potpaw_PBE_OQMD",
     "queuetype": "short",
     "allocation": "p31151",
-    "vasp_module": "vasp/5.4.4-openmpi-4.0.5-intel-19.0.5.281",
+    "vasp_module": "vasp/6.4.3-openmpi-intel-hdf5-cpu-only",
     "ncore": 12,
-    "ncore_per_node": 40
+    "ncore_per_node": 52
   },
   "perlmutter": {
     "user_id": "dwg4898",
