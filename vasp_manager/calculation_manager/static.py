@@ -20,7 +20,7 @@ class StaticCalculationManager(BaseCalculationManager):
 
     def __init__(
         self,
-        material_path,
+        material_dir,
         to_rerun,
         to_submit,
         primitive=True,
@@ -30,7 +30,7 @@ class StaticCalculationManager(BaseCalculationManager):
         tail=5,
     ):
         """
-        For material_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
+        For material_dir, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
         see BaseCalculationManager
 
         Args:
@@ -40,7 +40,7 @@ class StaticCalculationManager(BaseCalculationManager):
         self.from_relax = from_relax
         self.tail = tail
         super().__init__(
-            material_path=material_path,
+            material_dir=material_dir,
             to_rerun=to_rerun,
             to_submit=to_submit,
             primitive=primitive,
@@ -58,15 +58,15 @@ class StaticCalculationManager(BaseCalculationManager):
     @cached_property
     def poscar_source_path(self):
         if self.from_relax:
-            poscar_source_path = self.material_path / "rlx" / "CONTCAR"
+            poscar_source_path = self.material_dir / "rlx" / "CONTCAR"
         else:
-            poscar_source_path = self.material_path / "POSCAR"
+            poscar_source_path = self.material_dir / "POSCAR"
         return poscar_source_path
 
     @cached_property
     def vasp_input_creator(self):
         return VaspInputCreator(
-            self.calc_path,
+            self.calc_dir,
             mode=self.mode,
             poscar_source_path=self.poscar_source_path,
             primitive=self.primitive,
@@ -75,7 +75,7 @@ class StaticCalculationManager(BaseCalculationManager):
 
     def _check_use_spin(self):
         if self.from_relax:
-            rlx_stdout = self.material_path / "rlx" / "stdout.txt"
+            rlx_stdout = self.material_dir / "rlx" / "stdout.txt"
             rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
             use_spin = len(rlx_mags) != 0
         else:
@@ -114,7 +114,7 @@ class StaticCalculationManager(BaseCalculationManager):
             self.logger.info(f"{self.mode.upper()} not finished")
             return False
 
-        stdout_path = self.calc_path / "stdout.txt"
+        stdout_path = self.calc_dir / "stdout.txt"
         if not stdout_path.exists():
             # shouldn't get here unless function was called with submit=False
             self.logger.info(f"{self.mode.upper()} Calculation: No stdout.txt available")
@@ -128,7 +128,7 @@ class StaticCalculationManager(BaseCalculationManager):
             all_errors_addressed = self._address_vasp_errors(vasp_errors)
             if all_errors_addressed:
                 if self.to_rerun:
-                    self.logger.info(f"Rerunning {self.calc_path}")
+                    self.logger.info(f"Rerunning {self.calc_dir}")
                     self._from_scratch()
                     self.setup_calc()
             else:
@@ -148,7 +148,7 @@ class StaticCalculationManager(BaseCalculationManager):
             self.logger.warning(f"{self.mode.upper()} FAILED")
             self.logger.debug(tail_output)
             if self.to_rerun:
-                self.logger.info(f"Rerunning {self.calc_path}")
+                self.logger.info(f"Rerunning {self.calc_dir}")
                 self._from_scratch()
                 # increase nodes as its likely the calculation failed
                 self.setup_calc(increase_walltime_by_factor=2)
@@ -156,7 +156,7 @@ class StaticCalculationManager(BaseCalculationManager):
 
         self._results = {}
         final_energy = float(grep_output[0].split()[2])
-        num_atoms = len(Structure.from_file(self.calc_path / "POSCAR"))
+        num_atoms = len(Structure.from_file(self.calc_dir / "POSCAR"))
         magmom_per_atom = self._parse_magmom_per_atom()
         self._results["final_energy"] = final_energy
         self._results["final_energy_pa"] = final_energy / num_atoms

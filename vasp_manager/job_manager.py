@@ -19,31 +19,29 @@ class JobManager:
 
     def __init__(
         self,
-        calc_path,
+        calc_dir,
         exe_name="vasp.q",
         jobid_name="jobid",
-        config_path=None,
+        config_dir=None,
         manager_name=None,
         ignore_personal_errors=True,
     ):
         """
         Args:
-            calc_path (str | Path): base directory of job
+            calc_dir (str | Path): base directory of job
             exe_name (str): filename for slurm job submission
             jobid_name (str): filename for storing slurm jobid
-            config_path (str | Path): path to configuration files
+            config_dir (str | Path): path to directory containing configuration files
             manager_name (str): name for logging purposes
             ignore_personal_errors (bool): if True, ignore job submission errors
                 if on personal computer
         """
-        self.calc_path = Path(calc_path)
-        self.config_path = (
-            Path(config_path) if config_path else self.calc_path.parent.parent
-        )
+        self.calc_dir = Path(calc_dir)
+        self.config_dir = Path(config_dir) if config_dir else self.calc_dir.parents[1]
         self.ignore_personal_errors = ignore_personal_errors
         self.exe_name = exe_name
         self.jobid_name = jobid_name
-        self.manager_name = manager_name if manager_name else str(calc_path)
+        self.manager_name = manager_name if manager_name else str(self.calc_dir)
         self._jobid = None
         self._job_complete = None
         self.logger = LoggerAdapter(logging.getLogger(__name__), self.manager_name)
@@ -51,12 +49,12 @@ class JobManager:
     @property
     def computing_config_dict(self):
         fname = "computing_config.json"
-        fpath = self.config_path / fname
+        fpath = self.config_dir / fname
         if fpath.exists():
             with open(fpath) as fr:
                 computing_config = json.load(fr)
         else:
-            raise Exception(f"No {fname} found in path {self.config_path.absolute()}")
+            raise Exception(f"No {fname} found in {self.config_dir.absolute()}")
         return computing_config
 
     @cached_property
@@ -69,11 +67,11 @@ class JobManager:
 
     @cached_property
     def mode(self):
-        return self.calc_path.name
+        return self.calc_dir.name
 
     @property
     def job_exists(self):
-        jobid_path = self.calc_path / self.jobid_name
+        jobid_path = self.calc_dir / self.jobid_name
         if not jobid_path.exists():
             return False
         if jobid_path.stat().st_size == 0:
@@ -87,7 +85,7 @@ class JobManager:
     @property
     def jobid(self):
         if not self.job_exists:
-            raise Exception(f"jobid has not been set in {self.calc_path}")
+            raise Exception(f"jobid has not been set in {self.calc_dir}")
         return self._jobid
 
     @jobid.setter
@@ -116,16 +114,16 @@ class JobManager:
             self.logger.debug(msg)
             return True
 
-        qpath = self.calc_path / self.exe_name
+        qpath = self.calc_dir / self.exe_name
         if not qpath.exists():
-            self.logger.info(f"No {self.exe_name} file in {self.calc_path}")
+            self.logger.info(f"No {self.exe_name} file in {self.calc_dir}")
             # return False here instead of catching an exception
             # This enables job resubmission by letting the calling function
             # know that the calculation needs to be restarted
             return False
 
         submission_call = f"sbatch {self.exe_name}"
-        with change_directory(self.calc_path):
+        with change_directory(self.calc_dir):
             submission_call_output = (
                 subprocess.check_output(submission_call, shell=True)
                 .decode("utf-8")

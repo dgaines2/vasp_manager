@@ -23,37 +23,37 @@ SUPPORTED_ELASTIC_PROPERTIES = [
 
 @pytest.fixture(scope="session")
 def stable_material_dir(tmp_path_factory):
-    material_folder = (
+    material_dir = (
         importlib_resources.files("vasp_manager") / "tests" / "calculations" / "material"
     )
-    new_material_folder = tmp_path_factory.mktemp("material")
+    new_material_dir = tmp_path_factory.mktemp("material")
     shutil.copytree(
-        material_folder,
-        new_material_folder,
+        material_dir,
+        new_material_dir,
         dirs_exist_ok=True,
         symlinks=True,
         ignore=shutil.ignore_patterns("elastic_constants.txt"),
     )
-    return new_material_folder
+    return new_material_dir
 
 
 @pytest.fixture(scope="session")
 def unstable_material_dir(tmp_path_factory):
-    material_folder = (
+    material_dir = (
         importlib_resources.files("vasp_manager")
         / "tests"
         / "calculations"
         / "material_spinu"
     )
-    new_material_folder = tmp_path_factory.mktemp("material_spinu")
+    new_material_dir = tmp_path_factory.mktemp("material_spinu")
     shutil.copytree(
-        material_folder,
-        new_material_folder,
+        material_dir,
+        new_material_dir,
         dirs_exist_ok=True,
         symlinks=True,
         ignore=shutil.ignore_patterns("elastic_constants.txt"),
     )
-    return new_material_folder
+    return new_material_dir
 
 
 def test_elastic_analyzer_stable(stable_material_dir):

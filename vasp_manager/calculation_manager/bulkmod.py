@@ -24,7 +24,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
     def __init__(
         self,
-        material_path,
+        material_dir,
         to_rerun,
         to_submit,
         primitive=True,
@@ -35,7 +35,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
         tail=5,
     ):
         """
-        For material_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
+        For material_dir, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
         see BaseCalculationManager
 
         Args:
@@ -55,7 +55,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
         )
         self.tail = tail
         super().__init__(
-            material_path=material_path,
+            material_dir=material_dir,
             to_rerun=to_rerun,
             to_submit=to_submit,
             primitive=primitive,
@@ -73,15 +73,15 @@ class BulkmodCalculationManager(BaseCalculationManager):
     @cached_property
     def poscar_source_path(self):
         if self.from_relax:
-            poscar_source_path = self.material_path / "rlx" / "CONTCAR"
+            poscar_source_path = self.material_dir / "rlx" / "CONTCAR"
         else:
-            poscar_source_path = self.material_path / "POSCAR"
+            poscar_source_path = self.material_dir / "POSCAR"
         return poscar_source_path
 
     @cached_property
     def vasp_input_creator(self):
         return VaspInputCreator(
-            self.calc_path,
+            self.calc_dir,
             mode=self.mode,
             poscar_source_path=self.poscar_source_path,
             primitive=self.primitive,
@@ -102,7 +102,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
     def _check_use_spin(self):
         if self.from_relax:
-            rlx_stdout = self.material_path / "rlx" / "stdout.txt"
+            rlx_stdout = self.material_dir / "rlx" / "stdout.txt"
             rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
             use_spin = len(rlx_mags) != 0
         else:
@@ -151,9 +151,9 @@ class BulkmodCalculationManager(BaseCalculationManager):
             middle = int(len(self.strains) / 2)
             strain_index = i - middle
             strain_name = f"strain_{strain_index}"
-            strain_path = self.calc_path / strain_name
-            stdout_path = strain_path / "stdout.txt"
-            stderr_path = strain_path / "stderr.txt"
+            strain_dir = self.calc_dir / strain_name
+            stdout_path = strain_dir / "stdout.txt"
+            stderr_path = strain_dir / "stderr.txt"
             if not stdout_path.exists():
                 return False
 
@@ -164,7 +164,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
                 all_errors_addressed = self._address_vasp_errors(vasp_errors)
                 if all_errors_addressed:
                     if self.to_rerun:
-                        self.logger.info(f"Rerunning {self.calc_path}")
+                        self.logger.info(f"Rerunning {self.calc_dir}")
                         self._from_scratch()
                         self.setup_calc()
                 else:
@@ -181,7 +181,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
             grep_output = pgrep(stdout_path, "1 F=", stop_after_first_match=True)
             if len(grep_output) == 0:
                 if self.to_rerun:
-                    self.logger.info(f"Rerunning {self.calc_path}")
+                    self.logger.info(f"Rerunning {self.calc_dir}")
                     # increase nodes as its likely the calculation failed
                     self._from_scratch()
                     self.setup_calc(increase_walltime_by_factor=2)
@@ -202,7 +202,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
             else:
                 return None
         try:
-            ba = BulkmodAnalyzer(calc_path=self.calc_path)
+            ba = BulkmodAnalyzer(calc_dir=self.calc_dir)
             self._results = ba.results
             self.logger.info(f"{self.mode.upper()} Calculation: Success")
             self.logger.info(f"BULK MODULUS: {ba.results.get('B')}")
@@ -213,7 +213,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
     def _make_bulkmod_strains(self):
         """
-        Creates a set of strain directory for fitting the E-V info
+        Creates a set of strain directories for fitting the E-V info
 
         Args:
             strains (iterable of floats)
@@ -223,13 +223,13 @@ class BulkmodCalculationManager(BaseCalculationManager):
             middle = int(len(self.strains) / 2)
             strain_index = i - middle
             strain_name = f"strain_{strain_index}"
-            strain_path = self.calc_path / strain_name
-            self.logger.info(strain_path)
+            strain_dir = self.calc_dir / strain_name
+            self.logger.info(strain_dir)
 
-            if not strain_path.exists():
-                strain_path.mkdir()
-            orig_poscar_path = self.calc_path / "POSCAR"
-            strain_poscar_path = strain_path / "POSCAR"
+            if not strain_dir.exists():
+                strain_dir.mkdir()
+            orig_poscar_path = self.calc_dir / "POSCAR"
+            strain_poscar_path = strain_dir / "POSCAR"
             shutil.copy(orig_poscar_path, strain_poscar_path)
 
             # change second line to be {strain} rather than 1.0
@@ -240,7 +240,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
             with open(strain_poscar_path, "w+") as fw:
                 fw.write("\n".join(strain_poscar))
 
-            with change_directory(strain_path):
+            with change_directory(strain_dir):
                 for f in ["POTCAR", "INCAR"]:
                     if Path(f).exists():
                         os.remove(f)

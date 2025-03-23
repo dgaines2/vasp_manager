@@ -20,7 +20,7 @@ class ElasticCalculationManager(BaseCalculationManager):
 
     def __init__(
         self,
-        material_path,
+        material_dir,
         to_rerun,
         to_submit,
         primitive=False,
@@ -29,7 +29,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         tail=5,
     ):
         """
-        For material_path, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
+        For material_dir, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
         see BaseCalculationManager
 
         Args:
@@ -40,7 +40,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         """
         self.tail = tail
         super().__init__(
-            material_path=material_path,
+            material_dir=material_dir,
             to_rerun=to_rerun,
             to_submit=to_submit,
             primitive=primitive,
@@ -57,12 +57,12 @@ class ElasticCalculationManager(BaseCalculationManager):
 
     @cached_property
     def poscar_source_path(self):
-        return self.material_path / "rlx" / "CONTCAR"
+        return self.material_dir / "rlx" / "CONTCAR"
 
     @cached_property
     def vasp_input_creator(self):
         return VaspInputCreator(
-            self.calc_path,
+            self.calc_dir,
             mode=self.mode,
             poscar_source_path=self.poscar_source_path,
             primitive=self.primitive,
@@ -70,7 +70,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         )
 
     def _check_use_spin(self):
-        rlx_stdout = self.material_path / "rlx" / "stdout.txt"
+        rlx_stdout = self.material_dir / "rlx" / "stdout.txt"
         rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
         use_spin = len(rlx_mags) != 0
         return use_spin
@@ -109,7 +109,7 @@ class ElasticCalculationManager(BaseCalculationManager):
             self.logger.info(f"{self.mode.upper()} job not finished")
             return False
 
-        stdout_path = self.calc_path / "stdout.txt"
+        stdout_path = self.calc_dir / "stdout.txt"
         if not stdout_path.exists():
             # shouldn't get here unless function was called with submit=False
             self.logger.info(f"{self.mode.upper()} Calculation: No stdout.txt available")
@@ -123,7 +123,7 @@ class ElasticCalculationManager(BaseCalculationManager):
             all_errors_addressed = self._address_vasp_errors(vasp_errors)
             if all_errors_addressed:
                 if self.to_rerun:
-                    self.logger.info(f"Rerunning {self.calc_path}")
+                    self.logger.info(f"Rerunning {self.calc_dir}")
                     self._from_scratch()
                     self.setup_calc()
             else:
@@ -140,7 +140,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         grep_output = pgrep(stdout_path, str_to_grep="Total")
         if len(grep_output) == 0:
             if self.to_rerun:
-                self.logger.info(f"Rerunning {self.calc_path}")
+                self.logger.info(f"Rerunning {self.calc_dir}")
                 # calculation failed before end of first SCF cycle
                 self._from_scratch()
                 self.setup_calc()
@@ -156,7 +156,7 @@ class ElasticCalculationManager(BaseCalculationManager):
             self.logger.info(tail_output)
             self.logger.info(f"{self.mode.upper()} Calculation: FAILED")
             if self.to_rerun:
-                self.logger.info(f"Rerunning {self.calc_path}")
+                self.logger.info(f"Rerunning {self.calc_dir}")
                 # increase walltime as its likely the calculation failed
                 self._from_scratch()
                 self.setup_calc(increase_walltime_by_factor=2)
@@ -189,7 +189,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         """
         Gets results from elastic calculation
         """
-        ea = ElasticAnalyzer.from_calc_dir(self.calc_path)
+        ea = ElasticAnalyzer.from_calc_dir(self.calc_dir)
         if ea.results.get("elastically_unstable"):
             self.logger.warning("-" * 10 + " WARNING: Elastically Unstable " + "-" * 10)
         self.logger.debug(json.dumps(ea.results, cls=NumpyEncoder, indent=2))

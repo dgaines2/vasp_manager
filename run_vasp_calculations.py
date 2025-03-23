@@ -9,17 +9,17 @@ from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 from vasp_manager import VaspManager
 
 
-def make_calculations_folder(data_path="structures.json", calcs_path="calculations"):
+def make_calculations_dir(data_path="structures.json", calcs_dir="calculations"):
     """
-    Make a calculations folder
-        For each material, make a named folder that contains a POSCAR
+    Make a calculations directory
+        For each material, make a named directory that contains a POSCAR
     Args:
         data_path (str | Path): path to a json with named materials and cifs
-        calcs_path (str | Path): path of base calculations folder to create
+        calcs_dir (str | Path): path of base calculations directory to create
     """
-    calcs_path = Path(calcs_path)
-    if not calcs_path.exists():
-        calcs_path.mkdir()
+    calcs_dir = Path(calcs_dir)
+    if not calcs_dir.exists():
+        calcs_dir.mkdir()
 
     # This was my data file, but of course you can specify your own here
     with open(data_path) as fr:
@@ -27,14 +27,14 @@ def make_calculations_folder(data_path="structures.json", calcs_path="calculatio
 
     for material, cif_string in structure_dict.items():
         print(material)
-        material_path = calcs_path / material
-        if not material_path.exists():
-            material_path.mkdir()
+        material_dir = calcs_dir / material
+        if not material_dir.exists():
+            material_dir.mkdir()
         structure = Structure.from_str(cif_string, fmt="cif")
         sga = SpacegroupAnalyzer(structure)
         prim_structure = sga.get_primitive_standard_structure()
         poscar = Poscar(prim_structure)
-        poscar_path = material_path / "POSCAR"
+        poscar_path = material_dir / "POSCAR"
         poscar.write_file(poscar_path)
 
 
@@ -45,16 +45,16 @@ if __name__ == "__main__":
         logging.basicConfig()
         logging.getLogger("vasp_manager").setLevel(logging_level)
 
-    calculation_folder = Path("calculations")
-    if not calculation_folder.exists():
-        make_calculations_folder(calcs_path=calculation_folder)
+    calculations_dir = Path("calculations")
+    if not calculations_dir.exists():
+        make_calculations_dir(calcs_dir=calculations_dir)
 
-    calc_config_path = calculation_folder / "calc_config.json"
-    computing_config_path = calculation_folder / "computing_config.json"
+    calc_config_path = calculations_dir / "calc_config.json"
+    computing_config_path = calculations_dir / "computing_config.json"
     if not calc_config_path.exists() or not computing_config_path.exists():
         raise Exception(
             f"""Couldn't find one of the configuration files
-           Be sure to set up the configuration files in {calculation_folder}
+           Be sure to set up the configuration files in {calculations_dir}
            before trying to run VaspManager"""
         )
 
@@ -65,11 +65,11 @@ if __name__ == "__main__":
         "bulkmod",
         "elastic",
     ]
-    material_paths = [p for p in sorted(calculation_folder.glob("*")) if p.is_dir()]
+    material_dirs = [p for p in sorted(calculations_dir.glob("*")) if p.is_dir()]
 
     vmg = VaspManager(
         calculation_types,
-        material_paths=material_paths,
+        material_dirs=material_dirs,
         to_rerun=True,
         to_submit=True,
     )

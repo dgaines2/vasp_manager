@@ -7,13 +7,13 @@ from vasp_manager import VaspManager
 
 
 def test_vmg_in_order(tmp_path):
-    original_calculation_folder = (
+    original_calculations_dir = (
         importlib_resources.files("vasp_manager") / "tests" / "calculations"
     )
-    temp_calculation_folder = tmp_path / "calculations"
+    temp_calculations_dir = tmp_path / "calculations"
     shutil.copytree(
-        original_calculation_folder,
-        temp_calculation_folder,
+        original_calculations_dir,
+        temp_calculations_dir,
         dirs_exist_ok=True,
         symlinks=True,
         ignore=shutil.ignore_patterns(
@@ -34,15 +34,15 @@ def test_vmg_in_order(tmp_path):
         "bulkmod",
         "elastic",
     ]
-    material_paths = [
-        p for p in sorted(list(temp_calculation_folder.glob("*"))) if p.is_dir()
+    material_dirs = [
+        p for p in sorted(list(temp_calculations_dir.glob("*"))) if p.is_dir()
     ]
 
     for i, calculation_type in enumerate(calculation_types):
         calculation_type_subset = calculation_types[: i + 1]
         vmg = VaspManager(
             calculation_types=calculation_type_subset,
-            material_paths=material_paths,
+            material_dirs=material_dirs,
             use_multiprocessing=False,
             to_rerun=True,
             to_submit=True,
@@ -72,13 +72,13 @@ def test_vmg_in_order(tmp_path):
             for pc in previous_calc_types:
                 assert summary["n_total"] == summary[pc]["n_finished"]
 
-        for p in material_paths:
+        for p in material_dirs:
             mat_name = p.name
-            orig_mode_path = original_calculation_folder / mat_name / calculation_type
-            temp_mode_path = p / calculation_type
+            orig_mode_dir = original_calculations_dir / mat_name / calculation_type
+            temp_mode_dir = p / calculation_type
             shutil.copytree(
-                orig_mode_path,
-                temp_mode_path,
+                orig_mode_dir,
+                temp_mode_dir,
                 dirs_exist_ok=True,
                 symlinks=True,
                 ignore=shutil.ignore_patterns("elastic_constants.txt"),
@@ -104,7 +104,7 @@ def test_vmg_in_order(tmp_path):
 
     vmg = VaspManager(
         calculation_types=calculation_types,
-        material_paths=material_paths,
+        material_dirs=material_dirs,
         use_multiprocessing=False,
         to_rerun=True,
         to_submit=True,
@@ -125,14 +125,14 @@ def test_vmg_in_order(tmp_path):
 
 
 def test_vmg_with_skipping(tmp_path):
-    original_calculation_folder = (
+    original_calculations_dir = (
         importlib_resources.files("vasp_manager") / "tests" / "calculations"
     )
-    temp_calculation_folder = tmp_path / "calculations"
+    temp_calculations_dir = tmp_path / "calculations"
     # skip static and bulkmod when copying
     shutil.copytree(
-        original_calculation_folder,
-        temp_calculation_folder,
+        original_calculations_dir,
+        temp_calculations_dir,
         dirs_exist_ok=True,
         symlinks=True,
         ignore=shutil.ignore_patterns(
@@ -151,13 +151,13 @@ def test_vmg_with_skipping(tmp_path):
         "bulkmod",
         "elastic",
     ]
-    material_paths = [
-        p for p in sorted(list(temp_calculation_folder.glob("*"))) if p.is_dir()
+    material_dirs = [
+        p for p in sorted(list(temp_calculations_dir.glob("*"))) if p.is_dir()
     ]
 
     vmg = VaspManager(
         calculation_types=calculation_types,
-        material_paths=material_paths,
+        material_dirs=material_dirs,
         use_multiprocessing=True,
         to_rerun=True,
         to_submit=True,
