@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 - Update quest configuration for quest[10,11,12] nodes
+- Add optional mixing tags (AMIX, BMIX) to INCAR from calc config
 
 
 ## [1.2.0] - 2025-03-23

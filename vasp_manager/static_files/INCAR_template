@@ -24,6 +24,8 @@ NELMIN = 5
 EDIFF = {ediff}
 ALGO = {algo}
 LASPH = .TRUE.
+AMIX = {amix}
+BMIX = {bmix}
 
 #= DFT+U =#
 
