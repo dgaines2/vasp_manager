@@ -13,7 +13,7 @@ name = "vasp_manager"
 description = "A simple package to run and analyze VASP calculations"
 dynamic = ["version"]
 readme = {file = "README.md", content-type = "text/markdown"}
-license = {text = "MIT"}
+license = "MIT"
 authors = [{name = "Dale Gaines II", email = "dalegainesii@gmail.com"}]
 maintainers = [{name = "Dale Gaines II", email = "dalegainesii@gmail.com"}]
 keywords = ["vasp", "dft", "high-throughput"]
