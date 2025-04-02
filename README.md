@@ -6,7 +6,7 @@
     \  / (_| \__ \ |_) | |  | | (_| | | | | (_| | (_| |  __/ |
      \/ \__,_|___/ .__/|_|  |_|\__,_|_| |_|\__,_|\__, |\___|_|
                  | |                              __/ |
-                 |_|                             |___/ v1.3.0
+                 |_|                             |___/ v1.3.1
 ```
 
 <hr/>
@@ -74,10 +74,10 @@ there to start a `rlx` calculation from the initially provided POSCAR.
 
 Most users' workflows follow `rlx-coarse` &#8594; `rlx` &#8594; `static`. The
 modes `static`, `bulkmod`, and `elastic` can all be run independently of each
-other. For example, workflows might look like `rlx-coarse` &#8594; `rlx` &#8594;
-`static` &#8594; `bulkmod`, or `rlx` &#8594; `elastic`, or simply `bulkmod`.
-The `elastic` mode requires at least `rlx` preceding it in order to guarantee
-converged lattice parameters and atomic positions.
+other. For example, workflows might look like `rlx-coarse` &#8594; `rlx`
+&#8594; `static` &#8594; `bulkmod`, or `rlx` &#8594; `elastic`, or simply
+`static` or `bulkmod`.  The `elastic` mode requires at least `rlx` preceding it
+in order to guarantee converged lattice parameters and atomic positions.
 
 ## Usage Guide
 

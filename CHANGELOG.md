@@ -8,15 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 <!-- ## Unreleased -->
 
 
+## [1.3.1] - 2025-04-01
+
+### Added
+
+- Added publish to PyPi github workflow
+
+
 ## [1.3.0] - 2025-03-24
 
 ### Added
 
-- Add optional mixing tags (AMIX, BMIX) to INCAR from calc config
+- Added optional mixing tags (AMIX, BMIX) to INCAR from calc config
 
 ### Changed
 
-- Update quest configuration for quest[10,11,12] nodes
+- Updated quest configuration for quest[10,11,12] nodes
 
 
 ## [1.2.0] - 2025-03-23
@@ -31,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added (optional) write tags LCHARG, LWAVE, and LVTOT to calc config
 - Catch sbatch errors with subprocess.check\_output()
 - Added ASCII logo to VaspManager init
-- Add international\_monoclinic argument to get\_pmg\_structure\_from\_poscar
+- Added international\_monoclinic argument to get\_pmg\_structure\_from\_poscar
 
 ### Changed
 
