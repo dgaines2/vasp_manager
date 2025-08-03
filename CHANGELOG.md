@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## Unreleased -->
 
+## [1.3.4] - 2025-08-03
+
+### Changed
+
+- Change POSCAR precision from 8 to 16 to avoid symmetry errors associated with floating point errors
+
 
 ## [1.3.3] - 2025-04-02
 
