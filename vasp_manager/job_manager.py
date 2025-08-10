@@ -1,13 +1,19 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
+from __future__ import annotations
+
 import json
 import logging
 import subprocess
 from functools import cached_property
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from vasp_manager.utils import LoggerAdapter, change_directory
+
+if TYPE_CHECKING:
+    from vasp_manager.types import SourceDirectory, WorkingDirectory
 
 logger = logging.getLogger(__name__)
 
@@ -19,21 +25,22 @@ class JobManager:
 
     def __init__(
         self,
-        calc_dir,
-        exe_name="vasp.q",
-        jobid_name="jobid",
-        config_dir=None,
-        manager_name=None,
-        ignore_personal_errors=True,
-    ):
+        calc_dir: WorkingDirectory,
+        exe_name: str = "vasp.q",
+        jobid_name: str = "jobid",
+        config_dir: SourceDirectory | None = None,
+        manager_name: str = None,
+        ignore_personal_errors: bool = True,
+    ) -> None:
         """
         Args:
-            calc_dir (str | Path): base directory of job
-            exe_name (str): filename for slurm job submission
-            jobid_name (str): filename for storing slurm jobid
-            config_dir (str | Path): path to directory containing configuration files
-            manager_name (str): name for logging purposes
-            ignore_personal_errors (bool): if True, ignore job submission errors
+            calc_dir: base directory of job
+            exe_name: filename for slurm job submission
+            jobid_name: filename for storing slurm jobid
+            config_dir: path to directory containing configuration files. If
+                None, use the parent directory of calc_dir
+            manager_name: name for logging purposes
+            ignore_personal_errors: if True, ignore job submission errors
                 if on personal computer
         """
         self.calc_dir = Path(calc_dir)
@@ -42,12 +49,12 @@ class JobManager:
         self.exe_name = exe_name
         self.jobid_name = jobid_name
         self.manager_name = manager_name if manager_name else str(self.calc_dir)
-        self._jobid = None
-        self._job_complete = None
+        self._jobid: int
+        self._job_complete: bool
         self.logger = LoggerAdapter(logging.getLogger(__name__), self.manager_name)
 
     @property
-    def computing_config_dict(self):
+    def computing_config_dict(self) -> dict:
         fname = "computing_config.json"
         fpath = self.config_dir / fname
         if fpath.exists():
@@ -58,19 +65,19 @@ class JobManager:
         return computing_config
 
     @cached_property
-    def computer(self):
+    def computer(self) -> str:
         return self.computing_config_dict["computer"]
 
     @cached_property
-    def user_id(self):
+    def user_id(self) -> str:
         return self.computing_config_dict[self.computer]["user_id"]
 
     @cached_property
-    def mode(self):
+    def mode(self) -> str:
         return self.calc_dir.name
 
     @property
-    def job_exists(self):
+    def job_exists(self) -> bool:
         jobid_path = self.calc_dir / self.jobid_name
         if not jobid_path.exists():
             return False
@@ -83,24 +90,25 @@ class JobManager:
         return True
 
     @property
-    def jobid(self):
+    def jobid(self) -> int:
         if not self.job_exists:
             raise Exception(f"jobid has not been set in {self.calc_dir}")
         return self._jobid
 
     @jobid.setter
-    def jobid(self, job_value):
-        # some criteria to make sure jobid actually looks reasonable?
-        # but I think SLURM will throw and error if sbatch fails
+    def jobid(self, job_value: str | int) -> None:
         try:
             jobid_int = int(job_value)
         except Exception as e:
             raise RuntimeError(f"Tried to set jobid={job_value}\n{e}")
         self._jobid = jobid_int
 
-    def submit_job(self):
+    def submit_job(self) -> bool:
         """
         Submits job, making sure to not make duplicate jobs
+
+        Returns:
+            job_submitted_successfully
         """
         if self.job_exists:
             self.logger.info(f"{self.mode.upper()} job already exists")
@@ -137,13 +145,15 @@ class JobManager:
         return True
 
     @property
-    def job_complete(self):
-        if self._job_complete is None and self.job_exists:
+    def job_complete(self) -> bool:
+        if getattr(self, "_job_complete", None) is None and self.job_exists:
             self._job_complete = self._check_job_complete()
+        else:
+            self._job_complete = False
         return self._job_complete
 
-    def _check_job_complete(self):
-        """Returns True if job done"""
+    def _check_job_complete(self) -> bool:
+        """Returns True if job complete"""
         if self.computer == "personal":
             msg = "Cannot check job on personal computer\n\tIgnoring job status check..."
             self.logger.debug(msg)
@@ -158,7 +168,7 @@ class JobManager:
             .splitlines()
         )
         for line in queue_call:
-            line = line.strip().split()
-            if str(self.jobid) in line:
+            line_as_str = line.strip().split()
+            if str(self.jobid) in line_as_str:
                 return False
         return True
