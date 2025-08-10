@@ -5,7 +5,7 @@ A python package to run and analyze VASP calculations
 """
 
 __package__ = "vasp_manager"
-__version__ = "1.3.4"
+__version__ = "1.3.5"
 __author__ = "Dale Gaines II"
 
 import logging

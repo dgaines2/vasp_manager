@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 <!-- ## Unreleased -->
 
+## [1.3.5] - 2025-08-10
+
+### Changed
+
+- Enforce calculation types ordering in VaspManager
+
+
 ## [1.3.4] - 2025-08-03
 
 ### Changed
