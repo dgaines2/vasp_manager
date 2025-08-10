@@ -1,12 +1,19 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
+from __future__ import annotations
+
 import logging
 from functools import cached_property
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 from vasp_manager.calculation_manager.base import BaseCalculationManager
 from vasp_manager.utils import LoggerAdapter, pgrep, ptail
 from vasp_manager.vasp_input_creator import VaspInputCreator
+
+if TYPE_CHECKING:
+    from vasp_manager.types import CalculationType, WorkingDirectory
 
 logger = logging.getLogger(__name__)
 
@@ -18,21 +25,28 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
 
     def __init__(
         self,
-        material_dir,
-        to_rerun,
-        to_submit,
-        primitive=True,
-        ignore_personal_errors=True,
-        from_scratch=False,
-        tail=5,
-        max_reruns=3,
-    ):
+        material_dir: WorkingDirectory,
+        to_rerun: bool,
+        to_submit: bool,
+        primitive: bool = True,
+        ignore_personal_errors: bool = True,
+        from_scratch: bool = False,
+        tail: int = 5,
+        max_reruns: int = 3,
+    ) -> None:
         """
-        For material_dir, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
-        see BaseCalculationManager
-
         Args:
-            tail (int): number of last lines to log in debugging if job failed
+            material_dir: path to a directory for a single material
+            to_rerun: if True, rerun failed calculations
+            to_submit: if True, submit calculations to job manager
+            primitive: if True, find primitive cell, else find conventional cell
+            ignore_personal_errors: if True, ignore job submission errors
+                if on personal computer
+            from_scratch: if True, remove the calculation's directory and
+                restart
+            tail: number of last lines to log in debugging if job failed
+            max_reruns: maximum number of times to rerun rlx-coarse before
+                continuing to rlx
         """
         self.tail = tail
         self.max_reruns = max_reruns
@@ -44,20 +58,20 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
-        self._is_done = None
-        self._results = None
+        self._is_done: bool
+        self._results: str
         self.logger = LoggerAdapter(logging.getLogger(__name__), self.material_name)
 
     @cached_property
-    def mode(self):
+    def mode(self) -> CalculationType:
         return "rlx-coarse"
 
     @cached_property
-    def poscar_source_path(self):
+    def poscar_source_path(self) -> Path:
         return self.material_dir / "POSCAR"
 
     @cached_property
-    def vasp_input_creator(self):
+    def vasp_input_creator(self) -> VaspInputCreator:
         return VaspInputCreator(
             self.calc_dir,
             mode=self.mode,
@@ -68,10 +82,10 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
 
     def setup_calc(
         self,
-        increase_nodes_by_factor=1,
-        increase_walltime_by_factor=1,
-        make_archive=False,
-    ):
+        increase_nodes_by_factor: int = 1,
+        increase_walltime_by_factor: int = 1,
+        make_archive: bool = False,
+    ) -> None:
         """
         Sets up a coarse relaxation
         """
@@ -90,7 +104,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
                 # if job didn't submit, try rerunning setup
                 self.setup_calc()
 
-    def check_calc(self):
+    def check_calc(self) -> bool:
         """
         Checks if calculation has finished and reached required accuracy
 
@@ -155,18 +169,18 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
         return True
 
     @property
-    def is_done(self):
-        if self._is_done is None:
+    def is_done(self) -> bool:
+        if getattr(self, "_is_done", None) is None:
             self._is_done = self.check_calc()
         return self._is_done
 
     @property
-    def results(self):
+    def results(self) -> str:
         if not self.is_done:
             if self.stopped:
-                return "STOPPED"
+                self._results = "STOPPED"
             else:
-                return "not finished"
+                self._results = "not finished"
         else:
             self._results = "done"
         return self._results
