@@ -1,14 +1,21 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
+from __future__ import annotations
+
 import json
 import logging
 from functools import cached_property
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 from vasp_manager.analyzer import ElasticAnalyzer
 from vasp_manager.calculation_manager.base import BaseCalculationManager
 from vasp_manager.utils import LoggerAdapter, NumpyEncoder, pgrep, ptail
 from vasp_manager.vasp_input_creator import VaspInputCreator
+
+if TYPE_CHECKING:
+    from vasp_manager.types import CalculationType, WorkingDirectory
 
 logger = logging.getLogger(__name__)
 
@@ -20,23 +27,29 @@ class ElasticCalculationManager(BaseCalculationManager):
 
     def __init__(
         self,
-        material_dir,
-        to_rerun,
-        to_submit,
-        primitive=False,
-        ignore_personal_errors=True,
-        from_scratch=False,
-        tail=5,
+        material_dir: WorkingDirectory,
+        to_rerun: bool,
+        to_submit: bool,
+        primitive: bool = False,
+        ignore_personal_errors: bool = True,
+        from_scratch: bool = False,
+        tail: int = 5,
     ):
         """
-        For material_dir, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
-        see BaseCalculationManager
-
         Args:
-            tail (int): number of last lines to log in debugging if job failed
+            material_dir: path to a directory for a single material
+            to_rerun: if True, rerun failed calculations
+            to_submit: if True, submit calculations to job manager
+            primitive: if True, find primitive cell, else find conventional cell
+            ignore_personal_errors: if True, ignore job submission errors
+                if on personal computer
+            from_scratch: if True, remove the calculation's directory and
+                restart
+            tail: number of last lines to log in debugging if job failed
 
-        Note: primitive is set to False for elastic calculations as sometimes elongated or
-            distorted cells lead to erroneous results
+        Note:
+            primitive is set to False for elastic calculations as sometimes
+            elongated or distorted cells lead to erroneous results
         """
         self.tail = tail
         super().__init__(
@@ -47,20 +60,20 @@ class ElasticCalculationManager(BaseCalculationManager):
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
-        self._is_done = None
-        self._results = None
+        self._is_done: bool
+        self._results: None | str | dict
         self.logger = LoggerAdapter(logging.getLogger(__name__), self.material_name)
 
     @cached_property
-    def mode(self):
+    def mode(self) -> CalculationType:
         return "elastic"
 
     @cached_property
-    def poscar_source_path(self):
+    def poscar_source_path(self) -> Path:
         return self.material_dir / "rlx" / "CONTCAR"
 
     @cached_property
-    def vasp_input_creator(self):
+    def vasp_input_creator(self) -> VaspInputCreator:
         return VaspInputCreator(
             self.calc_dir,
             mode=self.mode,
@@ -69,7 +82,7 @@ class ElasticCalculationManager(BaseCalculationManager):
             name=self.material_name,
         )
 
-    def _check_use_spin(self):
+    def _check_use_spin(self) -> bool:
         rlx_stdout = self.material_dir / "rlx" / "stdout.txt"
         rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
         use_spin = len(rlx_mags) != 0
@@ -77,9 +90,9 @@ class ElasticCalculationManager(BaseCalculationManager):
 
     def setup_calc(
         self,
-        increase_nodes_by_factor=1,
-        increase_walltime_by_factor=1,
-    ):
+        increase_nodes_by_factor: int = 1,
+        increase_walltime_by_factor: int = 1,
+    ) -> None:
         """
         Runs elastic constants routine through VASP
 
@@ -97,12 +110,12 @@ class ElasticCalculationManager(BaseCalculationManager):
             if not job_submitted:
                 self.setup_calc()
 
-    def check_calc(self):
+    def check_calc(self) -> bool:
         """
         Checks result of elastic calculation
 
         Returns:
-            elastic_successful (bool): if True, elastic calculation completed
+            elastic_successful: if True, elastic calculation completed
                 successfully
         """
         if not self.job_complete:
@@ -166,13 +179,13 @@ class ElasticCalculationManager(BaseCalculationManager):
         return True
 
     @property
-    def is_done(self):
-        if self._is_done is None:
+    def is_done(self) -> bool:
+        if getattr(self, "_is_done", None) is None:
             self._is_done = self.check_calc()
         return self._is_done
 
     @property
-    def results(self):
+    def results(self) -> None | str | dict:
         if not self.is_done:
             if self.stopped:
                 return "STOPPED"
@@ -185,7 +198,7 @@ class ElasticCalculationManager(BaseCalculationManager):
             self._results = None
         return self._results
 
-    def _analyze_elastic(self):
+    def _analyze_elastic(self) -> dict:
         """
         Gets results from elastic calculation
         """
