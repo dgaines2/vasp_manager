@@ -1,44 +1,54 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
+from __future__ import annotations
+
 import logging
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 from pymatgen.analysis.eos import BirchMurnaghan
 from pymatgen.core import Structure
 from pymatgen.io.vasp import Vasprun
 
+if TYPE_CHECKING:
+    from vasp_manager.types import WorkingDirectory
+
 logger = logging.getLogger(__name__)
 
 
 class BulkmodAnalyzer:
-    def __init__(self, calc_dir, rounding_precision=3):
+    def __init__(
+        self,
+        calc_dir: WorkingDirectory,
+        rounding_precision: int = 3,
+    ) -> None:
         """
         Args:
-            calc_dir (str): path to bulkmod calculation directory
-            rounding_precision (int): precision to round calculated quantities
+            calc_dir: path to bulkmod calculation directory
+            rounding_precision: precision to round calculated quantities
         """
         self.calc_dir = Path(calc_dir)
         self.rounding_precision = rounding_precision
-        self._results = None
+        self._results: dict
 
     @property
-    def calc_dir(self):
+    def calc_dir(self) -> Path:
         return self._calc_dir
 
     @calc_dir.setter
-    def calc_dir(self, value):
+    def calc_dir(self, value: Path) -> None:
         if not value.exists():
             raise ValueError(f"Could not set calc_dir to {value} as it does not exist")
         self._calc_dir = value
 
     @property
-    def rounding_precision(self):
+    def rounding_precision(self) -> int:
         return self._rounding_precision
 
     @rounding_precision.setter
-    def rounding_precision(self, value):
+    def rounding_precision(self, value: int) -> None:
         if not isinstance(value, int):
             raise ValueError(
                 f"Could not set rounding_precision to {value}, rounding precision must"
@@ -47,7 +57,7 @@ class BulkmodAnalyzer:
         self._rounding_precision = value
 
     @staticmethod
-    def analyze_bulkmod(calc_dir, rounding_precision):
+    def analyze_bulkmod(calc_dir: Path, rounding_precision: int) -> dict:
         """
         Fit an EOS to calculate the bulk modulus from a finished bulkmod calculation
         """
@@ -82,7 +92,7 @@ class BulkmodAnalyzer:
         return b_dict
 
     @property
-    def results(self):
-        if self._results is None:
+    def results(self) -> dict:
+        if getattr(self, "_results", None) is None:
             self._results = self.analyze_bulkmod(self.calc_dir, self.rounding_precision)
         return self._results
