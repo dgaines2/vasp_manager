@@ -1,0 +1,121 @@
+repo_url: https://github.com/dgaines2/vasp_manager
+site_author: Dale Gaines II
+site_description: >-
+  vasp_manager is a package to automatically run VASP relaxation, static, bulk
+  moduli, or elastic constant calculations
+site_name: vasp_manager
+site_url: https://dgaines2.github.io/vasp_manager/
+nav:
+  - Home: index.md
+  - User Guide:
+      - user/installation.md
+      - user/general.md
+      - user/calculation_modes.md
+      - user/setting_up.md
+      - Static Files:
+          - user/static_files/calc_config.md
+          - user/static_files/computing_config.md
+      - user/extras.md
+  - Code Documentation: reference/
+  - About:
+      - about/CHANGELOG.md
+      - about/LICENSE.md
+
+theme:
+  # favicon:
+  features:
+    - content.action.edit
+    - content.code.copy
+    - content.code.select
+    - content.code.annotate
+    - content.tabs.link
+    - content.tooltips
+    - navigation.footer
+    - navigation.path
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - search.share
+    - header.autohide
+    - toc.follow
+  # logo:
+  name: material
+  palette:
+    primary: indigo
+    accent: green
+    scheme: slate
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.snippets
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format ''
+          name: mermaid
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - autorefs
+  - offline
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          import:
+            - https://docs.python.org/3/objects.inv
+            - https://pymatgen.org/objects.inv
+            - https://numpy.org/doc/stable/objects.inv
+          options:
+            docstring_style: google
+            docstring_section_style: list
+            separate_signature: true
+            merge_init_into_class: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+            show_if_no_docstring: true
+
+  - gen-files:
+      scripts:
+        - docs/gen_ref_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
+
+edit_uri: blob/main/docs/
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/dgaines2/
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
