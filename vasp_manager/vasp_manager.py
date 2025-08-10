@@ -110,7 +110,12 @@ class VaspManager:
     def calculation_types(self, values):
         if not isinstance(values, list):
             raise TypeError("calculation_types must be a list")
-        self._calculation_types = values
+        proper_order = ["rlx-coarse", "rlx", "static", "bulkmod", "elastic"]
+        for calc_type in values:
+            if calc_type not in proper_order:
+                raise ValueError(f"Calculation type {calc_type} not supported")
+        sorted_values = [calc_type for calc_type in proper_order if calc_type in values]
+        self._calculation_types = sorted_values
 
     @property
     def ncore(self):
