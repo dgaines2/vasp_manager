@@ -21,7 +21,7 @@
 Automatically run `VASP` relaxation, static, bulk moduli, or elastic constant
 calculations
 
-</h4>
-
 For instructions on how to install `vasp_manager` and a user guide, please see:
 [Documentation](https://dgaines2.github.io/vasp_manager/)
+
+</h4>
