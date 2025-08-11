@@ -1,3 +1,0 @@
-# Computing Configuration
-
-See here

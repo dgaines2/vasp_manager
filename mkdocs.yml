@@ -9,12 +9,15 @@ nav:
   - Home: index.md
   - User Guide:
       - user/installation.md
-      - user/general.md
+      - user/about.md
       - user/calculation_modes.md
       - user/setting_up.md
-      - Static Files:
-          - user/static_files/calc_config.md
-          - user/static_files/computing_config.md
+      - user/managers.md
+      - Configuration:
+          - user/user_config/jobs.md
+          - user/user_config/potentials.md
+          - user/user_config/spin.md
+          - user/user_config/hubbards.md
       - user/extras.md
   - Code Documentation: reference/
   - About:
@@ -22,7 +25,7 @@ nav:
       - about/LICENSE.md
 
 theme:
-  # favicon:
+  favicon: images/ZnS.svg
   features:
     - content.action.edit
     - content.code.copy
@@ -40,7 +43,7 @@ theme:
     - search.share
     - header.autohide
     - toc.follow
-  # logo:
+  logo: images/ZnS.svg
   name: material
   palette:
     primary: indigo
@@ -54,10 +57,12 @@ markdown_extensions:
   - def_list
   - footnotes
   - md_in_html
+
   - toc:
       permalink: true
   - pymdownx.arithmatex:
       generic: true
+  - pymdownx.blocks.caption
   - pymdownx.betterem:
       smart_enable: all
   - pymdownx.caret

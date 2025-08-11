@@ -2,10 +2,10 @@
 
 We include calculation modes `"rlx-coarse"`, `"rlx"`, `"static"`, `"bulkmod"`,
 and `"elastic"`.  The desired modes to calculate are specified when
-initializing a `VaspManager` object.
+initializing a [`VaspManager`][vasp_manager.VaspManager] object.
 
 * `rlx-coarse`: lower precision energy-based relaxation
-* `rlx`: tighter force-based relaxation
+* `rlx`: tighter relaxation (often force-based)
 * `static`: high accuracy static SCF calculation
 * `bulkmod`: bulk modulus calculation using an Equation of State (EOS) fit to an
 energy-volume curve

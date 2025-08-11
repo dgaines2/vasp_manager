@@ -1,3 +1,0 @@
-# Calculation Configuration
-
-See here
