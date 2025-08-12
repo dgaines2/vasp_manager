@@ -8,6 +8,9 @@ packages = ["vasp_manager"]
 [tool.setuptools.dynamic]
 version = {attr = "vasp_manager.__version__"}
 
+[tool.setuptools.package-data]
+"vasp_manager" = ["py.typed"]
+
 [project]
 name = "vasp_manager"
 description = "A simple package to run and analyze VASP calculations"
