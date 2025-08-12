@@ -30,6 +30,7 @@ dev = [
     "isort",
     "pre-commit",
     "pytest",
+    "mypy",
 ]
 docs = [
     "blacken-docs>=1.16.0",
@@ -84,3 +85,7 @@ addopts = "--import-mode=importlib"
 command_line = "-m pytest"
 source = ["vasp_manager"]
 omit = ["*tests*"]
+
+[tool.mypy]
+ignore_missing_imports = true
+no_implicit_optional = false
