@@ -1,14 +1,21 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
+from __future__ import annotations
+
 import logging
 from functools import cached_property
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from vasp_manager.calculation_manager.base import BaseCalculationManager
 from vasp_manager.utils import LoggerAdapter, get_pmg_structure_from_poscar, pgrep, ptail
 from vasp_manager.vasp_input_creator import VaspInputCreator
+
+if TYPE_CHECKING:
+    from vasp_manager.types import CalculationType, WorkingDirectory
 
 logger = logging.getLogger(__name__)
 
@@ -20,24 +27,34 @@ class RlxCalculationManager(BaseCalculationManager):
 
     def __init__(
         self,
-        material_dir,
-        to_rerun,
-        to_submit,
-        primitive=True,
-        ignore_personal_errors=True,
-        from_coarse_relax=True,
-        from_scratch=False,
-        tail=5,
-        max_reruns=3,
-        magmom_per_atom_cutoff=0.0,
+        material_dir: WorkingDirectory,
+        to_rerun: bool,
+        to_submit: bool,
+        primitive: bool = True,
+        ignore_personal_errors: bool = True,
+        from_scratch: bool = False,
+        from_coarse_relax: bool = True,
+        tail: int = 5,
+        max_reruns: int = 3,
+        magmom_per_atom_cutoff: float = 0.0,
     ):
         """
-        For material_dir, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
-        see BaseCalculationManager
-
         Args:
-            from_coarse_relax (bool): if True, use CONTCAR from coarse relax
-            tail (int): number of last lines to log in debugging if job failed
+            material_dir: path to a directory for a single material
+            to_rerun: if True, rerun failed calculations
+            to_submit: if True, submit calculations to job manager
+            primitive: if True, find primitive cell, else find conventional cell
+            ignore_personal_errors: if True, ignore job submission errors
+                if on personal computer
+            from_scratch: if True, remove the calculation's directory and
+                restart
+            from_coarse_relax: if True, use CONTCAR from coarse relax
+            tail: number of last lines to log in debugging if job failed
+            max_reruns: maximum number of times to rerun rlx before refusing to
+                continue
+            magmom_per_atom_cutoff: calculations that result in
+                magmom_per_atom less than this parameter will be automatically
+                rerun without spin-polarization
         """
         self.from_coarse_relax = from_coarse_relax
         self.tail = tail
@@ -51,16 +68,16 @@ class RlxCalculationManager(BaseCalculationManager):
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
-        self._is_done = None
-        self._results = None
+        self._is_done: bool
+        self._results: None | str | dict
         self.logger = LoggerAdapter(logging.getLogger(__name__), self.material_name)
 
     @cached_property
-    def mode(self):
+    def mode(self) -> CalculationType:
         return "rlx"
 
     @cached_property
-    def poscar_source_path(self):
+    def poscar_source_path(self) -> Path:
         if self.from_coarse_relax:
             poscar_source_path = self.material_dir / "rlx-coarse" / "CONTCAR"
         else:
@@ -68,7 +85,7 @@ class RlxCalculationManager(BaseCalculationManager):
         return poscar_source_path
 
     @cached_property
-    def vasp_input_creator(self):
+    def vasp_input_creator(self) -> VaspInputCreator:
         return VaspInputCreator(
             self.calc_dir,
             mode=self.mode,
@@ -79,11 +96,11 @@ class RlxCalculationManager(BaseCalculationManager):
 
     def setup_calc(
         self,
-        increase_nodes_by_factor=1,
-        increase_walltime_by_factor=1,
-        make_archive=False,
-        use_spin=True,
-    ):
+        increase_nodes_by_factor: int = 1,
+        increase_walltime_by_factor: int = 1,
+        make_archive: bool = False,
+        use_spin: bool = True,
+    ) -> None:
         """
         Sets up a fine relaxation
         """
@@ -101,12 +118,12 @@ class RlxCalculationManager(BaseCalculationManager):
             if not job_submitted:
                 self.setup_calc()
 
-    def check_calc(self):
+    def check_calc(self) -> bool:
         """
         Checks if calculation has finished and reached required accuracy
 
         Returns:
-            relaxation_successful (bool): if True, relaxation completed successfully
+            relaxation_successful: if True, relaxation completed successfully
         """
         if not self.job_complete:
             self.logger.info(f"{self.mode.upper()} not finished")
@@ -183,7 +200,7 @@ class RlxCalculationManager(BaseCalculationManager):
         self.logger.debug(tail_output)
         return True
 
-    def check_volume_difference(self):
+    def check_volume_difference(self) -> bool:
         """
         Checks relaxation runs for volume difference
 
@@ -191,7 +208,7 @@ class RlxCalculationManager(BaseCalculationManager):
         only checks for mode='rlx' as that's the structure for further calculation
 
         Returns:
-            volume_converged (bool): if True, relaxation completed successfully
+            volume_converged: if True, relaxation completed successfully
         """
         original_poscar_path = self.material_dir / "POSCAR"
         poscar_path = self.calc_dir / "POSCAR"
@@ -245,8 +262,8 @@ class RlxCalculationManager(BaseCalculationManager):
         return volume_converged
 
     @property
-    def is_done(self):
-        if self._is_done is None:
+    def is_done(self) -> bool:
+        if getattr(self, "_is_done", None) is None:
             self._is_done = False
             calc_done = self.check_calc()
             if calc_done:
@@ -256,7 +273,7 @@ class RlxCalculationManager(BaseCalculationManager):
         return self._is_done
 
     @property
-    def results(self):
+    def results(self) -> None | str | dict:
         if not self.is_done:
             if self.stopped:
                 return "STOPPED"

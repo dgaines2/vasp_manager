@@ -1,6 +1,8 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
+from __future__ import annotations
+
 import json
 import logging
 import os
@@ -10,10 +12,12 @@ import warnings
 from datetime import time, timedelta
 from functools import cached_property
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import importlib_resources
 import numpy as np
 import yaml
+from pymatgen.core import Structure
 from pymatgen.io.vasp import Poscar, Potcar
 
 from vasp_manager.utils import (
@@ -22,6 +26,9 @@ from vasp_manager.utils import (
     get_pmg_structure_from_poscar,
     pcat,
 )
+
+if TYPE_CHECKING:
+    from vasp_manager.types import Filepath, SourceDirectory, WorkingDirectory
 
 logger = logging.getLogger(__name__)
 
@@ -33,31 +40,31 @@ class VaspInputCreator:
 
     def __init__(
         self,
-        calc_dir,
-        mode,
-        poscar_source_path,
-        config_dir=None,
-        primitive=True,
-        name=None,
-        increase_nodes_by_factor=1,
-        increase_walltime_by_factor=1,
-        poscar_significant_figures=16,
-        ncore_per_node_for_memory=None,
-        use_spin=True,
-    ):
+        calc_dir: WorkingDirectory,
+        mode: str,
+        poscar_source_path: Filepath,
+        config_dir: SourceDirectory | None = None,
+        primitive: bool = True,
+        name: str = None,
+        increase_nodes_by_factor: int = 1,
+        increase_walltime_by_factor: int = 1,
+        poscar_significant_figures: int = 16,
+        ncore_per_node_for_memory: int | None = None,
+        use_spin: bool = True,
+    ) -> None:
         """
         Args:
-            calc_dir (str | Path)
-            mode (str)
-            poscar_source_path (str | Path)
-            config_dir (str | Path)
-            primitive (bool)
-            name (str)
-            increase_nodes_by_factor (int)
-            increase_walltime_by_factor (int)
-            poscar_significant_figures (int)
-            ncore_per_node_for_memory (int)
-            use_spin (bool): pass False to suppress spin polarization
+            calc_dir:
+            mode:
+            poscar_source_path:
+            config_dir:
+            primitive:
+            name:
+            increase_nodes_by_factor:
+            increase_walltime_by_factor:
+            poscar_significant_figures:
+            ncore_per_node_for_memory:
+            use_spin: pass False to suppress spin polarization
         """
         self.calc_dir = Path(calc_dir)
         self.mode = mode
@@ -73,7 +80,7 @@ class VaspInputCreator:
         self.logger = LoggerAdapter(logging.getLogger(__name__), self.name)
 
     @cached_property
-    def calc_config(self):
+    def calc_config(self) -> dict:
         fname = "calc_config.json"
         fpath = self.config_dir / fname
         if fpath.exists():
@@ -92,7 +99,7 @@ class VaspInputCreator:
         return calc_config
 
     @cached_property
-    def computing_config_dict(self):
+    def computing_config_dict(self) -> dict:
         """
         Dict containing all computing configs
         """
@@ -106,18 +113,18 @@ class VaspInputCreator:
         return computing_config_dict
 
     @cached_property
-    def computing_config(self):
+    def computing_config(self) -> dict:
         """
         Dict containing only the computing config for the specified computer
         """
         return self.computing_config_dict[self.computer]
 
     @cached_property
-    def computer(self):
+    def computer(self) -> str:
         return self.computing_config_dict["computer"]
 
     @cached_property
-    def source_structure(self):
+    def source_structure(self) -> Structure:
         num_archives = len(list(self.calc_dir.glob("archive*")))
         if num_archives > 0:
             archive_name = f"archive_{num_archives-1}"
@@ -128,10 +135,11 @@ class VaspInputCreator:
             )
         except Exception as e:
             raise Exception(f"Cannot load POSCAR in {self.poscar_source_path}: {e}")
+        assert isinstance(structure, Structure)
         return structure
 
     @cached_property
-    def incar_template(self):
+    def incar_template(self) -> str:
         incar_template = (
             importlib_resources.files("vasp_manager")
             .joinpath(str(Path("static_files") / "INCAR_template"))
@@ -140,7 +148,7 @@ class VaspInputCreator:
         return incar_template
 
     @cached_property
-    def potcar_dict(self):
+    def potcar_dict(self) -> dict:
         potcar_dict = json.loads(
             importlib_resources.files("vasp_manager")
             .joinpath(str(Path("static_files") / "pot_dict.json"))
@@ -149,7 +157,7 @@ class VaspInputCreator:
         return potcar_dict
 
     @cached_property
-    def q_mapper(self):
+    def q_mapper(self) -> dict:
         q_mapper = json.loads(
             importlib_resources.files("vasp_manager")
             .joinpath(str(Path("static_files") / "q_handles.json"))
@@ -157,7 +165,7 @@ class VaspInputCreator:
         )
         return q_mapper
 
-    def make_poscar(self):
+    def make_poscar(self) -> None:
         """
         Create and write a POSCAR
         """
@@ -167,7 +175,7 @@ class VaspInputCreator:
             poscar_path, significant_figures=self.poscar_significant_figures
         )
 
-    def make_potcar(self):
+    def make_potcar(self) -> None:
         """
         Create and write a POTCAR
         """
@@ -191,7 +199,7 @@ class VaspInputCreator:
             fw.write(potcar)
 
     @cached_property
-    def n_nodes(self):
+    def n_nodes(self) -> int:
         # start with 1 node per 32 atoms
         num_nodes = (len(self.source_structure) // 32) + 1
         if self.computer == "quest":
@@ -201,16 +209,16 @@ class VaspInputCreator:
         return num_nodes
 
     @cached_property
-    def n_procs(self):
+    def n_procs(self) -> int:
         n_procs = self.n_nodes * self.computing_config["ncore_per_node"]
         return n_procs
 
     @property
-    def ncore_per_node_for_memory(self):
+    def ncore_per_node_for_memory(self) -> int:
         return self._ncore_per_node_for_memory
 
     @ncore_per_node_for_memory.setter
-    def ncore_per_node_for_memory(self, value):
+    def ncore_per_node_for_memory(self, value: int | None) -> None:
         if value is None:
             value = 4 if self.computer == "quest" else 0
         if not isinstance(value, int):
@@ -218,7 +226,7 @@ class VaspInputCreator:
         self._ncore_per_node_for_memory = value
 
     @cached_property
-    def n_procs_used(self):
+    def n_procs_used(self) -> int:
         """
         Total number of actual processors to run VASP, which may be different
         than the total number of processors requested in SLURM
@@ -229,7 +237,7 @@ class VaspInputCreator:
         return self.n_nodes * (ncore_per_node - self.ncore_per_node_for_memory)
 
     @cached_property
-    def d_f_block(self):
+    def d_f_block(self) -> dict:
         d_f_block = json.loads(
             importlib_resources.files("vasp_manager")
             .joinpath(str(Path("static_files") / "d_f_block.json"))
@@ -237,7 +245,7 @@ class VaspInputCreator:
         )
         return d_f_block
 
-    def _check_needs_spin_polarization(self, composition_dict):
+    def _check_needs_spin_polarization(self, composition_dict: dict) -> bool:
         needs_spin_polarization = False
         for el_name in composition_dict:
             if (
@@ -247,7 +255,7 @@ class VaspInputCreator:
                 needs_spin_polarization = True
         return needs_spin_polarization
 
-    def _get_auto_magmom(self, composition_dict):
+    def _get_auto_magmom(self, composition_dict: dict) -> str:
         magmom_string = "MAGMOM ="
         for el_name in composition_dict:
             if el_name in self.d_f_block["d_block"]:
@@ -261,7 +269,7 @@ class VaspInputCreator:
         return magmom_string
 
     @cached_property
-    def hubbards(self):
+    def hubbards(self) -> dict:
         hubbards = json.loads(
             importlib_resources.files("vasp_manager")
             .joinpath(str(Path("static_files") / "hubbards.json"))
@@ -269,7 +277,7 @@ class VaspInputCreator:
         )
         return hubbards
 
-    def _check_needs_dftu(self, hubbards_type, composition_dict):
+    def _check_needs_dftu(self, hubbards_type: str, composition_dict: dict) -> bool:
         if not hubbards_type:
             return False
 
@@ -279,7 +287,7 @@ class VaspInputCreator:
                 needs_dftu = True
         return needs_dftu
 
-    def _get_ldau_string(self, hubbards_type, composition_dict):
+    def _get_ldau_string(self, hubbards_type: str, composition_dict: dict) -> str:
         u_string = "LDAUU ="
         j_string = "LDAUJ ="
         l_string = "LDAUL ="
@@ -303,7 +311,7 @@ class VaspInputCreator:
         ldau_string += f"{l_string}"
         return ldau_string
 
-    def _get_lmaxmix(self, composition_dict):
+    def _get_lmaxmix(self, composition_dict: dict) -> int:
         d_block_elements = self.d_f_block["d_block"]
         f_block_elements = self.d_f_block["f_block"]
         lmaxmix = 2
@@ -315,7 +323,7 @@ class VaspInputCreator:
                 lmaxmix = 6
         return lmaxmix
 
-    def make_incar(self):
+    def make_incar(self) -> None:
         """
         Create and write an INCAR
 
@@ -402,13 +410,13 @@ class VaspInputCreator:
                 if "KSPACING" in line:
                     nfree_line = "NFREE = {nfree}"
                     incar_tmp.insert(i + 1, nfree_line)
-        incar_tmp = "\n".join([line for line in incar_tmp])
-        incar = incar_tmp.format(**calc_config)
+        incar_tmp_as_str = "\n".join([line for line in incar_tmp])
+        incar = incar_tmp_as_str.format(**calc_config)
         self.logger.debug(incar)
         with open(incar_path, "w+") as fw:
             fw.write(incar)
 
-    def make_kpoints(self):
+    def make_kpoints(self) -> None:
         kpoints_path = self.calc_dir / "KPOINTS"
         kspacing = self.calc_config["kspacing"]
         reciprocal_lattice = self.source_structure.lattice.reciprocal_lattice
@@ -422,7 +430,7 @@ class VaspInputCreator:
         with open(kpoints_path, "w+") as fw:
             fw.write(kpoints_text)
 
-    def make_vaspq(self):
+    def make_vaspq(self) -> None:
         """
         Create and write vasp.q file
         """
@@ -464,11 +472,13 @@ class VaspInputCreator:
         # convert to HH:MM:SS
         walltime = str(walltime_duration)
         # cut walltime short by 1 minute so job metrics log properly
-        timeout = walltime_duration.seconds - 60
-        # quest uses mpirun which needs timeout in seconds
-        # otherwise, convert it back to HH:MM:SS
-        if not self.computer == "quest":
-            timeout = str(timedelta(seconds=timeout))
+        timeout_as_delta = timedelta(seconds=walltime_duration.seconds - 60)
+        if self.computer == "quest":
+            # quest uses mpirun which needs timeout in seconds
+            timeout = str(timeout_as_delta.seconds)
+        else:
+            # otherwise, convert it back to HH:MM:SS
+            timeout = str(timeout_as_delta)
 
         computing_config = self.computing_config.copy()
         ncore_per_node = self.n_procs_used // self.n_nodes
@@ -510,7 +520,7 @@ class VaspInputCreator:
             fw.write(vaspq)
         vaspq_path.chmod(vaspq_path.stat().st_mode | stat.S_IEXEC)
 
-    def make_archive_and_repopulate(self):
+    def make_archive_and_repopulate(self) -> None:
         """
         Make an archive of a VASP calculation and copy back over relevant files
         """
@@ -553,12 +563,13 @@ class VaspInputCreator:
 
         self.create()
 
-    def create(self):
+    def create(self) -> None:
         """
         Make VASP input files
 
-        Don't touch the order! make_incar and make_vaspq rely on the poscar and
-        potcar existing already
+        Note:
+            Don't touch the order! make_incar and make_vaspq rely on the poscar and
+            potcar existing already
         """
         if not self.calc_dir.exists():
             self.calc_dir.mkdir()

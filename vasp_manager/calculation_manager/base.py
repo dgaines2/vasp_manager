@@ -1,16 +1,21 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
+from __future__ import annotations
+
 import os
 import shutil
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
-
-import numpy as np
+from typing import TYPE_CHECKING
 
 from vasp_manager.job_manager import JobManager
 from vasp_manager.utils import get_pmg_structure_from_poscar, pgrep
+from vasp_manager.vasp_input_creator import VaspInputCreator
+
+if TYPE_CHECKING:
+    from vasp_manager.types import CalculationType, WorkingDirectory
 
 
 class BaseCalculationManager(ABC):
@@ -20,23 +25,23 @@ class BaseCalculationManager(ABC):
 
     def __init__(
         self,
-        material_dir,
-        to_rerun,
-        to_submit,
-        primitive=True,
-        ignore_personal_errors=True,
-        from_scratch=False,  # DANGEROUS, WILL DELETE PREVIOUS CALCULATION
+        material_dir: WorkingDirectory,
+        to_rerun: bool,
+        to_submit: bool,
+        primitive: bool = True,
+        ignore_personal_errors: bool = True,
+        from_scratch: bool = False,  # DANGEROUS, WILL DELETE PREVIOUS CALCULATION
     ):
         """
         Args:
-            material_dir (str | Path): path to a directory for a single material
+            material_dir: path to a directory for a single material
                 ex. calculations/AlAs
-            to_rerun (bool): if True, rerun failed calculations
-            to_submit (bool): if True, submit calculations to job manager
-            primitive (bool): if True, find primitive cell, else find conventional cell
-            ignore_personal_errors (bool): if True, ignore job submission errors
+            to_rerun: if True, rerun failed calculations
+            to_submit: if True, submit calculations to job manager
+            primitive: if True, find primitive cell, else find conventional cell
+            ignore_personal_errors: if True, ignore job submission errors
                 if on personal computer
-            from_scratch (bool): if True, remove the calculation's directory and
+            from_scratch: if True, remove the calculation's directory and
                 restart
                 note: DANGEROUS
         """
@@ -56,59 +61,60 @@ class BaseCalculationManager(ABC):
 
     @property
     @abstractmethod
-    def mode(self):
+    def mode(self) -> CalculationType:
         pass
 
     @property
     @abstractmethod
-    def is_done(self):
+    def is_done(self) -> bool:
         pass
 
     @property
     @abstractmethod
-    def vasp_input_creator(self):
+    def vasp_input_creator(self) -> VaspInputCreator:
         pass
 
     @cached_property
-    def calc_dir(self):
+    def calc_dir(self) -> Path:
         return self.material_dir / self.mode
 
     @cached_property
-    def material_name(self):
+    def material_name(self) -> str:
         return self.material_dir.name
 
+    @cached_property
     @abstractmethod
-    def poscar_source_path(self):
+    def poscar_source_path(self) -> Path:
         pass
 
     @abstractmethod
-    def setup_calc(self):
+    def setup_calc(self) -> None:
         pass
 
     @abstractmethod
-    def check_calc(self):
+    def check_calc(self) -> bool:
         pass
 
     @property
-    def job_exists(self):
+    def job_exists(self) -> bool:
         return self.job_manager.job_exists
 
     @property
-    def job_complete(self):
+    def job_complete(self) -> bool:
         return self.job_manager.job_complete
 
     @property
-    def stopped(self):
+    def stopped(self) -> bool:
         return (self.material_dir / "STOP").exists()
 
-    def stop(self):
+    def stop(self) -> None:
         with open(self.material_dir / "STOP", "w+"):
             pass
 
-    def submit_job(self):
+    def submit_job(self) -> bool:
         return self.job_manager.submit_job()
 
-    def _cancel_previous_job(self):
+    def _cancel_previous_job(self) -> None:
         jobid_path = self.calc_dir / "jobid"
         if jobid_path.exists():
             with open(jobid_path) as fr:
@@ -117,11 +123,11 @@ class BaseCalculationManager(ABC):
             os.system(cancel_job_call)
             os.remove(jobid_path)
 
-    def _from_scratch(self):
+    def _from_scratch(self) -> None:
         self._cancel_previous_job()
         shutil.rmtree(self.calc_dir)
 
-    def _parse_magmom(self):
+    def _parse_magmom(self) -> float | None:
         stdout_path = self.calc_dir / "stdout.txt"
         mag_lines = pgrep(stdout_path, "mag=")
         # if "mag=" not found in stdout, set magmom=None
@@ -132,7 +138,7 @@ class BaseCalculationManager(ABC):
             magmom = float(total_mag)
         return magmom
 
-    def _parse_magmom_per_atom(self):
+    def _parse_magmom_per_atom(self) -> float | None:
         total_magmom = self._parse_magmom()
         if total_magmom is None:
             return None
@@ -140,19 +146,31 @@ class BaseCalculationManager(ABC):
         magmom_per_atom = total_magmom / len(structure)
         return magmom_per_atom
 
-    def _parse_incar_tag(self, tag):
+    def _parse_incar_tag(self, tag) -> str:
         incar_path = self.calc_dir / "INCAR"
         with open(incar_path) as fr:
             incar = fr.readlines()
-        tag_value = None
         for line in incar:
             if tag in line:
                 tag_value = line.split("=")[1].strip()
         return tag_value
 
-    def _check_vasp_errors(self, stdout_path=None, stderr_path=None, extra_errors=None):
+    def _check_vasp_errors(
+        self,
+        stdout_path: Path | None = None,
+        stderr_path: Path | None = None,
+        extra_errors: list[str] | None = None,
+    ) -> set[str]:
         """
         Find VASP errors in stdout and stderr
+
+        Args:
+            stdout_path
+            stderr_path
+            extra_errors: names of other errors to include in search
+
+        Returns:
+            errors_found: True if any errors found
         """
         if stdout_path is None:
             stdout_path = self.calc_dir / "stdout.txt"
@@ -191,14 +209,14 @@ class BaseCalculationManager(ABC):
 
         return errors_found
 
-    def _address_vasp_errors(self, errors):
+    def _address_vasp_errors(self, errors: set[str]) -> bool:
         """
         Args:
-            errors (set): set of errors found in stdout or stderr
+            errors: set of errors found in stdout or stderr
+
         Returns:
-            all_errors_addressed (bool): if True, all errors could
-                be fixed automatically. If False, some errors
-                could not be handled
+            all_errors_addressed: if True, all errors could be fixed
+                automatically. If False, some errors could not be handled
         """
         vic = self.vasp_input_creator
 
@@ -230,5 +248,5 @@ class BaseCalculationManager(ABC):
                     errors_addressed[error] = True
                 case _:
                     errors_addressed[error] = False
-        all_errors_addressed = np.all([v for v in errors_addressed.values()])
+        all_errors_addressed = all([v for v in errors_addressed.values()])
         return all_errors_addressed

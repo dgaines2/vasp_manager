@@ -1,18 +1,25 @@
 # Copyright (c) Dale Gaines II
 # Distributed under the terms of the MIT LICENSE
 
+from __future__ import annotations
+
 import logging
 import os
 import shutil
 from functools import cached_property
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
+from numpy.typing import NDArray
 
 from vasp_manager.analyzer.bulkmod_analyzer import BulkmodAnalyzer
 from vasp_manager.calculation_manager.base import BaseCalculationManager
 from vasp_manager.utils import LoggerAdapter, change_directory, pgrep
 from vasp_manager.vasp_input_creator import VaspInputCreator
+
+if TYPE_CHECKING:
+    from vasp_manager.types import CalculationType, WorkingDirectory
 
 logger = logging.getLogger(__name__)
 
@@ -24,28 +31,31 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
     def __init__(
         self,
-        material_dir,
-        to_rerun,
-        to_submit,
-        primitive=True,
-        ignore_personal_errors=True,
-        from_relax=True,
-        from_scratch=False,
-        strains=None,
-        tail=5,
+        material_dir: WorkingDirectory,
+        to_rerun: bool,
+        to_submit: bool,
+        primitive: bool = True,
+        ignore_personal_errors: bool = True,
+        from_scratch: bool = False,
+        from_relax: bool = True,
+        tail: int = 5,
+        strains: None | NDArray = None,
     ):
         """
-        For material_dir, to_rerun, to_submit, ignore_personal_errors, and from_scratch,
-        see BaseCalculationManager
-
         Args:
-            from_relax (bool): if True, use CONTCAR from relax
-            strains (array-like): optional, fractional strain along each axis for
-                each deformation
-                if None, use default
-                default is np.linspace(start=0.925, stop=1.075, number=11)**(1/3)
+            material_dir: path to a directory for a single material
+            to_rerun: if True, rerun failed calculations
+            to_submit: if True, submit calculations to job manager
+            primitive: if True, find primitive cell, else find conventional cell
+            ignore_personal_errors: if True, ignore job submission errors
+                if on personal computer
+            from_scratch: if True, remove the calculation's directory and
+                restart
+            from_relax: if True, use CONTCAR from relax
+            tail: number of last lines to log in debugging if job failed
+            strains: fractional strain along each axis for each deformation
+                if None, use np.linspace(start=0.925, stop=1.075, number=11)**(1/3)
                 len(strains) must be odd and strains must be centered around 0
-            tail (int): number of last lines to log in debugging if job failed
         """
         self.from_relax = from_relax
         self.strains = (
@@ -62,16 +72,16 @@ class BulkmodCalculationManager(BaseCalculationManager):
             ignore_personal_errors=ignore_personal_errors,
             from_scratch=from_scratch,
         )
-        self._is_done = None
-        self._results = None
+        self._is_done: bool
+        self._results: None | str | dict
         self.logger = LoggerAdapter(logging.getLogger(__name__), self.material_name)
 
     @cached_property
-    def mode(self):
+    def mode(self) -> CalculationType:
         return "bulkmod"
 
     @cached_property
-    def poscar_source_path(self):
+    def poscar_source_path(self) -> Path:
         if self.from_relax:
             poscar_source_path = self.material_dir / "rlx" / "CONTCAR"
         else:
@@ -79,7 +89,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
         return poscar_source_path
 
     @cached_property
-    def vasp_input_creator(self):
+    def vasp_input_creator(self) -> VaspInputCreator:
         return VaspInputCreator(
             self.calc_dir,
             mode=self.mode,
@@ -89,18 +99,18 @@ class BulkmodCalculationManager(BaseCalculationManager):
         )
 
     @property
-    def strains(self):
+    def strains(self) -> NDArray:
         return self._strains
 
     @strains.setter
-    def strains(self, values):
+    def strains(self, values: NDArray) -> None:
         if np.any(values < 0.8) or np.any(values > 1.2):
             raise ValueError("Strains not in expected bounds")
         if (middle := values[int(len(values) / 2)]) != 1.0:
             raise ValueError(f"Strains not centered around 1.0: middle is {middle}")
         self._strains = values
 
-    def _check_use_spin(self):
+    def _check_use_spin(self) -> bool:
         if self.from_relax:
             rlx_stdout = self.material_dir / "rlx" / "stdout.txt"
             rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
@@ -111,9 +121,9 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
     def setup_calc(
         self,
-        increase_nodes_by_factor=1,
-        increase_walltime_by_factor=1,
-    ):
+        increase_nodes_by_factor: int = 1,
+        increase_walltime_by_factor: int = 1,
+    ) -> None:
         """
         Sets up an EOS bulkmod calculation
         """
@@ -136,12 +146,12 @@ class BulkmodCalculationManager(BaseCalculationManager):
             if not job_submitted:
                 self.setup_calc()
 
-    def check_calc(self):
+    def check_calc(self) -> bool:
         """
         Checks result of bulk modulus calculation
 
         Returns:
-            bulkmod_sucessful (bool): if True, bulkmod calculation completed successfully
+            bulkmod_sucessful: if True, bulkmod calculation completed successfully
         """
         if not self.job_complete:
             self.logger.info(f"{self.mode.upper()} job not finished")
@@ -189,13 +199,13 @@ class BulkmodCalculationManager(BaseCalculationManager):
         return True
 
     @property
-    def is_done(self):
-        if self._is_done is None:
+    def is_done(self) -> bool:
+        if getattr(self, "_is_done", None) is None:
             self._is_done = self.check_calc()
         return self._is_done
 
     @property
-    def results(self):
+    def results(self) -> None | str | dict:
         if not self.is_done:
             if self.stopped:
                 return "STOPPED"
@@ -211,12 +221,9 @@ class BulkmodCalculationManager(BaseCalculationManager):
             self._results = None
         return self._results
 
-    def _make_bulkmod_strains(self):
+    def _make_bulkmod_strains(self) -> None:
         """
         Creates a set of strain directories for fitting the E-V info
-
-        Args:
-            strains (iterable of floats)
         """
         self.logger.info("Making strain directories")
         for i, strain in enumerate(self.strains):
