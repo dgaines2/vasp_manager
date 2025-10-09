@@ -6,10 +6,11 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import shutil
 import stat
 import warnings
-from datetime import time, timedelta
+from datetime import timedelta
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -430,6 +431,36 @@ class VaspInputCreator:
         with open(kpoints_path, "w+") as fw:
             fw.write(kpoints_text)
 
+    @staticmethod
+    def parse_walltime(walltime: str) -> timedelta:
+        """
+        Convert HH:MM:SS to timedelta
+        Enforces strict HH:MM:SS format
+        Raises ValueError on invalid format.
+        """
+        # Strict match: only digits + colons, exactly two colons, all numeric groups.
+        if not re.fullmatch(r"\d+:\d{2}:\d{2}", walltime):
+            raise ValueError(f"Invalid walltime format: {walltime} (expected HH:MM:SS)")
+
+        hours, minutes, seconds = map(int, walltime.split(":"))
+
+        if not (0 <= minutes < 60 and 0 <= seconds < 60):
+            raise ValueError(f"Invalid minutes/seconds in walltime: {walltime}")
+
+        return timedelta(hours=hours, minutes=minutes, seconds=seconds)
+
+    @staticmethod
+    def format_walltime(walltime: timedelta) -> str:
+        """
+        Convert timedelta to HH:MM:SS
+        """
+        total_seconds = int(walltime.total_seconds())
+        hours = total_seconds // 3600
+        remaining_seconds_after_hours = total_seconds % 3600
+        minutes = remaining_seconds_after_hours // 60
+        seconds = remaining_seconds_after_hours % 60
+        return f"{hours:02}:{minutes:02}:{seconds:02}"
+
     def make_vaspq(self) -> None:
         """
         Create and write vasp.q file
@@ -460,25 +491,18 @@ class VaspInputCreator:
                 )
 
         jobname = pad_string + self.name
-        # convert walltime into seconds for increase_walltime_by_factor
-        walltime_iso = time.fromisoformat(self.calc_config["walltime"])
-        # walltime_duration is in seconds
-        walltime_duration = timedelta(
-            hours=walltime_iso.hour,
-            minutes=walltime_iso.minute,
-            seconds=walltime_iso.second,
-        )
+        # convert walltime into timedelta (and back) for easier math
+        walltime_duration = self.parse_walltime(self.calc_config["walltime"])
         walltime_duration *= self.increase_walltime_by_factor
-        # convert to HH:MM:SS
-        walltime = str(walltime_duration)
+        walltime = self.format_walltime(walltime_duration)
         # cut walltime short by 1 minute so job metrics log properly
-        timeout_as_delta = timedelta(seconds=walltime_duration.seconds - 60)
+        timeout_as_delta = timedelta(seconds=walltime_duration.total_seconds() - 60)
         if self.computer == "quest":
             # quest uses mpirun which needs timeout in seconds
-            timeout = str(timeout_as_delta.seconds)
+            timeout = str(timeout_as_delta.total_seconds())
         else:
             # otherwise, convert it back to HH:MM:SS
-            timeout = str(timeout_as_delta)
+            timeout = self.format_walltime(timeout_as_delta)
 
         computing_config = self.computing_config.copy()
         ncore_per_node = self.n_procs_used // self.n_nodes
