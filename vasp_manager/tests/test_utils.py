@@ -1,9 +1,11 @@
 import json
 import shutil
+from datetime import timedelta
 from pathlib import Path
 
 import importlib_resources
 import numpy as np
+import pytest
 from pymatgen.analysis.structure_matcher import StructureMatcher
 from pymatgen.core import Structure
 
@@ -16,6 +18,7 @@ from vasp_manager.utils import (
     phead,
     ptail,
 )
+from vasp_manager.vasp_input_creator import VaspInputCreator
 
 input_string = """\
 DAV:   5    -0.677727844685E+01    0.16454E-04   -0.48875E-05  1776   0.450E-02    0.143E-02
@@ -145,3 +148,59 @@ def test_make_potcar_anonymous(tmp_path):
     with open(new_potcar_path) as fr:
         anon_potcar_text = fr.read()
     assert anon_potcar_text == "PAW_PBE P 17Jan2003\nPAW_PBE Pb_d 06Sep2000"
+
+
+@pytest.mark.parametrize(
+    "walltime_str,expected_timedelta",
+    [
+        ("00:00:00", timedelta(hours=0, minutes=0, seconds=0)),
+        ("00:00:59", timedelta(seconds=59)),
+        ("00:59:00", timedelta(minutes=59)),
+        ("01:00:00", timedelta(hours=1)),
+        ("12:34:56", timedelta(hours=12, minutes=34, seconds=56)),
+        ("100:01:00", timedelta(hours=100, minutes=1)),
+    ],
+)
+def test_parse_walltime(walltime_str, expected_timedelta):
+    assert VaspInputCreator.parse_walltime(walltime_str) == expected_timedelta
+
+
+@pytest.mark.parametrize(
+    "timedelta_input,expected_str",
+    [
+        (timedelta(hours=0, minutes=0, seconds=0), "00:00:00"),
+        (timedelta(seconds=59), "00:00:59"),
+        (timedelta(minutes=59), "00:59:00"),
+        (timedelta(hours=1), "01:00:00"),
+        (timedelta(hours=12, minutes=34, seconds=56), "12:34:56"),
+        (timedelta(hours=100, minutes=1), "100:01:00"),
+    ],
+)
+def test_format_walltime(timedelta_input, expected_str):
+    assert VaspInputCreator.format_walltime(timedelta_input) == expected_str
+
+
+@pytest.mark.parametrize(
+    "walltime_str",
+    ["00:00:00", "00:00:59", "12:34:56", "100:01:00"],
+)
+def test_roundtrip(walltime_str):
+    """Ensure format(parse(x)) == x."""
+    tdelta = VaspInputCreator.parse_walltime(walltime_str)
+    out_str = VaspInputCreator.format_walltime(tdelta)
+    assert out_str == walltime_str
+
+
+@pytest.mark.parametrize(
+    "invalid_input",
+    [
+        "2-03:00:00",  # contains dash
+        "01:60:00",  # minutes too large
+        "12:00:60",  # seconds too large
+        "12:34",  # missing part
+        "abc",  # nonsense
+    ],
+)
+def test_parse_walltime_invalid(invalid_input):
+    with pytest.raises(ValueError):
+        VaspInputCreator.parse_walltime(invalid_input)
