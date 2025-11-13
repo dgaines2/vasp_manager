@@ -278,14 +278,22 @@ class VaspInputCreator:
         )
         return hubbards
 
-    def _check_needs_dftu(self, hubbards_type: str, composition_dict: dict) -> bool:
+    def _check_needs_dftu(
+        self,
+        hubbards_type: str | None,
+        composition_dict: dict,
+    ) -> bool:
         if not hubbards_type:
             return False
 
-        needs_dftu = False
+        has_dftu_element = False
+        has_oxygen = False
         for el_name in composition_dict:
             if el_name in self.hubbards[hubbards_type]:
-                needs_dftu = True
+                has_dftu_element = True
+            if el_name == "O":
+                has_oxygen = True
+        needs_dftu = has_dftu_element and has_oxygen
         return needs_dftu
 
     def _get_ldau_string(self, hubbards_type: str, composition_dict: dict) -> str:
