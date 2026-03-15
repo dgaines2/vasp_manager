@@ -229,7 +229,9 @@ class BaseCalculationManager(ABC):
                     if previous_algo == new_algo:
                         errors_addressed[error] = False
                     else:
-                        vic.calc_config["algo"] = new_algo
+                        vic.calc_config = vic.calc_config.model_copy(
+                            update={"algo": new_algo}
+                        )
                         errors_addressed[error] = True
                 case "Inconsistent Bravais":
                     new_symprec = "1e-08"
@@ -237,7 +239,9 @@ class BaseCalculationManager(ABC):
                     if previous_symprec == new_symprec:
                         errors_addressed[error] = False
                     else:
-                        vic.calc_config["symprec"] = new_symprec
+                        vic.calc_config = vic.calc_config.model_copy(
+                            update={"symprec": new_symprec}
+                        )
                         errors_addressed[error] = True
                 case "oom-kill":
                     if vic.computer == "quest":

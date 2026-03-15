@@ -3,13 +3,13 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import subprocess
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from vasp_manager.config import ComputingConfig, load_computing_config
 from vasp_manager.utils import LoggerAdapter, change_directory
 
 if TYPE_CHECKING:
@@ -53,24 +53,17 @@ class JobManager:
         self._job_complete: bool
         self.logger = LoggerAdapter(logging.getLogger(__name__), self.manager_name)
 
-    @property
-    def computing_config_dict(self) -> dict:
-        fname = "computing_config.json"
-        fpath = self.config_dir / fname
-        if fpath.exists():
-            with open(fpath) as fr:
-                computing_config = json.load(fr)
-        else:
-            raise Exception(f"No {fname} found in {self.config_dir.absolute()}")
-        return computing_config
+    @cached_property
+    def computing_config(self) -> ComputingConfig:
+        return load_computing_config(self.config_dir)
 
     @cached_property
     def computer(self) -> str:
-        return self.computing_config_dict["computer"]
+        return self.computing_config.computer
 
     @cached_property
     def user_id(self) -> str:
-        return self.computing_config_dict[self.computer]["user_id"]
+        return self.computing_config.user_id
 
     @cached_property
     def mode(self) -> str:

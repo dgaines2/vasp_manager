@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Add typed pydantic config models (`CalcConfig`, `ComputingConfig`) with cached loaders
+
 ### Changed
 
+- `VaspInputCreator` and `JobManager` now use shared cached config loaders instead of reading JSON on each instantiation
 - Add `develop` branch to CI pull request trigger
 
 

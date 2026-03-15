@@ -21,6 +21,12 @@ import yaml
 from pymatgen.core import Structure
 from pymatgen.io.vasp import Poscar, Potcar
 
+from vasp_manager.config import (
+    CalcConfig,
+    ComputingConfig,
+    load_calc_configs,
+    load_computing_config,
+)
 from vasp_manager.utils import (
     LoggerAdapter,
     change_directory,
@@ -81,48 +87,26 @@ class VaspInputCreator:
         self.logger = LoggerAdapter(logging.getLogger(__name__), self.name)
 
     @cached_property
-    def calc_config(self) -> dict:
-        fname = "calc_config.json"
-        fpath = self.config_dir / fname
-        if fpath.exists():
-            with open(fpath) as fr:
-                calc_config_dict = json.load(fr)
-                calc_config = calc_config_dict[self.mode]
-        else:
-            raise Exception(f"No {fname} found in path {self.config_dir.absolute()}")
+    def calc_config(self) -> CalcConfig:
+        calc_config = load_calc_configs(self.config_dir)[self.mode]
         # if material_name/mode calc_config.json exists, update with that
         # This allows for custom settings for a specific material/mode to be used
-        custom_calc_config_path = self.calc_dir / fname
+        custom_calc_config_path = self.calc_dir / "calc_config.json"
         if custom_calc_config_path.exists():
             with open(custom_calc_config_path) as fr:
                 custom_calc_config = json.load(fr)
-            calc_config.update(custom_calc_config)
+            calc_config = CalcConfig.model_validate(
+                {**calc_config.model_dump(), **custom_calc_config}
+            )
         return calc_config
 
     @cached_property
-    def computing_config_dict(self) -> dict:
-        """
-        Dict containing all computing configs
-        """
-        fname = "computing_config.json"
-        fpath = self.config_dir / fname
-        if fpath.exists():
-            with open(fpath) as fr:
-                computing_config_dict = json.load(fr)
-        else:
-            raise Exception(f"No {fname} found in path {self.config_dir.absolute()}")
-        return computing_config_dict
-
-    @cached_property
-    def computing_config(self) -> dict:
-        """
-        Dict containing only the computing config for the specified computer
-        """
-        return self.computing_config_dict[self.computer]
+    def computing_config(self) -> ComputingConfig:
+        return load_computing_config(self.config_dir)
 
     @cached_property
     def computer(self) -> str:
-        return self.computing_config_dict["computer"]
+        return self.computing_config.computer
 
     @cached_property
     def source_structure(self) -> Structure:
@@ -181,7 +165,7 @@ class VaspInputCreator:
         Create and write a POTCAR
         """
         potcar_path = self.calc_dir / "POTCAR"
-        potcar_dir = Path(self.computing_config["potcar_dir"])
+        potcar_dir = self.computing_config.potcar_dir
 
         el_names = [el.name for el in self.source_structure.composition]
         self.logger.debug(
@@ -211,7 +195,7 @@ class VaspInputCreator:
 
     @cached_property
     def n_procs(self) -> int:
-        n_procs = self.n_nodes * self.computing_config["ncore_per_node"]
+        n_procs = self.n_nodes * self.computing_config.ncore_per_node
         return n_procs
 
     @property
@@ -234,7 +218,7 @@ class VaspInputCreator:
             Typically request all available processors on each node, and then
             (optionally) leave some empty for memory or ease of division
         """
-        ncore_per_node = self.computing_config["ncore_per_node"]
+        ncore_per_node = self.computing_config.ncore_per_node
         return self.n_nodes * (ncore_per_node - self.ncore_per_node_for_memory)
 
     @cached_property
@@ -340,7 +324,12 @@ class VaspInputCreator:
             but future versions should include ability to make kpoints from kppra
         """
         incar_path = self.calc_dir / "INCAR"
-        calc_config = self.calc_config.copy()
+        calc_config = self.calc_config.model_dump()
+        # Convert Python bools to VASP logical strings
+        calc_config = {
+            k: (".TRUE." if v else ".FALSE.") if isinstance(v, bool) else v
+            for k, v in calc_config.items()
+        }
 
         if calc_config["ispin"] not in [1, "auto"]:
             raise RuntimeError("ISPIN must be set to 1 or auto")
@@ -366,19 +355,15 @@ class VaspInputCreator:
             )
         # make n_bands divisible by NCORE (VASP INCAR tag)
         # elastic calculation won't run unless NCORE=1
-        if self.mode == "elastic":
-            self.computing_config["ncore"] = 1
-        ncore = self.computing_config["ncore"]
+        ncore = 1 if self.mode == "elastic" else self.computing_config.ncore
         calc_config["ncore"] = ncore
-        cores_per_group = int(self.n_procs_used / self.calc_config["kpar"])
+        cores_per_group = int(self.n_procs_used / self.calc_config.kpar)
         calc_config["nbands"] = np.max(
             [
                 int(np.ceil(0.75 * n_electrons / ncore) * ncore),
                 cores_per_group,
             ]
         )
-        for write_tag in ["lcharge", "lwave", "lvtot"]:
-            calc_config[write_tag] = calc_config.get(write_tag, ".FALSE.")
         calc_config["amix"] = calc_config.get("amix", 0.4)
         calc_config["bmix"] = calc_config.get("bmix", 1.0)
 
@@ -427,7 +412,7 @@ class VaspInputCreator:
 
     def make_kpoints(self) -> None:
         kpoints_path = self.calc_dir / "KPOINTS"
-        kspacing = self.calc_config["kspacing"]
+        kspacing = self.calc_config.kspacing
         reciprocal_lattice = self.source_structure.lattice.reciprocal_lattice
         abc = np.asarray(reciprocal_lattice.abc)
         kpoints = [int(k) for k in np.ceil(abc / kspacing)]
@@ -500,7 +485,7 @@ class VaspInputCreator:
 
         jobname = pad_string + self.name
         # convert walltime into timedelta (and back) for easier math
-        walltime_duration = self.parse_walltime(self.calc_config["walltime"])
+        walltime_duration = self.parse_walltime(self.calc_config.walltime)
         walltime_duration *= self.increase_walltime_by_factor
         walltime = self.format_walltime(walltime_duration)
         # cut walltime short by 1 minute so job metrics log properly
@@ -512,7 +497,7 @@ class VaspInputCreator:
             # otherwise, convert it back to HH:MM:SS
             timeout = self.format_walltime(timeout_as_delta)
 
-        computing_config = self.computing_config.copy()
+        computing_config = self.computing_config.model_dump()
         ncore_per_node = self.n_procs_used // self.n_nodes
         computing_config.update(
             {
@@ -607,8 +592,7 @@ class VaspInputCreator:
             self.calc_dir.mkdir()
         self.make_poscar()
         self.make_potcar()
-        if "write_kpoints" in self.calc_config:
-            if self.calc_config["write_kpoints"]:
-                self.make_kpoints()
+        if self.calc_config.write_kpoints:
+            self.make_kpoints()
         self.make_incar()
         self.make_vaspq()
