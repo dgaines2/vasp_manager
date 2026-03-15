@@ -195,8 +195,8 @@ def test_hit_errors_and_restart(calcs_dir):
     assert all_errors_addressed
     assert not rlx_coarse_manager.is_done
     assert not rlx_coarse_manager.stopped
-    assert rlx_coarse_manager.vasp_input_creator.calc_config["algo"] == "Fast"
-    assert rlx_coarse_manager.vasp_input_creator.calc_config["symprec"] == "1e-08"
+    assert rlx_coarse_manager.vasp_input_creator.calc_config.algo == "Fast"
+    assert rlx_coarse_manager.vasp_input_creator.calc_config.symprec == "1e-08"
     assert rlx_coarse_manager.vasp_input_creator.ncore_per_node_for_memory == 64
     assert rlx_coarse_manager.results == "not finished"
 
