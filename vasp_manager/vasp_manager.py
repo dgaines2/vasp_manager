@@ -34,6 +34,18 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+CALC_DEPENDENCIES: dict[str, list[str]] = {
+    "rlx-coarse": [],
+    "rlx": ["rlx-coarse"],
+    "static": ["rlx"],
+    "bulkmod": ["rlx"],
+    "elastic": ["rlx"],
+}
+
+REQUIRED_CALC_DEPENDENCIES: dict[str, list[str]] = {
+    "elastic": ["rlx"],
+}
+
 ASCII_LOGO = r"""
  __      __             __  __
  \ \    / /            |  \/  |
@@ -124,20 +136,20 @@ class VaspManager:
     def calculation_types(self, values: list[CalculationType]) -> None:
         if not isinstance(values, list):
             raise TypeError("calculation_types must be a list")
-        proper_order: list[CalculationType] = [
-            "rlx-coarse",
-            "rlx",
-            "static",
-            "bulkmod",
-            "elastic",
-        ]
+        supported_calc_types = set(CALC_DEPENDENCIES)
         for calc_type in values:
-            if calc_type not in proper_order:
+            if calc_type not in supported_calc_types:
                 raise ValueError(f"Calculation type {calc_type} not supported")
-        sorted_values: list[CalculationType] = [
-            calc_type for calc_type in proper_order if calc_type in values
-        ]
-        self._calculation_types = sorted_values
+        for calc_type, required_dependencies in REQUIRED_CALC_DEPENDENCIES.items():
+            if calc_type in values:
+                for required_dependency in required_dependencies:
+                    if required_dependency not in values:
+                        raise ValueError(
+                            f"Cannot use '{calc_type}' without '{required_dependency}'"
+                            " in calculation_types"
+                        )
+        active_dependencies = VaspManager._build_active_dependencies(values)
+        self._calculation_types = VaspManager._toposort(active_dependencies)
 
     @property
     def ncore(self) -> int:
@@ -239,6 +251,59 @@ class VaspManager:
         else:
             self._results = {mat_name: {} for mat_name in self.material_names}
 
+    @staticmethod
+    def _build_active_dependencies(
+        calc_types: list[str],
+    ) -> dict[str, list[str]]:
+        """
+        Build a dependency graph restricted to the requested calculation types.
+
+        An edge is only included when both the dependent calc type and its
+        dependency are present in calc_types, reflecting that dependencies are
+        optional unless explicitly requested.
+        """
+        return {
+            calc_type: [
+                dependency
+                for dependency in CALC_DEPENDENCIES.get(calc_type, [])
+                if dependency in calc_types
+            ]
+            for calc_type in calc_types
+        }
+
+    @staticmethod
+    def _toposort(dependencies: dict[str, list[str]]) -> list[str]:
+        """
+        Return nodes in dependency order using Kahn's algorithm.
+
+        Args:
+            dependencies: adjacency list mapping each node to its list of
+                prerequisite nodes
+
+        Returns:
+            list of node names in topological order
+
+        Raises:
+            ValueError: if a cycle is detected in the dependency graph
+        """
+        in_degree: dict[str, int] = {node: 0 for node in dependencies}
+        for node, parents in dependencies.items():
+            for parent in parents:
+                in_degree[node] += 1
+        queue = [node for node, degree in in_degree.items() if degree == 0]
+        result: list[str] = []
+        while queue:
+            node = queue.pop(0)
+            result.append(node)
+            for candidate, parents in dependencies.items():
+                if node in parents:
+                    in_degree[candidate] -= 1
+                    if in_degree[candidate] == 0:
+                        queue.append(candidate)
+        if len(result) != len(dependencies):
+            raise ValueError("Cycle detected in calculation dependency graph")
+        return result
+
     def _check_calc_by_result(
         self,
         material_name: str,
@@ -270,6 +335,7 @@ class VaspManager:
         """
         Gets calculation managers for a single material
         """
+        active_dependencies = self._build_active_dependencies(self.calculation_types)
         calc_managers: list[CalculationManager] = []
         for calc_type in self.calculation_types:
             manager: CalculationManager
@@ -285,7 +351,7 @@ class VaspManager:
                         **self.calculation_manager_kwargs[calc_type],
                     )
                 case "rlx":
-                    from_coarse_relax = "rlx-coarse" in self.calculation_types
+                    from_coarse_relax = "rlx-coarse" in active_dependencies.get("rlx", [])
                     manager = RlxCalculationManager(
                         material_dir=material_dir,
                         to_rerun=self.to_rerun,
@@ -298,7 +364,7 @@ class VaspManager:
                         **self.calculation_manager_kwargs[calc_type],
                     )
                 case "static":
-                    from_relax = "rlx" in self.calculation_types
+                    from_relax = "rlx" in active_dependencies.get("static", [])
                     manager = StaticCalculationManager(
                         material_dir=material_dir,
                         to_rerun=self.to_rerun,
@@ -309,7 +375,7 @@ class VaspManager:
                         **self.calculation_manager_kwargs[calc_type],
                     )
                 case "bulkmod":
-                    from_relax = "rlx" in self.calculation_types
+                    from_relax = "rlx" in active_dependencies.get("bulkmod", [])
                     manager = BulkmodCalculationManager(
                         material_dir=material_dir,
                         to_rerun=self.to_rerun,
@@ -319,12 +385,6 @@ class VaspManager:
                         **self.calculation_manager_kwargs[calc_type],
                     )
                 case "elastic":
-                    if "rlx" not in self.calculation_types:
-                        msg = (
-                            "Cannot perform elastic calculation without mode='rlx'"
-                            " first"
-                        )
-                        raise Exception(msg)
                     manager = ElasticCalculationManager(
                         material_dir=material_dir,
                         to_rerun=self.to_rerun,
@@ -353,44 +413,41 @@ class VaspManager:
         Runs vasp job workflow for a single material
         """
         material_results: dict[str, Any] = {}
+        active_dependencies = self._build_active_dependencies(self.calculation_types)
+        managers_by_mode = {
+            calc_manager.mode: calc_manager
+            for calc_manager in self.calculation_managers[material_name]
+        }
+
         for calc_manager in self.calculation_managers[material_name]:
-            if calc_manager.mode in self.results[material_name].keys():
+            mode = calc_manager.mode
+
+            if mode in self.results[material_name].keys():
                 calc_is_done, calc_is_stopped = self._check_calc_by_result(
-                    material_name, calc_manager.mode
+                    material_name, mode
                 )
                 if calc_is_done and not calc_manager.from_scratch:
-                    logger.info(
-                        f"{material_name} -- {calc_manager.mode.upper()} Successful"
-                    )
+                    logger.info(f"{material_name} -- {mode.upper()} Successful")
                     continue
 
             if calc_manager.stopped:
-                logger.info(f"{material_name} -- {calc_manager.mode.upper()} STOPPED")
-                material_results[calc_manager.mode] = "STOPPED"
-                break
+                logger.info(f"{material_name} -- {mode.upper()} STOPPED")
+                material_results[mode] = "STOPPED"
+                continue
+
+            dependencies_satisfied = all(
+                managers_by_mode[dependency].is_done
+                for dependency in active_dependencies.get(mode, [])
+                if dependency in managers_by_mode
+            )
+            if not dependencies_satisfied:
+                continue
 
             if not calc_manager.job_exists:
-                logger.info(f"{material_name} -- Setting up {calc_manager.mode.upper()}")
+                logger.info(f"{material_name} -- Setting up {mode.upper()}")
                 calc_manager.setup_calc()
-                match calc_manager.mode:
-                    case "rlx-coarse" | "rlx":
-                        break
-                    case _:
-                        pass
 
-            if not calc_manager.is_done:
-                match calc_manager.mode:
-                    case "rlx-coarse" | "rlx" | "elastic":
-                        # don't check further modes as they rely on rlx-coarse
-                        # or rlx to be done
-                        # break if elastic not done to avoid analysis
-                        break
-                    case _:
-                        # go ahead and check the other modes as they are
-                        # independent of each other
-                        pass
-
-            material_results[calc_manager.mode] = calc_manager.results
+            material_results[mode] = calc_manager.results
         return (material_name, material_results)
 
     def _manage_calculations_wrapper(self) -> list[tuple]:
