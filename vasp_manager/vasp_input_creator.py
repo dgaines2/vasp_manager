@@ -27,15 +27,10 @@ from vasp_manager.config import (
     load_calc_configs,
     load_computing_config,
 )
-from vasp_manager.utils import (
-    LoggerAdapter,
-    change_directory,
-    get_pmg_structure_from_poscar,
-    pcat,
-)
+from vasp_manager.utils import LoggerAdapter, change_directory, pcat
 
 if TYPE_CHECKING:
-    from vasp_manager.types import Filepath, SourceDirectory, WorkingDirectory
+    from vasp_manager.types import SourceDirectory, WorkingDirectory
 
 logger = logging.getLogger(__name__)
 
@@ -49,10 +44,9 @@ class VaspInputCreator:
         self,
         calc_dir: WorkingDirectory,
         mode: str,
-        poscar_source_path: Filepath,
+        structure: Structure,
         config_dir: SourceDirectory | None = None,
-        primitive: bool = True,
-        name: str = None,
+        name: str | None = None,
         increase_nodes_by_factor: int = 1,
         increase_walltime_by_factor: int = 1,
         poscar_significant_figures: int = 16,
@@ -61,26 +55,25 @@ class VaspInputCreator:
     ) -> None:
         """
         Args:
-            calc_dir:
-            mode:
-            poscar_source_path:
-            config_dir:
-            primitive:
-            name:
-            increase_nodes_by_factor:
-            increase_walltime_by_factor:
-            poscar_significant_figures:
-            ncore_per_node_for_memory:
+            calc_dir: directory where VASP input files will be written
+            mode: calculation type (e.g. "rlx", "static", "elastic")
+            structure: pymatgen Structure to use for input generation
+            config_dir: directory containing calc_config.json and
+                computing_config.json
+            name: material name for logging and job naming
+            increase_nodes_by_factor: multiply node count by this factor
+            increase_walltime_by_factor: multiply walltime by this factor
+            poscar_significant_figures: significant figures for POSCAR coords
+            ncore_per_node_for_memory: cores per node reserved for memory
             use_spin: pass False to suppress spin polarization
         """
         self.calc_dir = Path(calc_dir)
         self.mode = mode
-        self.poscar_source_path = Path(poscar_source_path)
+        self.structure = structure
         self.config_dir = Path(config_dir) if config_dir else self.calc_dir.parents[1]
-        self.primitive = primitive
         self.increase_nodes_by_factor = int(increase_nodes_by_factor)
         self.increase_walltime_by_factor = int(increase_walltime_by_factor)
-        self.name = name if name else self.source_structure.composition.reduced_formula
+        self.name = name if name else self.structure.composition.reduced_formula
         self.poscar_significant_figures = poscar_significant_figures
         self.ncore_per_node_for_memory = ncore_per_node_for_memory
         self.use_spin = use_spin
@@ -107,21 +100,6 @@ class VaspInputCreator:
     @cached_property
     def computer(self) -> str:
         return self.computing_config.computer
-
-    @cached_property
-    def source_structure(self) -> Structure:
-        num_archives = len(list(self.calc_dir.glob("archive*")))
-        if num_archives > 0:
-            archive_name = f"archive_{num_archives - 1}"
-            self.poscar_source_path = self.calc_dir / archive_name / "CONTCAR"
-        try:
-            structure = get_pmg_structure_from_poscar(
-                self.poscar_source_path, primitive=self.primitive
-            )
-        except Exception as e:
-            raise Exception(f"Cannot load POSCAR in {self.poscar_source_path}: {e}")
-        assert isinstance(structure, Structure)
-        return structure
 
     @cached_property
     def incar_template(self) -> str:
@@ -154,7 +132,7 @@ class VaspInputCreator:
         """
         Create and write a POSCAR
         """
-        poscar = Poscar(self.source_structure)
+        poscar = Poscar(self.structure)
         poscar_path = self.calc_dir / "POSCAR"
         poscar.write_file(
             poscar_path, significant_figures=self.poscar_significant_figures
@@ -167,10 +145,8 @@ class VaspInputCreator:
         potcar_path = self.calc_dir / "POTCAR"
         potcar_dir = self.computing_config.potcar_dir
 
-        el_names = [el.name for el in self.source_structure.composition]
-        self.logger.debug(
-            f"{self.source_structure.composition.reduced_formula}, {el_names}"
-        )
+        el_names = [el.name for el in self.structure.composition]
+        self.logger.debug(f"{self.structure.composition.reduced_formula}, {el_names}")
         pot_singles = [
             potcar_dir / self.potcar_dict[el_name] / "POTCAR" for el_name in el_names
         ]
@@ -186,7 +162,7 @@ class VaspInputCreator:
     @cached_property
     def n_nodes(self) -> int:
         # start with 1 node per 32 atoms
-        num_nodes = (len(self.source_structure) // 32) + 1
+        num_nodes = (len(self.structure) // 32) + 1
         if self.computer == "quest":
             # quest has ~2x smaller nodes than perlmutter
             num_nodes *= 2
@@ -342,7 +318,7 @@ class VaspInputCreator:
         if calc_config["iopt"] != 0 and calc_config["potim"] != 0:
             raise RuntimeError("To use IOPT != 0, POTIM must be set to 0")
 
-        composition_dict = self.source_structure.composition.as_dict()
+        composition_dict = self.structure.composition.as_dict()
         # read POTCAR
         potcar_path = self.calc_dir / "POTCAR"
         with warnings.catch_warnings():
@@ -413,7 +389,7 @@ class VaspInputCreator:
     def make_kpoints(self) -> None:
         kpoints_path = self.calc_dir / "KPOINTS"
         kspacing = self.calc_config.kspacing
-        reciprocal_lattice = self.source_structure.lattice.reciprocal_lattice
+        reciprocal_lattice = self.structure.lattice.reciprocal_lattice
         abc = np.asarray(reciprocal_lattice.abc)
         kpoints = [int(k) for k in np.ceil(abc / kspacing)]
         kpoints_str = " ".join(str(kpoint) for kpoint in kpoints)
@@ -471,9 +447,6 @@ class VaspInputCreator:
             case "static":
                 pad_string = "s"
                 mode = "static"
-            case "bulkmod":
-                pad_string = "b"
-                mode = "bulkmod"
             case "elastic":
                 pad_string = "e"
                 mode = "elastic"
@@ -537,9 +510,13 @@ class VaspInputCreator:
             fw.write(vaspq)
         vaspq_path.chmod(vaspq_path.stat().st_mode | stat.S_IEXEC)
 
-    def make_archive_and_repopulate(self) -> None:
+    def make_archive(self) -> Path | None:
         """
-        Make an archive of a VASP calculation and copy back over relevant files
+        Archive current VASP files into an archive_N/ subdirectory.
+
+        Returns:
+            archive_path: path to the created archive directory, or None if
+                CONTCAR was empty/missing and files were just cleaned up
         """
         with change_directory(self.calc_dir):
             contcar_path = Path("CONTCAR")
@@ -558,6 +535,7 @@ class VaspInputCreator:
                 ]
                 for f in all_files:
                     os.remove(f)
+                return None
             # else, make the archive
             else:
                 num_previous_archives = len(list(Path(".").glob("archive*")))
@@ -571,14 +549,13 @@ class VaspInputCreator:
                     if f.is_file() and "archive" not in f.name and "json" not in f.name
                 ]
                 for f in all_files:
-                    # add if symlink for testing
                     if f.is_symlink():
                         f_links_to = f.readlink()
                         os.remove(f)
                         shutil.copy2(f_links_to, f)
                     shutil.move(f, archive_name)
 
-        self.create()
+                return self.calc_dir / archive_name
 
     def create(self) -> None:
         """

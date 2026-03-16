@@ -6,6 +6,7 @@ import shutil
 import importlib_resources
 import pytest
 
+from vasp_manager.utils import get_pmg_structure_from_poscar
 from vasp_manager.vasp_input_creator import VaspInputCreator
 
 
@@ -63,10 +64,11 @@ def nacl_vic(tmp_path, nacl_poscar_path, config_dir):
     )
     potcar_dst = calc_dir / "POTCAR"
     shutil.copy(str(potcar_src), str(potcar_dst))
+    structure = get_pmg_structure_from_poscar(nacl_poscar_path, primitive=True)
     return VaspInputCreator(
         calc_dir=calc_dir,
         mode="rlx-coarse",
-        poscar_source_path=nacl_poscar_path,
+        structure=structure,
         config_dir=config_dir,
     )
 
@@ -88,10 +90,11 @@ def cuo_vic(tmp_path, cuo_poscar_path, config_dir):
     )
     potcar_dst = calc_dir / "POTCAR"
     shutil.copy(str(potcar_src), str(potcar_dst))
+    structure = get_pmg_structure_from_poscar(cuo_poscar_path, primitive=True)
     return VaspInputCreator(
         calc_dir=calc_dir,
         mode="rlx",
-        poscar_source_path=cuo_poscar_path,
+        structure=structure,
         config_dir=config_dir,
     )
 
@@ -105,7 +108,7 @@ def test_check_needs_spin_polarization_no_d_f_elements(nacl_vic):
     """
     NaCl (Na, Cl) should not need spin polarization
     """
-    composition_dict = nacl_vic.source_structure.composition.as_dict()
+    composition_dict = nacl_vic.structure.composition.as_dict()
     result = nacl_vic._check_needs_spin_polarization(composition_dict)
     assert result is False
 
@@ -114,7 +117,7 @@ def test_check_needs_spin_polarization_with_d_block(cuo_vic):
     """
     CuO (Cu is d-block) should need spin polarization
     """
-    composition_dict = cuo_vic.source_structure.composition.as_dict()
+    composition_dict = cuo_vic.structure.composition.as_dict()
     result = cuo_vic._check_needs_spin_polarization(composition_dict)
     assert result is True
 
@@ -128,7 +131,7 @@ def test_check_needs_dftu_no_hubbards(nacl_vic):
     """
     No hubbards → no DFT+U regardless of composition
     """
-    composition_dict = nacl_vic.source_structure.composition.as_dict()
+    composition_dict = nacl_vic.structure.composition.as_dict()
     assert nacl_vic._check_needs_dftu(None, composition_dict) is False
     assert nacl_vic._check_needs_dftu(False, composition_dict) is False
 
@@ -137,7 +140,7 @@ def test_check_needs_dftu_no_oxygen(nacl_vic):
     """
     Wang DFT+U requires oxygen; NaCl has no oxygen → no DFT+U
     """
-    composition_dict = nacl_vic.source_structure.composition.as_dict()
+    composition_dict = nacl_vic.structure.composition.as_dict()
     assert nacl_vic._check_needs_dftu("wang", composition_dict) is False
 
 
@@ -145,7 +148,7 @@ def test_check_needs_dftu_with_oxygen_and_d_block(cuo_vic):
     """
     CuO has Cu (d-block) + O → needs DFT+U
     """
-    composition_dict = cuo_vic.source_structure.composition.as_dict()
+    composition_dict = cuo_vic.structure.composition.as_dict()
     assert cuo_vic._check_needs_dftu("wang", composition_dict) is True
 
 
@@ -158,7 +161,7 @@ def test_get_lmaxmix_sp_elements_only(nacl_vic):
     """
     NaCl has only s/p elements → LMAXMIX = 2
     """
-    composition_dict = nacl_vic.source_structure.composition.as_dict()
+    composition_dict = nacl_vic.structure.composition.as_dict()
     assert nacl_vic._get_lmaxmix(composition_dict) == 2
 
 
@@ -166,7 +169,7 @@ def test_get_lmaxmix_d_block(cuo_vic):
     """
     CuO has Cu (d-block) → LMAXMIX = 4
     """
-    composition_dict = cuo_vic.source_structure.composition.as_dict()
+    composition_dict = cuo_vic.structure.composition.as_dict()
     assert cuo_vic._get_lmaxmix(composition_dict) == 4
 
 
@@ -179,7 +182,7 @@ def test_get_auto_magmom_no_d_f_elements(nacl_vic):
     """
     NaCl: all elements should get 0.0 initial moment
     """
-    composition_dict = nacl_vic.source_structure.composition.as_dict()
+    composition_dict = nacl_vic.structure.composition.as_dict()
     magmom = nacl_vic._get_auto_magmom(composition_dict)
     assert magmom.startswith("MAGMOM =")
     assert "5.0" not in magmom
@@ -192,7 +195,7 @@ def test_get_auto_magmom_d_block_element(cuo_vic):
     """
     CuO: Cu (d-block) should get 5.0 initial moment
     """
-    composition_dict = cuo_vic.source_structure.composition.as_dict()
+    composition_dict = cuo_vic.structure.composition.as_dict()
     magmom = cuo_vic._get_auto_magmom(composition_dict)
     assert "5.0" in magmom
 
