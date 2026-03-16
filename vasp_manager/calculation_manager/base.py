@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 
 from pymatgen.core import Structure
 
+from vasp_manager.config import load_computing_config
 from vasp_manager.job_manager import JobManager
 from vasp_manager.utils import get_pmg_structure_from_poscar
 from vasp_manager.vasp_input_creator import VaspInputCreator
@@ -97,6 +98,17 @@ class BaseCalculationManager(ABC):
     @abstractmethod
     def check_calc(self) -> bool:
         pass
+
+    def _rerun_resource_kwargs(self) -> dict[str, int]:
+        """Build increase_*_by_factor kwargs for a timeout rerun.
+
+        Reads the rerun strategy from computing_config to determine whether
+        to increase nodes or walltime, and by what factor.
+        """
+        cc = load_computing_config(self.config_dir)
+        if cc.rerun_increase == "nodes":
+            return {"increase_nodes_by_factor": cc.rerun_increase_factor}
+        return {"increase_walltime_by_factor": cc.rerun_increase_factor}
 
     def _load_structure(self, poscar_path: Path | None = None) -> Structure:
         """

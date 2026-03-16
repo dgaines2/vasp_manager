@@ -155,8 +155,7 @@ class StaticCalculationManager(BaseCalculationManager):
             if self.to_rerun:
                 self.logger.info(f"Rerunning {self.calc_dir}")
                 self._from_scratch()
-                # increase nodes as its likely the calculation failed
-                self.setup_calc(increase_walltime_by_factor=2)
+                self.setup_calc(**self._rerun_resource_kwargs())
             return False
 
         self._results = {}

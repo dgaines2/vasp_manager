@@ -175,10 +175,18 @@ class RlxCalculationManager(BaseCalculationManager):
             self.logger.debug(tail_output)
             if self.to_rerun:
                 self.logger.info(f"Rerunning {self.calc_dir}")
-                # increase nodes as its likely the calculation failed
-                self.setup_calc(
-                    increase_walltime_by_factor=2, make_archive=True, use_spin=use_spin
-                )
+                nsw = self.vasp_input_creator.calc_config.nsw
+                completed_steps = len(pgrep(stdout_path, "F="))
+                if completed_steps >= nsw:
+                    # ran all NSW steps without converging — relaunch same params
+                    self.setup_calc(make_archive=True, use_spin=use_spin)
+                else:
+                    # timed out before completing NSW — apply rerun strategy
+                    self.setup_calc(
+                        **self._rerun_resource_kwargs(),
+                        make_archive=True,
+                        use_spin=use_spin,
+                    )
             return False
 
         # in the case that the calculation finishes but results in a spin value lower
