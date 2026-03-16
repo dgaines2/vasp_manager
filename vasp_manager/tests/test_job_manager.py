@@ -3,8 +3,6 @@
 
 import json
 
-import pytest
-
 from vasp_manager.job_manager import JobManager
 
 

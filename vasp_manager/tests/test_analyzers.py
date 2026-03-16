@@ -37,7 +37,7 @@ def test_elastic_analyzer_stable(stable_material_dir):
     assert results["G_Reuss"] == 14.286
     assert results["G_Voigt"] == 14.734
     assert results["G_VRH"] == 14.51
-    assert results["unstable"] == False
+    assert not results["unstable"]
     assert np.array_equal(
         results["elastic_tensor"],
         [
@@ -71,7 +71,7 @@ def test_elastic_analyzer_unstable(unstable_material_dir):
     assert results["G_Reuss"] == -199.401
     assert results["G_Voigt"] == 25.595
     assert results["G_VRH"] == -86.903
-    assert results["unstable"] == True
+    assert results["unstable"]
     assert np.array_equal(
         results["elastic_tensor"],
         [

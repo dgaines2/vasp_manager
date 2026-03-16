@@ -55,9 +55,7 @@ ASCII_LOGO = r"""
      \/ \__,_|___/ .__/|_|  |_|\__,_|_| |_|\__,_|\__, |\___|_|
                  | |                              __/ |
                  |_|                             |___/ v{}
-""".format(
-    version("vasp_manager")
-)
+""".format(version("vasp_manager"))
 
 
 class VaspManager:
@@ -459,7 +457,9 @@ class VaspManager:
         else:
             results = []
             for i, material_name in enumerate(self.material_names):
-                print(f"{i+1}/{len(self.material_names)} -- {material_name}", flush=True)
+                print(
+                    f"{i + 1}/{len(self.material_names)} -- {material_name}", flush=True
+                )
                 results.append(self._manage_calculations(material_name))
                 print()
         return results

@@ -112,7 +112,7 @@ class VaspInputCreator:
     def source_structure(self) -> Structure:
         num_archives = len(list(self.calc_dir.glob("archive*")))
         if num_archives > 0:
-            archive_name = f"archive_{num_archives-1}"
+            archive_name = f"archive_{num_archives - 1}"
             self.poscar_source_path = self.calc_dir / archive_name / "CONTCAR"
         try:
             structure = get_pmg_structure_from_poscar(
