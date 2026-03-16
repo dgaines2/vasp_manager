@@ -1,7 +1,5 @@
 import filecmp
-import shutil
 
-import importlib_resources
 import pytest
 from pymatgen.analysis.structure_matcher import StructureMatcher
 from pymatgen.core import Structure
@@ -15,58 +13,21 @@ from vasp_manager.calculation_manager import (
 )
 from vasp_manager.utils import pgrep
 
-"""
-Four material paths exist in calculations/
-1) material: NaCl completed successfully
-2) material_needs_rerun: NaCl with failed runs to rerun from scratch
-3) material_needs_archive: NaCl with failed runs to make archive directories
-4) material_hit_erros: NaCl with errors in stdout.txt and stderr.txt
-5) material_spinu: CuO with spin and DFT+U completed sucessfully
-"""
+# Four material paths exist in calculations/
+# 1) material: NaCl completed successfully
+# 2) material_needs_rerun: NaCl with failed runs to rerun from scratch
+# 3) material_needs_archive: NaCl with failed runs to make archive directories
+# 4) material_hit_erros: NaCl with errors in stdout.txt and stderr.txt
+# 5) material_spinu: CuO with spin and DFT+U completed sucessfully
 
 INPUT_FILES = ["POSCAR", "POTCAR", "INCAR", "vasp.q"]
 
-
-@pytest.fixture(scope="session")
-def calcs_dir(tmp_path_factory):
-    """
-    Complete calculations directory
-    """
-    calculations_dir = (
-        importlib_resources.files("vasp_manager") / "tests" / "calculations"
-    )
-    new_calculations_dir = tmp_path_factory.mktemp("calculations")
-    shutil.copytree(
-        calculations_dir,
-        new_calculations_dir,
-        dirs_exist_ok=True,
-        symlinks=True,
-    )
-    return new_calculations_dir
+# calcs_dir and base_calcs_dir fixtures are in conftest.py
 
 
-@pytest.fixture(scope="session")
-def base_calcs_dir(tmp_path_factory):
-    """
-    Calculations directory that needs each run type to be set up
-    """
-    calculations_dir = (
-        importlib_resources.files("vasp_manager") / "tests" / "calculations"
-    )
-    new_calculations_dir = tmp_path_factory.mktemp("calculations")
-    shutil.copytree(
-        calculations_dir,
-        new_calculations_dir,
-        dirs_exist_ok=True,
-        symlinks=True,
-        ignore=shutil.ignore_patterns("rlx*", "static", "bulkmod", "elastic"),
-    )
-    return new_calculations_dir
-
-
-"""
-Do testing of the results first as they don't modify the directories
-"""
+# ---------------------------------------------------------------------------
+# Do testing of the results first as they don't modify the directories
+# ---------------------------------------------------------------------------
 
 
 def test_rlx_coarse_results(calcs_dir):
@@ -169,9 +130,9 @@ def test_elastic_results(calcs_dir):
     assert elastic_manager.is_done
 
 
-"""
-Do testing of the errors next as they are independent
-"""
+# ---------------------------------------------------------------------------
+# Do testing of the errors next as they are independent
+# ---------------------------------------------------------------------------
 
 
 def test_hit_errors_and_restart(calcs_dir):
@@ -327,9 +288,9 @@ def test_parse_magmom(calcs_dir):
         assert rlx_manager._parse_magmom_per_atom() == expected_magmom_pa
 
 
-"""
-Do testing of the reruns/archives last as they modify their directories
-"""
+# ---------------------------------------------------------------------------
+# Do testing of the reruns/archives last as they modify their directories
+# ---------------------------------------------------------------------------
 
 
 def test_too_many_rlx_coarse_archives(calcs_dir):
