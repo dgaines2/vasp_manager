@@ -45,6 +45,9 @@ running jobs on.
 * `vasp_module` (str)
 * `ncore` (int)
 * `ncore_per_node` (int)
+* `atoms_per_node` (int, optional) — default `32`
+* `rerun_increase` (str, optional) — `"nodes"` or `"walltime"`, default `"walltime"`
+* `rerun_increase_factor` (int, optional) — default `2`
 
 !!! note
 
@@ -55,6 +58,18 @@ running jobs on.
     * For `vasp_module`, a VASP 6 module is strongly recommended.
     * The `personal` "computer" is only used for internal unit testing, not to
       run any actual jobs.
+
+!!! note "Job resource tuning"
+
+    The following fields are **optional** — omitting them preserves the previous
+    default behavior.
+
+    * `atoms_per_node` controls how many compute nodes are requested per job
+      (nodes = floor(total atoms / `atoms_per_node`) + 1).
+    * `rerun_increase` chooses which resource to scale when a job times out:
+      `"walltime"` (increase the walltime) or `"nodes"` (increase the node count).
+    * `rerun_increase_factor` is the multiplier applied to the chosen resource
+      on rerun (e.g., `2` means double).
 
 !!! warning "Warning"
 
@@ -89,8 +104,9 @@ For each desired calculation mode, set the INCAR tags in this json.
   [Spin Configuration](user_config/spin.md)
 * See more about DFT+U settings (`"hubbards": "wang"`) here:
   [DFT+U Configuration](user_config/hubbards.md)
-* Note: `VaspManager` uses 1 compute node per 32 atoms, so don't be surprised
-  if you job requests more than a single node.
+* Note: `VaspManager` uses 1 compute node per `atoms_per_node` atoms (see
+  [Computing Configuration](#computing-configuration)), so don't be surprised
+  if your job requests more than a single node.
 
 ### Supported tags:
 
@@ -130,8 +146,10 @@ For each desired calculation mode, set the INCAR tags in this json.
       them from being parsed as decimals (e.g. `0.001`).
     * `walltime` should be passed as `"hh:mm:ss"`. You should try to set this
       such that your job hits NSW before it runs out of time.  If your job
-      fails or times out, an archive will be made and the calculation will be
-      resubmitted with a (2x) longer walltime.
+      times out, an archive will be made and the calculation will be
+      resubmitted with increased resources according to `rerun_increase` and
+      `rerun_increase_factor` in your
+      [computing configuration](#computing-configuration).
     * You can place another `calc_config.json` file in a specific material's calculation
       directory (e.g. `NaCl/rlx`) to use custom settings for only that
       material. You only need to include settings you want to change from the
