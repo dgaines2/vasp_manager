@@ -29,12 +29,11 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "black",
     "coverage",
-    "isort",
     "pre-commit",
     "pytest",
     "mypy",
+    "ruff",
 ]
 docs = [
     "blacken-docs>=1.16.0",
@@ -48,38 +47,20 @@ docs = [
 [project.urls]
 repository = "https://github.com/dgaines2/vasp_manager"
 
-[tool.black]
-target-version = ["py310"]
+[tool.ruff]
+target-version = "py310"
 line-length = 90
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | _build
-  | build
-  | dist
-)/
-| tests/data
-'''
 
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-line_length = 90
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E203", "E231"]
 
-[tool.flake8]
-max-line-length = 90
-exclude = "vasp_manager/tests/ | **/*.pyc | .git | __pycache__"
-per-file-ignores = "__init__.py:F401"
-select = "E, F, W, B9"
-ignore = "E203, W503"
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"vasp_manager/tests/test_utils.py" = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["vasp_manager"]
 
 [tool.pytest.ini_options]
 pythonpath = "."

@@ -1,6 +1,3 @@
-import filecmp
-
-import pytest
 from pymatgen.analysis.structure_matcher import StructureMatcher
 from pymatgen.core import Structure
 
@@ -79,7 +76,7 @@ def test_static_results(calcs_dir):
     assert static_manager.is_done
     assert static_manager.results["final_energy"] == -6.7778924
     assert static_manager.results["final_energy_pa"] == -3.3889462
-    assert static_manager.results["magmom_pa"] == None
+    assert static_manager.results["magmom_pa"] is None
 
 
 def test_static_spin_results(calcs_dir):
@@ -370,7 +367,7 @@ def test_rlx_archive(calcs_dir):
         magmom_per_atom_cutoff=1.0,
     )
     assert not rlx_manager.is_done
-    assert rlx_manager.results == None
+    assert rlx_manager.results is None
     assert not rlx_manager.vasp_input_creator.use_spin
     # check archive made correctly
     archive_dir = rlx_dir / "archive_0"
@@ -397,7 +394,7 @@ def test_static_rerun(calcs_dir):
         to_submit=False,
     )
     assert not static_manager.is_done
-    assert static_manager.results == None
+    assert static_manager.results is None
     static_dir_files = list(static_dir.glob("*"))
     assert len(static_dir_files) == 4
     for file in static_dir_files:
@@ -417,7 +414,7 @@ def test_bulkmod_rerun(calcs_dir):
         to_submit=False,
     )
     assert not bulkmod_manager.is_done
-    assert bulkmod_manager.results == None
+    assert bulkmod_manager.results is None
 
     bulkmod_dir_contents = list(bulkmod_dir.glob("*"))
     bulkmod_dir_files = [f for f in bulkmod_dir_contents if f.is_file()]
@@ -447,4 +444,4 @@ def test_elastic_rerun(calcs_dir):
         to_submit=False,
     )
     assert not elastic_manager.is_done
-    assert elastic_manager.results == None
+    assert elastic_manager.results is None

@@ -49,11 +49,11 @@ class ElasticAnalyzer:
         values = np.asarray(values)
         if values.shape != (6, 6):
             raise ValueError(
-                "cij must be a 6x6 array," f"found shape={values.shape} instead"
+                f"cij must be a 6x6 array,found shape={values.shape} instead"
             )
         if values.dtype != float:
             raise TypeError(
-                "cij must be a 6x6 array of floats," f" found type={values.dtype} instead"
+                f"cij must be a 6x6 array of floats, found type={values.dtype} instead"
             )
         self._cij = values
 
