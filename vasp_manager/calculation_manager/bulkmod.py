@@ -15,8 +15,10 @@ from numpy.typing import NDArray
 
 from vasp_manager.analyzer.bulkmod_analyzer import BulkmodAnalyzer
 from vasp_manager.calculation_manager.base import BaseCalculationManager
-from vasp_manager.utils import LoggerAdapter, change_directory, pgrep
+from vasp_manager.job_manager import JobManager
+from vasp_manager.utils import LoggerAdapter, pgrep
 from vasp_manager.vasp_input_creator import VaspInputCreator
+from vasp_manager.vasp_run import VaspRun
 
 if TYPE_CHECKING:
     from vasp_manager.types import CalculationType, WorkingDirectory
@@ -26,7 +28,10 @@ logger = logging.getLogger(__name__)
 
 class BulkmodCalculationManager(BaseCalculationManager):
     """
-    Runs bulk modulus job workflow for a single material
+    Runs bulk modulus job workflow for a single material.
+
+    Each strain is an independent static calculation with its own
+    VaspInputCreator, JobManager, and SLURM job.
     """
 
     def __init__(
@@ -74,6 +79,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
         )
         self._is_done: bool
         self._results: None | str | dict
+        self._vasp_runs: dict[str, VaspRun] | None = None
         self.logger = LoggerAdapter(logging.getLogger(__name__), self.material_name)
 
     @cached_property
@@ -88,16 +94,6 @@ class BulkmodCalculationManager(BaseCalculationManager):
             poscar_source_path = self.material_dir / "POSCAR"
         return poscar_source_path
 
-    @cached_property
-    def vasp_input_creator(self) -> VaspInputCreator:
-        return VaspInputCreator(
-            self.calc_dir,
-            mode=self.mode,
-            poscar_source_path=self.poscar_source_path,
-            primitive=self.primitive,
-            name=self.material_name,
-        )
-
     @property
     def strains(self) -> NDArray:
         return self._strains
@@ -109,6 +105,50 @@ class BulkmodCalculationManager(BaseCalculationManager):
         if (middle := values[int(len(values) / 2)]) != 1.0:
             raise ValueError(f"Strains not centered around 1.0: middle is {middle}")
         self._strains = values
+
+    @property
+    def strain_names(self) -> list[str]:
+        middle = int(len(self.strains) / 2)
+        return [f"strain_{i - middle}" for i in range(len(self.strains))]
+
+    @property
+    def vasp_runs(self) -> dict[str, VaspRun]:
+        """One VaspRun per strain directory."""
+        if self._vasp_runs is None:
+            self._vasp_runs = self._build_vasp_runs()
+        return self._vasp_runs
+
+    def _build_vasp_runs(self) -> dict[str, VaspRun]:
+        """Build VaspRun dict from existing strain directories."""
+        runs = {}
+        base_structure = self._load_structure()
+        for i, strain in enumerate(self.strains):
+            strain_name = self.strain_names[i]
+            strain_dir = self.calc_dir / strain_name
+            if not strain_dir.exists():
+                continue
+            strained = base_structure.copy()
+            strained.scale_lattice(base_structure.volume * strain**3)
+            vic = VaspInputCreator(
+                calc_dir=strain_dir,
+                mode="static",
+                structure=strained,
+                config_dir=self.config_dir,
+                name=f"{self.material_name}_s{strain_name.split('_')[1]}",
+            )
+            jm = JobManager(
+                calc_dir=strain_dir,
+                manager_name=f"{self.material_name} BULKMOD {strain_name}",
+                config_dir=self.config_dir,
+                ignore_personal_errors=self._ignore_personal_errors,
+            )
+            runs[strain_name] = VaspRun(
+                run_dir=strain_dir,
+                structure=strained,
+                vasp_input_creator=vic,
+                job_manager=jm,
+            )
+        return runs
 
     def _check_use_spin(self) -> bool:
         if self.from_relax:
@@ -125,7 +165,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
         increase_walltime_by_factor: int = 1,
     ) -> None:
         """
-        Sets up an EOS bulkmod calculation
+        Sets up an EOS bulkmod calculation with independent strain jobs.
         """
         if not self.from_relax:
             msg = (
@@ -134,16 +174,57 @@ class BulkmodCalculationManager(BaseCalculationManager):
             )
             self.logger.warning(msg)
 
-        self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
-        self.vasp_input_creator.increase_walltime_by_factor = increase_walltime_by_factor
-        self.vasp_input_creator.use_spin = self._check_use_spin()
-        self.vasp_input_creator.create()
-        self._make_bulkmod_strains()
+        if not self.calc_dir.exists():
+            self.calc_dir.mkdir()
+
+        base_structure = self._load_structure()
+        use_spin = self._check_use_spin()
+        runs: dict[str, VaspRun] = {}
+
+        self.logger.info("Making strain directories")
+        for i, strain in enumerate(self.strains):
+            strain_name = self.strain_names[i]
+            strain_dir = self.calc_dir / strain_name
+            self.logger.info(strain_dir)
+
+            if not strain_dir.exists():
+                strain_dir.mkdir()
+
+            # Scale structure for this strain
+            strained = base_structure.copy()
+            strained.scale_lattice(base_structure.volume * strain**3)
+
+            vic = VaspInputCreator(
+                calc_dir=strain_dir,
+                mode="static",
+                structure=strained,
+                config_dir=self.config_dir,
+                name=f"{self.material_name}_s{strain_name.split('_')[1]}",
+                increase_nodes_by_factor=increase_nodes_by_factor,
+                increase_walltime_by_factor=increase_walltime_by_factor,
+                use_spin=use_spin,
+            )
+            vic.create()
+
+            jm = JobManager(
+                calc_dir=strain_dir,
+                manager_name=f"{self.material_name} BULKMOD {strain_name}",
+                config_dir=self.config_dir,
+                ignore_personal_errors=self._ignore_personal_errors,
+            )
+
+            runs[strain_name] = VaspRun(
+                run_dir=strain_dir,
+                structure=strained,
+                vasp_input_creator=vic,
+                job_manager=jm,
+            )
+
+        self._vasp_runs = runs
 
         if self.to_submit:
-            job_submitted = self.submit_job()
-            # job status returns True if sucessfully submitted, else False
-            if not job_submitted:
+            all_submitted = self.submit_job()
+            if not all_submitted:
                 self.setup_calc()
 
     def check_calc(self) -> bool:
@@ -157,21 +238,14 @@ class BulkmodCalculationManager(BaseCalculationManager):
             self.logger.info(f"{self.mode.upper()} job not finished")
             return False
 
-        for i, strain in enumerate(self.strains):
-            middle = int(len(self.strains) / 2)
-            strain_index = i - middle
-            strain_name = f"strain_{strain_index}"
-            strain_dir = self.calc_dir / strain_name
-            stdout_path = strain_dir / "stdout.txt"
-            stderr_path = strain_dir / "stderr.txt"
+        for strain_name, run in self.vasp_runs.items():
+            stdout_path = run.run_dir / "stdout.txt"
             if not stdout_path.exists():
                 return False
 
-            vasp_errors = self._check_vasp_errors(
-                stdout_path=stdout_path, stderr_path=stderr_path, extra_errors=["NELM"]
-            )
+            vasp_errors = run.check_vasp_errors(extra_errors=["NELM"])
             if len(vasp_errors) > 0:
-                all_errors_addressed = self._address_vasp_errors(vasp_errors)
+                all_errors_addressed = run.address_vasp_errors(vasp_errors)
                 if all_errors_addressed:
                     if self.to_rerun:
                         self.logger.info(f"Rerunning {self.calc_dir}")
@@ -221,35 +295,19 @@ class BulkmodCalculationManager(BaseCalculationManager):
             self._results = None
         return self._results
 
-    def _make_bulkmod_strains(self) -> None:
-        """
-        Creates a set of strain directories for fitting the E-V info
-        """
-        self.logger.info("Making strain directories")
-        for i, strain in enumerate(self.strains):
-            middle = int(len(self.strains) / 2)
-            strain_index = i - middle
-            strain_name = f"strain_{strain_index}"
+    def _cancel_previous_job(self) -> None:
+        """Cancel all strain jobs."""
+        for strain_name in self.strain_names:
             strain_dir = self.calc_dir / strain_name
-            self.logger.info(strain_dir)
+            jobid_path = strain_dir / "jobid"
+            if jobid_path.exists():
+                with open(jobid_path) as fr:
+                    jobid = fr.read().strip()
+                cancel_job_call = f"scancel {jobid}"
+                os.system(cancel_job_call)
+                os.remove(jobid_path)
 
-            if not strain_dir.exists():
-                strain_dir.mkdir()
-            orig_poscar_path = self.calc_dir / "POSCAR"
-            strain_poscar_path = strain_dir / "POSCAR"
-            shutil.copy(orig_poscar_path, strain_poscar_path)
-
-            # change second line to be {strain} rather than 1.0
-            with open(strain_poscar_path, "r") as fr:
-                strain_poscar = fr.read().splitlines()
-            strain_poscar[1] = f"{strain}"
-            self.logger.debug(f"{strain}")
-            with open(strain_poscar_path, "w+") as fw:
-                fw.write("\n".join(strain_poscar))
-
-            with change_directory(strain_dir):
-                for f in ["POTCAR", "INCAR"]:
-                    if Path(f).exists():
-                        os.remove(f)
-                    orig_path = Path("..") / f
-                    os.symlink(orig_path, f, target_is_directory=False)
+    def _from_scratch(self) -> None:
+        self._cancel_previous_job()
+        shutil.rmtree(self.calc_dir)
+        self._vasp_runs = None

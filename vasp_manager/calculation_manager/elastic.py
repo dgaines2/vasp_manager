@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 from vasp_manager.analyzer import ElasticAnalyzer
 from vasp_manager.calculation_manager.base import BaseCalculationManager
 from vasp_manager.utils import LoggerAdapter, NumpyEncoder, pgrep, ptail
-from vasp_manager.vasp_input_creator import VaspInputCreator
 
 if TYPE_CHECKING:
     from vasp_manager.types import CalculationType, WorkingDirectory
@@ -72,16 +71,6 @@ class ElasticCalculationManager(BaseCalculationManager):
     def poscar_source_path(self) -> Path:
         return self.material_dir / "rlx" / "CONTCAR"
 
-    @cached_property
-    def vasp_input_creator(self) -> VaspInputCreator:
-        return VaspInputCreator(
-            self.calc_dir,
-            mode=self.mode,
-            poscar_source_path=self.poscar_source_path,
-            primitive=self.primitive,
-            name=self.material_name,
-        )
-
     def _check_use_spin(self) -> bool:
         rlx_stdout = self.material_dir / "rlx" / "stdout.txt"
         rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
@@ -131,9 +120,9 @@ class ElasticCalculationManager(BaseCalculationManager):
                 self.setup_calc()
             return False
 
-        vasp_errors = self._check_vasp_errors(extra_errors=["NELM"])
+        vasp_errors = self.vasp_run.check_vasp_errors(extra_errors=["NELM"])
         if len(vasp_errors) > 0:
-            all_errors_addressed = self._address_vasp_errors(vasp_errors)
+            all_errors_addressed = self.vasp_run.address_vasp_errors(vasp_errors)
             if all_errors_addressed:
                 if self.to_rerun:
                     self.logger.info(f"Rerunning {self.calc_dir}")

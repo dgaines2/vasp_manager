@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 
 from vasp_manager.calculation_manager.base import BaseCalculationManager
 from vasp_manager.utils import LoggerAdapter, pgrep, ptail
-from vasp_manager.vasp_input_creator import VaspInputCreator
 
 if TYPE_CHECKING:
     from vasp_manager.types import CalculationType, WorkingDirectory
@@ -70,16 +69,6 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
     def poscar_source_path(self) -> Path:
         return self.material_dir / "POSCAR"
 
-    @cached_property
-    def vasp_input_creator(self) -> VaspInputCreator:
-        return VaspInputCreator(
-            self.calc_dir,
-            mode=self.mode,
-            poscar_source_path=self.poscar_source_path,
-            primitive=self.primitive,
-            name=self.material_name,
-        )
-
     def setup_calc(
         self,
         increase_nodes_by_factor: int = 1,
@@ -89,13 +78,13 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
         """
         Sets up a coarse relaxation
         """
+        if make_archive:
+            self.vasp_input_creator.make_archive()
+            self._invalidate_vasp_runs()
+
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
         self.vasp_input_creator.increase_walltime_by_factor = increase_walltime_by_factor
-
-        if make_archive:
-            self.vasp_input_creator.make_archive_and_repopulate()
-        else:
-            self.vasp_input_creator.create()
+        self.vasp_input_creator.create()
 
         if self.to_submit:
             job_submitted = self.submit_job()
@@ -126,9 +115,9 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
                 self.setup_calc()
             return False
 
-        vasp_errors = self._check_vasp_errors()
+        vasp_errors = self.vasp_run.check_vasp_errors()
         if len(vasp_errors) > 0:
-            all_errors_addressed = self._address_vasp_errors(vasp_errors)
+            all_errors_addressed = self.vasp_run.address_vasp_errors(vasp_errors)
             if all_errors_addressed:
                 if self.to_rerun:
                     self.logger.info(f"Rerunning {self.calc_dir}")

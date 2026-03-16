@@ -12,7 +12,6 @@ from pymatgen.core import Structure
 
 from vasp_manager.calculation_manager.base import BaseCalculationManager
 from vasp_manager.utils import LoggerAdapter, pgrep, ptail
-from vasp_manager.vasp_input_creator import VaspInputCreator
 
 if TYPE_CHECKING:
     from vasp_manager.types import CalculationType, WorkingDirectory
@@ -75,16 +74,6 @@ class StaticCalculationManager(BaseCalculationManager):
             poscar_source_path = self.material_dir / "POSCAR"
         return poscar_source_path
 
-    @cached_property
-    def vasp_input_creator(self) -> VaspInputCreator:
-        return VaspInputCreator(
-            self.calc_dir,
-            mode=self.mode,
-            poscar_source_path=self.poscar_source_path,
-            primitive=self.primitive,
-            name=self.material_name,
-        )
-
     def _check_use_spin(self) -> bool:
         if self.from_relax:
             rlx_stdout = self.material_dir / "rlx" / "stdout.txt"
@@ -135,9 +124,9 @@ class StaticCalculationManager(BaseCalculationManager):
                 self.setup_calc()
             return False
 
-        vasp_errors = self._check_vasp_errors(extra_errors=["NELM"])
+        vasp_errors = self.vasp_run.check_vasp_errors(extra_errors=["NELM"])
         if len(vasp_errors) > 0:
-            all_errors_addressed = self._address_vasp_errors(vasp_errors)
+            all_errors_addressed = self.vasp_run.address_vasp_errors(vasp_errors)
             if all_errors_addressed:
                 if self.to_rerun:
                     self.logger.info(f"Rerunning {self.calc_dir}")
@@ -169,7 +158,7 @@ class StaticCalculationManager(BaseCalculationManager):
         self._results = {}
         final_energy = float(grep_output[0].split()[2])
         num_atoms = len(Structure.from_file(self.calc_dir / "POSCAR"))
-        magmom_per_atom = self._parse_magmom_per_atom()
+        magmom_per_atom = self.vasp_run.parse_magmom_per_atom()
         self._results["final_energy"] = final_energy
         self._results["final_energy_pa"] = final_energy / num_atoms
         self._results["magmom_pa"] = magmom_per_atom
