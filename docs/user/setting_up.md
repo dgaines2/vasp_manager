@@ -84,6 +84,7 @@ The calculation configuration is set up in `calc_config.json`.
 For each desired calculation mode, set the INCAR tags in this json.
 
 * Each mode has its own configuration settings with sensible defaults, but these can be easily customized by the user.
+  * Note: `bulkmod` does not have its own section in `calc_config.json` — it uses the `static` configuration.
 * See more about about spin polarization settings (`"ispin": "auto"`) here:
   [Spin Configuration](user_config/spin.md)
 * See more about DFT+U settings (`"hubbards": "wang"`) here:
