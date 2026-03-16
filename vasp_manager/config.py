@@ -1,6 +1,7 @@
 import json
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict
 
@@ -17,6 +18,11 @@ class ComputingConfig(BaseModel):
     vasp_module: str
     ncore: int
     ncore_per_node: int
+
+    # Job resource tuning (optional, backward-compatible defaults)
+    atoms_per_node: int = 32
+    rerun_increase: Literal["nodes", "walltime"] = "walltime"
+    rerun_increase_factor: int = 2
 
 
 class CalcConfig(BaseModel):

@@ -165,8 +165,8 @@ class VaspInputCreator:
 
     @cached_property
     def n_nodes(self) -> int:
-        # start with 1 node per 32 atoms
-        num_nodes = (len(self.structure) // 32) + 1
+        atoms_per_node = self.computing_config.atoms_per_node
+        num_nodes = (len(self.structure) // atoms_per_node) + 1
         if self.computer == "quest":
             # quest has ~2x smaller nodes than perlmutter
             num_nodes *= 2

@@ -231,3 +231,73 @@ def test_calc_config_custom_override_applied(config_dir):
     base = configs["rlx-coarse"]
     merged = CalcConfig.model_validate({**base.model_dump(), "kspacing": 0.99})
     assert merged.kspacing == 0.99
+
+
+# ---------------------------------------------------------------------------
+# ComputingConfig job resource fields
+# ---------------------------------------------------------------------------
+
+
+def test_computing_config_defaults_when_fields_omitted(tmp_path):
+    """
+    atoms_per_node, rerun_increase, and rerun_increase_factor use sensible
+    defaults when not present in the JSON
+    """
+    config_dir = _make_computing_config_json(tmp_path)
+    cc = load_computing_config(config_dir)
+    assert cc.atoms_per_node == 32
+    assert cc.rerun_increase == "walltime"
+    assert cc.rerun_increase_factor == 2
+
+
+def test_computing_config_custom_job_resource_fields(tmp_path):
+    """
+    Custom atoms_per_node, rerun_increase, and rerun_increase_factor are
+    loaded from JSON
+    """
+    config = {
+        "computer": "quest",
+        "quest": {
+            "user_id": "testuser",
+            "potcar_dir": "/fake/potcars",
+            "queuetype": "short",
+            "allocation": "fake_alloc",
+            "constraint": "cpu",
+            "vasp_module": "vasp/6.0",
+            "ncore": 16,
+            "ncore_per_node": 64,
+            "atoms_per_node": 16,
+            "rerun_increase": "nodes",
+            "rerun_increase_factor": 3,
+        },
+    }
+    (tmp_path / "computing_config.json").write_text(json.dumps(config))
+    cc = load_computing_config(tmp_path)
+    assert cc.atoms_per_node == 16
+    assert cc.rerun_increase == "nodes"
+    assert cc.rerun_increase_factor == 3
+
+
+def test_computing_config_invalid_rerun_increase_raises(tmp_path):
+    """
+    An invalid rerun_increase value raises a ValidationError
+    """
+    from pydantic import ValidationError
+
+    config = {
+        "computer": "personal",
+        "personal": {
+            "user_id": "testuser",
+            "potcar_dir": "/fake/potcars",
+            "queuetype": "regular",
+            "allocation": "fake_alloc",
+            "constraint": "cpu",
+            "vasp_module": "vasp/6.0",
+            "ncore": 16,
+            "ncore_per_node": 128,
+            "rerun_increase": "memory",
+        },
+    }
+    (tmp_path / "computing_config.json").write_text(json.dumps(config))
+    with pytest.raises(ValidationError):
+        load_computing_config(tmp_path)
