@@ -10,9 +10,12 @@ from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from pymatgen.core import Structure
+
 from vasp_manager.job_manager import JobManager
-from vasp_manager.utils import get_pmg_structure_from_poscar, pgrep
+from vasp_manager.utils import get_pmg_structure_from_poscar
 from vasp_manager.vasp_input_creator import VaspInputCreator
+from vasp_manager.vasp_run import VaspRun
 
 if TYPE_CHECKING:
     from vasp_manager.types import CalculationType, WorkingDirectory
@@ -49,11 +52,7 @@ class BaseCalculationManager(ABC):
         self.to_rerun = to_rerun
         self.to_submit = to_submit
         self.primitive = primitive
-        self.job_manager = JobManager(
-            calc_dir=self.calc_dir,
-            manager_name=f"{self.material_name} {self.mode.upper()}",
-            ignore_personal_errors=ignore_personal_errors,
-        )
+        self._ignore_personal_errors = ignore_personal_errors
 
         self.from_scratch = from_scratch
         if from_scratch:
@@ -69,9 +68,9 @@ class BaseCalculationManager(ABC):
     def is_done(self) -> bool:
         pass
 
-    @property
+    @cached_property
     @abstractmethod
-    def vasp_input_creator(self) -> VaspInputCreator:
+    def poscar_source_path(self) -> Path:
         pass
 
     @cached_property
@@ -79,13 +78,12 @@ class BaseCalculationManager(ABC):
         return self.material_dir / self.mode
 
     @cached_property
-    def material_name(self) -> str:
-        return self.material_dir.name
+    def config_dir(self) -> Path:
+        return self.material_dir.parent
 
     @cached_property
-    @abstractmethod
-    def poscar_source_path(self) -> Path:
-        pass
+    def material_name(self) -> str:
+        return self.material_dir.name
 
     @abstractmethod
     def setup_calc(self) -> None:
@@ -95,13 +93,107 @@ class BaseCalculationManager(ABC):
     def check_calc(self) -> bool:
         pass
 
+    def _load_structure(self, poscar_path: Path | None = None) -> Structure:
+        """
+        Load a pymatgen Structure from a POSCAR file.
+
+        Args:
+            poscar_path: path to POSCAR/CONTCAR. Defaults to
+                self.poscar_source_path.
+
+        Returns:
+            structure: pymatgen Structure
+        """
+        if poscar_path is None:
+            poscar_path = self.poscar_source_path
+        try:
+            structure = get_pmg_structure_from_poscar(
+                poscar_path, primitive=self.primitive
+            )
+        except Exception as e:
+            raise Exception(f"Cannot load POSCAR in {poscar_path}: {e}")
+        assert isinstance(structure, Structure)
+        return structure
+
+    def _load_structure_for_rerun(self) -> Structure:
+        """
+        Load structure for a rerun, checking for archives first.
+
+        If archives exist in calc_dir, loads the CONTCAR from the latest
+        archive. Otherwise falls back to poscar_source_path.
+        """
+        num_archives = len(list(self.calc_dir.glob("archive*")))
+        if num_archives > 0:
+            archive_name = f"archive_{num_archives - 1}"
+            contcar_path = self.calc_dir / archive_name / "CONTCAR"
+            return self._load_structure(contcar_path)
+        return self._load_structure()
+
+    @cached_property
+    def vasp_runs(self) -> dict[str, VaspRun]:
+        """All runs for this calculation. Override for multi-run managers."""
+        structure = self._load_structure_for_rerun()
+        vic = VaspInputCreator(
+            calc_dir=self.calc_dir,
+            mode=self.mode,
+            structure=structure,
+            config_dir=self.config_dir,
+            name=self.material_name,
+        )
+        jm = JobManager(
+            calc_dir=self.calc_dir,
+            manager_name=f"{self.material_name} {self.mode.upper()}",
+            config_dir=self.config_dir,
+            ignore_personal_errors=self._ignore_personal_errors,
+        )
+        run = VaspRun(
+            run_dir=self.calc_dir,
+            structure=structure,
+            vasp_input_creator=vic,
+            job_manager=jm,
+        )
+        return {self.mode: run}
+
+    @property
+    def vasp_run(self) -> VaspRun:
+        """Convenience accessor for single-run managers."""
+        runs = self.vasp_runs
+        if len(runs) != 1:
+            raise AttributeError(
+                f"{type(self).__name__} has {len(runs)} runs. "
+                "Use vasp_runs to access individual runs."
+            )
+        return next(iter(runs.values()))
+
+    def _invalidate_vasp_runs(self) -> None:
+        """Clear the cached vasp_runs so it will be recreated on next access."""
+        if "vasp_runs" in self.__dict__:
+            del self.__dict__["vasp_runs"]
+
+    @property
+    def vasp_input_creator(self) -> VaspInputCreator:
+        return self.vasp_run.vasp_input_creator
+
+    @property
+    def job_manager(self) -> JobManager:
+        return self.vasp_run.job_manager
+
     @property
     def job_exists(self) -> bool:
-        return self.job_manager.job_exists
+        if not self.vasp_runs:
+            return False
+        return all(r.job_manager.job_exists for r in self.vasp_runs.values())
 
     @property
     def job_complete(self) -> bool:
-        return self.job_manager.job_complete
+        if not self.vasp_runs:
+            return False
+        return all(r.job_manager.job_complete for r in self.vasp_runs.values())
+
+    def submit_job(self) -> bool:
+        if not self.vasp_runs:
+            return False
+        return all(r.job_manager.submit_job() for r in self.vasp_runs.values())
 
     @property
     def stopped(self) -> bool:
@@ -110,9 +202,6 @@ class BaseCalculationManager(ABC):
     def stop(self) -> None:
         with open(self.material_dir / "STOP", "w+"):
             pass
-
-    def submit_job(self) -> bool:
-        return self.job_manager.submit_job()
 
     def _cancel_previous_job(self) -> None:
         jobid_path = self.calc_dir / "jobid"
@@ -126,131 +215,3 @@ class BaseCalculationManager(ABC):
     def _from_scratch(self) -> None:
         self._cancel_previous_job()
         shutil.rmtree(self.calc_dir)
-
-    def _parse_magmom(self) -> float | None:
-        stdout_path = self.calc_dir / "stdout.txt"
-        mag_lines = pgrep(stdout_path, "mag=")
-        # if "mag=" not found in stdout, set magmom=None
-        if len(mag_lines) == 0:
-            magmom = None
-        else:
-            total_mag = mag_lines[-1].split()[-1]
-            magmom = float(total_mag)
-        return magmom
-
-    def _parse_magmom_per_atom(self) -> float | None:
-        total_magmom = self._parse_magmom()
-        if total_magmom is None:
-            return None
-        structure = get_pmg_structure_from_poscar(self.poscar_source_path)
-        magmom_per_atom = total_magmom / len(structure)
-        return magmom_per_atom
-
-    def _parse_incar_tag(self, tag) -> str:
-        incar_path = self.calc_dir / "INCAR"
-        with open(incar_path) as fr:
-            incar = fr.readlines()
-        for line in incar:
-            if tag in line:
-                tag_value = line.split("=")[1].strip()
-        return tag_value
-
-    def _check_vasp_errors(
-        self,
-        stdout_path: Path | None = None,
-        stderr_path: Path | None = None,
-        extra_errors: list[str] | None = None,
-    ) -> set[str]:
-        """
-        Find VASP errors in stdout and stderr
-
-        Args:
-            stdout_path
-            stderr_path
-            extra_errors: names of other errors to include in search
-
-        Returns:
-            errors_found: True if any errors found
-        """
-        if stdout_path is None:
-            stdout_path = self.calc_dir / "stdout.txt"
-        if stderr_path is None:
-            stderr_path = self.calc_dir / "stderr.txt"
-        if extra_errors is None:
-            extra_errors = []
-        errors_found = set()
-
-        with open(stdout_path) as fr:
-            for line in fr:
-                errors = [
-                    "Sub-Space-Matrix",
-                    "Inconsistent Bravais",
-                    "num prob",
-                    "BRMIX",
-                    "SICK JOB",
-                    "VERY BAD NEWS",
-                    "Fatal error",
-                ]
-                errors.extend(extra_errors)
-                for error in errors:
-                    if error in line:
-                        errors_found.add(error)
-
-        with open(stderr_path) as fr:
-            for line in fr:
-                for error in [
-                    "oom-kill",
-                    "SETYLM",
-                    "Segmentation",
-                    "command not found",
-                ]:
-                    if error in line:
-                        errors_found.add(error)
-
-        return errors_found
-
-    def _address_vasp_errors(self, errors: set[str]) -> bool:
-        """
-        Args:
-            errors: set of errors found in stdout or stderr
-
-        Returns:
-            all_errors_addressed: if True, all errors could be fixed
-                automatically. If False, some errors could not be handled
-        """
-        vic = self.vasp_input_creator
-
-        errors_addressed = {e: False for e in errors}
-        for error in errors:
-            match error:
-                case "Sub-Space-Matrix":
-                    new_algo = "Fast"
-                    previous_algo = self._parse_incar_tag("ALGO")
-                    if previous_algo == new_algo:
-                        errors_addressed[error] = False
-                    else:
-                        vic.calc_config = vic.calc_config.model_copy(
-                            update={"algo": new_algo}
-                        )
-                        errors_addressed[error] = True
-                case "Inconsistent Bravais":
-                    new_symprec = "1e-08"
-                    previous_symprec = self._parse_incar_tag("SYMPREC")
-                    if previous_symprec == new_symprec:
-                        errors_addressed[error] = False
-                    else:
-                        vic.calc_config = vic.calc_config.model_copy(
-                            update={"symprec": new_symprec}
-                        )
-                        errors_addressed[error] = True
-                case "oom-kill":
-                    if vic.computer == "quest":
-                        ncore_per_node_for_memory = 28
-                    else:
-                        ncore_per_node_for_memory = 64
-                    vic.ncore_per_node_for_memory = ncore_per_node_for_memory
-                    errors_addressed[error] = True
-                case _:
-                    errors_addressed[error] = False
-        all_errors_addressed = all([v for v in errors_addressed.values()])
-        return all_errors_addressed
