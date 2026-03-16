@@ -167,9 +167,6 @@ class VaspInputCreator:
     def n_nodes(self) -> int:
         atoms_per_node = self.computing_config.atoms_per_node
         num_nodes = (len(self.structure) // atoms_per_node) + 1
-        if self.computer == "quest":
-            # quest has ~2x smaller nodes than perlmutter
-            num_nodes *= 2
         num_nodes *= self.increase_nodes_by_factor
         return num_nodes
 
