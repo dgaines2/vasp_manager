@@ -67,6 +67,10 @@ class ElasticCalculationManager(BaseCalculationManager):
     def mode(self) -> CalculationType:
         return "elastic"
 
+    @property
+    def job_prefix(self) -> str:
+        return "e"
+
     @cached_property
     def poscar_source_path(self) -> Path:
         return self.material_dir / "rlx" / "CONTCAR"

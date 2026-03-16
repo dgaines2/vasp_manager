@@ -86,6 +86,10 @@ class BulkmodCalculationManager(BaseCalculationManager):
     def mode(self) -> CalculationType:
         return "bulkmod"
 
+    @property
+    def job_prefix(self) -> str:
+        return "b"
+
     @cached_property
     def poscar_source_path(self) -> Path:
         if self.from_relax:
@@ -135,6 +139,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
                 structure=strained,
                 config_dir=self.config_dir,
                 name=f"{self.material_name}_s{strain_name.split('_')[1]}",
+                job_prefix=self.job_prefix,
             )
             jm = JobManager(
                 calc_dir=strain_dir,
@@ -200,6 +205,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
                 structure=strained,
                 config_dir=self.config_dir,
                 name=f"{self.material_name}_s{strain_name.split('_')[1]}",
+                job_prefix=self.job_prefix,
                 increase_nodes_by_factor=increase_nodes_by_factor,
                 increase_walltime_by_factor=increase_walltime_by_factor,
                 use_spin=use_spin,

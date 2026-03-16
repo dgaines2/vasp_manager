@@ -65,6 +65,10 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
     def mode(self) -> CalculationType:
         return "rlx-coarse"
 
+    @property
+    def job_prefix(self) -> str:
+        return "rc"
+
     @cached_property
     def poscar_source_path(self) -> Path:
         return self.material_dir / "POSCAR"

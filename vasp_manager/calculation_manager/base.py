@@ -65,6 +65,11 @@ class BaseCalculationManager(ABC):
 
     @property
     @abstractmethod
+    def job_prefix(self) -> str:
+        """Short prefix for SLURM job names (e.g. 'r', 's', 'b')."""
+
+    @property
+    @abstractmethod
     def is_done(self) -> bool:
         pass
 
@@ -139,6 +144,7 @@ class BaseCalculationManager(ABC):
             structure=structure,
             config_dir=self.config_dir,
             name=self.material_name,
+            job_prefix=self.job_prefix,
         )
         jm = JobManager(
             calc_dir=self.calc_dir,

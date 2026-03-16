@@ -70,6 +70,7 @@ def nacl_vic(tmp_path, nacl_poscar_path, config_dir):
         mode="rlx-coarse",
         structure=structure,
         config_dir=config_dir,
+        job_prefix="rc",
     )
 
 
@@ -96,6 +97,7 @@ def cuo_vic(tmp_path, cuo_poscar_path, config_dir):
         mode="rlx",
         structure=structure,
         config_dir=config_dir,
+        job_prefix="r",
     )
 
 

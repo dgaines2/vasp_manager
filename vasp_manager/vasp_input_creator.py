@@ -47,6 +47,7 @@ class VaspInputCreator:
         structure: Structure,
         config_dir: SourceDirectory | None = None,
         name: str | None = None,
+        job_prefix: str | None = None,
         increase_nodes_by_factor: int = 1,
         increase_walltime_by_factor: int = 1,
         poscar_significant_figures: int = 16,
@@ -61,6 +62,8 @@ class VaspInputCreator:
             config_dir: directory containing calc_config.json and
                 computing_config.json
             name: material name for logging and job naming
+            job_prefix: short prefix for SLURM job names (e.g. "r", "s", "b").
+                If None, derived from mode for backwards compatibility.
             increase_nodes_by_factor: multiply node count by this factor
             increase_walltime_by_factor: multiply walltime by this factor
             poscar_significant_figures: significant figures for POSCAR coords
@@ -69,6 +72,7 @@ class VaspInputCreator:
         """
         self.calc_dir = Path(calc_dir)
         self.mode = mode
+        self.job_prefix = job_prefix
         self.structure = structure
         self.config_dir = Path(config_dir) if config_dir else self.calc_dir.parents[1]
         self.increase_nodes_by_factor = int(increase_nodes_by_factor)
@@ -436,27 +440,15 @@ class VaspInputCreator:
         """
         vaspq_path = self.calc_dir / "vasp.q"
 
-        # create pad string for job naming to differentiate in the queue
-        match self.mode:
-            case "rlx-coarse" | "rlx":
-                if self.mode == "rlx":
-                    pad_string = "r"
-                elif self.mode == "rlx-coarse":
-                    pad_string = "rc"
-                mode = "rlx"
-            case "static":
-                pad_string = "s"
-                mode = "static"
-            case "elastic":
-                pad_string = "e"
-                mode = "elastic"
-            case _:
-                raise ValueError(
-                    "Calculation type {self.mode} not in supported calculation types"
-                    "of VaspInputCreator"
-                )
+        if self.job_prefix is None:
+            raise ValueError(
+                "job_prefix must be set on VaspInputCreator to generate vasp.q"
+            )
 
-        jobname = pad_string + self.name
+        # map mode to q_handles key (rlx-coarse shares rlx's queue settings)
+        mode = "rlx" if "rlx" in self.mode else self.mode
+
+        jobname = self.job_prefix + self.name
         # convert walltime into timedelta (and back) for easier math
         walltime_duration = self.parse_walltime(self.calc_config.walltime)
         walltime_duration *= self.increase_walltime_by_factor

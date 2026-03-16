@@ -75,6 +75,10 @@ class RlxCalculationManager(BaseCalculationManager):
     def mode(self) -> CalculationType:
         return "rlx"
 
+    @property
+    def job_prefix(self) -> str:
+        return "r"
+
     @cached_property
     def poscar_source_path(self) -> Path:
         if self.from_coarse_relax:

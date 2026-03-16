@@ -66,6 +66,10 @@ class StaticCalculationManager(BaseCalculationManager):
     def mode(self) -> CalculationType:
         return "static"
 
+    @property
+    def job_prefix(self) -> str:
+        return "s"
+
     @cached_property
     def poscar_source_path(self) -> Path:
         if self.from_relax:
