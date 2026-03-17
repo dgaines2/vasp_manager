@@ -72,8 +72,7 @@ def get_pmg_structure_from_poscar(
     international_monoclinic: bool = False,
     return_spacegroup: bool = False,
 ) -> Structure | tuple[Structure, int]:
-    """
-    Args:
+    """Args:
         poscar_path: path to POSCAR file
         to_process: if True, get standard reduced structure
         primitive: if True, get primitive structure, else get
@@ -108,8 +107,7 @@ def get_pmg_structure_from_poscar(
 
 
 def pcat(file_names: Filepath | list[Filepath]) -> str:
-    """
-    Custom python-only replacement for cat
+    """Custom python-only replacement for cat
 
     Args:
         file_names: names of files to cat together
@@ -135,8 +133,7 @@ def pgrep(
     after: int | None = None,
     as_string: bool = False,
 ) -> str | list[str]:
-    """
-    Custom python-only replacement for grep
+    """Custom python-only replacement for grep
 
     Args:
         file_name: path of file
@@ -174,8 +171,7 @@ def phead(
     n_head: int = 1,
     as_string: bool = False,
 ) -> str | list[str]:
-    """
-    Custom python-only replacement for head
+    """Custom python-only replacement for head
 
     Args:
         file_name: path of file
@@ -201,8 +197,7 @@ def ptail(
     n_tail: int = 1,
     as_string: bool = False,
 ) -> str | list[str]:
-    """
-    Custom python-only replacement for grep
+    """Custom python-only replacement for grep
 
     Args:
         file_name: path of file
@@ -226,8 +221,7 @@ def make_potcar_anonymous(
     input_file_name: Filepath,
     output_file_name: Filepath | None = None,
 ) -> None:
-    """
-    Replace full POTCAR with only single POTCAR names
+    """Replace full POTCAR with only single POTCAR names
 
     Args:
         input_file_name: path of POTCAR file

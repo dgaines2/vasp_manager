@@ -23,9 +23,7 @@ if TYPE_CHECKING:
 
 
 class BaseCalculationManager(ABC):
-    """
-    Runs vasp job workflow for a single material
-    """
+    """Runs vasp job workflow for a single material"""
 
     def __init__(
         self,
@@ -36,18 +34,17 @@ class BaseCalculationManager(ABC):
         ignore_personal_errors: bool = True,
         from_scratch: bool = False,  # DANGEROUS, WILL DELETE PREVIOUS CALCULATION
     ):
-        """
-        Args:
-            material_dir: path to a directory for a single material
-                ex. calculations/AlAs
-            to_rerun: if True, rerun failed calculations
-            to_submit: if True, submit calculations to job manager
-            primitive: if True, find primitive cell, else find conventional cell
-            ignore_personal_errors: if True, ignore job submission errors
-                if on personal computer
-            from_scratch: if True, remove the calculation's directory and
-                restart
-                note: DANGEROUS
+        """Args:
+        material_dir: path to a directory for a single material
+            ex. calculations/AlAs
+        to_rerun: if True, rerun failed calculations
+        to_submit: if True, submit calculations to job manager
+        primitive: if True, find primitive cell, else find conventional cell
+        ignore_personal_errors: if True, ignore job submission errors
+            if on personal computer
+        from_scratch: if True, remove the calculation's directory and
+            restart
+            note: DANGEROUS
         """
         self.material_dir = Path(material_dir)
         self.to_rerun = to_rerun
@@ -111,8 +108,7 @@ class BaseCalculationManager(ABC):
         return {"increase_walltime_by_factor": cc.rerun_increase_factor}
 
     def _load_structure(self, poscar_path: Path | None = None) -> Structure:
-        """
-        Load a pymatgen Structure from a POSCAR file.
+        """Load a pymatgen Structure from a POSCAR file.
 
         Args:
             poscar_path: path to POSCAR/CONTCAR. Defaults to
@@ -133,8 +129,7 @@ class BaseCalculationManager(ABC):
         return structure
 
     def _load_structure_for_rerun(self) -> Structure:
-        """
-        Load structure for a rerun, checking for archives first.
+        """Load structure for a rerun, checking for archives first.
 
         If archives exist in calc_dir, loads the CONTCAR from the latest
         archive. Otherwise falls back to poscar_source_path.
@@ -198,30 +193,40 @@ class BaseCalculationManager(ABC):
 
     @property
     def job_exists(self) -> bool:
+        """True if all runs have a jobid file."""
         if not self.vasp_runs:
             return False
         return all(r.job_manager.job_exists for r in self.vasp_runs.values())
 
     @property
     def job_complete(self) -> bool:
+        """True if all runs have finished (no longer in the SLURM queue)."""
         if not self.vasp_runs:
             return False
         return all(r.job_manager.job_complete for r in self.vasp_runs.values())
 
     def submit_job(self) -> bool:
+        """Submit all runs to the job manager.
+
+        Returns:
+            True if all jobs were submitted successfully
+        """
         if not self.vasp_runs:
             return False
         return all(r.job_manager.submit_job() for r in self.vasp_runs.values())
 
     @property
     def stopped(self) -> bool:
+        """True if a STOP file exists in the material directory."""
         return (self.material_dir / "STOP").exists()
 
     def stop(self) -> None:
+        """Create a STOP file to prevent further calculation attempts."""
         with open(self.material_dir / "STOP", "w+"):
             pass
 
     def _cancel_previous_job(self) -> None:
+        """Cancel the SLURM job for this calculation and remove its jobid file."""
         jobid_path = self.calc_dir / "jobid"
         if jobid_path.exists():
             with open(jobid_path) as fr:
@@ -231,5 +236,6 @@ class BaseCalculationManager(ABC):
             os.remove(jobid_path)
 
     def _from_scratch(self) -> None:
+        """Cancel the existing job and delete the calculation directory."""
         self._cancel_previous_job()
         shutil.rmtree(self.calc_dir)

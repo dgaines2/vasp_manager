@@ -20,9 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class RlxCalculationManager(BaseCalculationManager):
-    """
-    Runs relaxation job workflow for a single material
-    """
+    """Runs relaxation job workflow for a single material"""
 
     def __init__(
         self,
@@ -37,23 +35,22 @@ class RlxCalculationManager(BaseCalculationManager):
         max_reruns: int = 3,
         magmom_per_atom_cutoff: float = 0.0,
     ):
-        """
-        Args:
-            material_dir: path to a directory for a single material
-            to_rerun: if True, rerun failed calculations
-            to_submit: if True, submit calculations to job manager
-            primitive: if True, find primitive cell, else find conventional cell
-            ignore_personal_errors: if True, ignore job submission errors
-                if on personal computer
-            from_scratch: if True, remove the calculation's directory and
-                restart
-            from_coarse_relax: if True, use CONTCAR from coarse relax
-            tail: number of last lines to log in debugging if job failed
-            max_reruns: maximum number of times to rerun rlx before refusing to
-                continue
-            magmom_per_atom_cutoff: calculations that result in
-                magmom_per_atom less than this parameter will be automatically
-                rerun without spin-polarization
+        """Args:
+        material_dir: path to a directory for a single material
+        to_rerun: if True, rerun failed calculations
+        to_submit: if True, submit calculations to job manager
+        primitive: if True, find primitive cell, else find conventional cell
+        ignore_personal_errors: if True, ignore job submission errors
+            if on personal computer
+        from_scratch: if True, remove the calculation's directory and
+            restart
+        from_coarse_relax: if True, use CONTCAR from coarse relax
+        tail: number of last lines to log in debugging if job failed
+        max_reruns: maximum number of times to rerun rlx before refusing to
+            continue
+        magmom_per_atom_cutoff: calculations that result in
+            magmom_per_atom less than this parameter will be automatically
+            rerun without spin-polarization
         """
         self.from_coarse_relax = from_coarse_relax
         self.tail = tail
@@ -94,8 +91,13 @@ class RlxCalculationManager(BaseCalculationManager):
         make_archive: bool = False,
         use_spin: bool = True,
     ) -> None:
-        """
-        Sets up a fine relaxation
+        """Set up and optionally submit a fine relaxation.
+
+        Args:
+            increase_nodes_by_factor: multiply the node count by this factor
+            increase_walltime_by_factor: multiply the walltime by this factor
+            make_archive: if True, archive the current run before writing new input files
+            use_spin: if False, suppress spin polarization in the INCAR
         """
         if make_archive:
             self.vasp_input_creator.make_archive()
@@ -112,8 +114,7 @@ class RlxCalculationManager(BaseCalculationManager):
                 self.setup_calc()
 
     def check_calc(self) -> bool:
-        """
-        Checks if calculation has finished and reached required accuracy
+        """Checks if calculation has finished and reached required accuracy
 
         Returns:
             relaxation_successful: if True, relaxation completed successfully
@@ -178,10 +179,10 @@ class RlxCalculationManager(BaseCalculationManager):
                 nsw = self.vasp_input_creator.calc_config.nsw
                 completed_steps = len(pgrep(stdout_path, "F="))
                 if completed_steps >= nsw:
-                    # ran all NSW steps without converging — relaunch same params
+                    # ran all NSW steps without converging -- relaunch same params
                     self.setup_calc(make_archive=True, use_spin=use_spin)
                 else:
-                    # timed out before completing NSW — apply rerun strategy
+                    # timed out before completing NSW -- apply rerun strategy
                     self.setup_calc(
                         **self._rerun_resource_kwargs(),
                         make_archive=True,
@@ -202,8 +203,7 @@ class RlxCalculationManager(BaseCalculationManager):
         return True
 
     def check_volume_difference(self) -> bool:
-        """
-        Checks relaxation runs for volume difference
+        """Checks relaxation runs for volume difference
 
         if abs(volume difference) is >= 5%, reruns relaxation
         only checks for mode='rlx' as that's the structure for further calculation
@@ -264,6 +264,7 @@ class RlxCalculationManager(BaseCalculationManager):
 
     @property
     def is_done(self) -> bool:
+        """True if the relaxation converged and volume is within 5% (computed lazily)."""
         if getattr(self, "_is_done", None) is None:
             self._is_done = False
             calc_done = self.check_calc()
@@ -275,6 +276,9 @@ class RlxCalculationManager(BaseCalculationManager):
 
     @property
     def results(self) -> None | str | dict:
+        """Relaxation results dict with spacegroup and volume change, or None/"STOPPED"
+        if not finished.
+        """
         if not self.is_done:
             if self.stopped:
                 return "STOPPED"

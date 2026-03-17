@@ -59,7 +59,7 @@ class CalcConfig(BaseModel):
     amix: float = 0.4
     bmix: float = 1.0
 
-    # Write flags — Python bools; converted to ".TRUE."/".FALSE." at INCAR write time
+    # Write flags -- Python bools; converted to ".TRUE."/".FALSE." at INCAR write time
     lcharge: bool = False
     lwave: bool = False
     lvtot: bool = False

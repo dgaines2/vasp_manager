@@ -27,8 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 class BulkmodCalculationManager(BaseCalculationManager):
-    """
-    Runs bulk modulus job workflow for a single material.
+    """Runs bulk modulus job workflow for a single material.
 
     Each strain is an independent static calculation with its own
     VaspInputCreator, JobManager, and SLURM job.
@@ -46,21 +45,20 @@ class BulkmodCalculationManager(BaseCalculationManager):
         tail: int = 5,
         strains: None | NDArray = None,
     ):
-        """
-        Args:
-            material_dir: path to a directory for a single material
-            to_rerun: if True, rerun failed calculations
-            to_submit: if True, submit calculations to job manager
-            primitive: if True, find primitive cell, else find conventional cell
-            ignore_personal_errors: if True, ignore job submission errors
-                if on personal computer
-            from_scratch: if True, remove the calculation's directory and
-                restart
-            from_relax: if True, use CONTCAR from relax
-            tail: number of last lines to log in debugging if job failed
-            strains: fractional strain along each axis for each deformation
-                if None, use np.linspace(start=0.925, stop=1.075, number=11)**(1/3)
-                len(strains) must be odd and strains must be centered around 0
+        """Args:
+        material_dir: path to a directory for a single material
+        to_rerun: if True, rerun failed calculations
+        to_submit: if True, submit calculations to job manager
+        primitive: if True, find primitive cell, else find conventional cell
+        ignore_personal_errors: if True, ignore job submission errors
+            if on personal computer
+        from_scratch: if True, remove the calculation's directory and
+            restart
+        from_relax: if True, use CONTCAR from relax
+        tail: number of last lines to log in debugging if job failed
+        strains: fractional strain along each axis for each deformation
+            if None, use np.linspace(start=0.925, stop=1.075, number=11)**(1/3)
+            len(strains) must be odd and strains must be centered around 0
         """
         self.from_relax = from_relax
         self.strains = (
@@ -156,6 +154,14 @@ class BulkmodCalculationManager(BaseCalculationManager):
         return runs
 
     def _check_use_spin(self) -> bool:
+        """Determine whether spin polarization should be used for strain calculations.
+
+        If from_relax is True, checks the relaxation stdout for magnetic moments.
+        Otherwise, defaults to True.
+
+        Returns:
+            True if spin polarization should be enabled
+        """
         if self.from_relax:
             rlx_stdout = self.material_dir / "rlx" / "stdout.txt"
             rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
@@ -170,7 +176,16 @@ class BulkmodCalculationManager(BaseCalculationManager):
         increase_nodes_by_factor: int = 1,
         increase_walltime_by_factor: int = 1,
     ) -> VaspRun:
-        """Create input files for a single strain and return its VaspRun."""
+        """Create input files for a single strain and return its VaspRun.
+
+        Args:
+            strain_index: index into self.strains and self.strain_names
+            increase_nodes_by_factor: multiply the node count by this factor
+            increase_walltime_by_factor: multiply the walltime by this factor
+
+        Returns:
+            VaspRun for the newly created strain directory
+        """
         strain = self.strains[strain_index]
         strain_name = self.strain_names[strain_index]
         strain_dir = self.calc_dir / strain_name
@@ -227,8 +242,14 @@ class BulkmodCalculationManager(BaseCalculationManager):
         increase_nodes_by_factor: int = 1,
         increase_walltime_by_factor: int = 1,
     ) -> None:
-        """
-        Sets up an EOS bulkmod calculation with independent strain jobs.
+        """Set up and optionally submit an EOS bulkmod calculation with independent
+        strain jobs.
+
+        Args:
+            increase_nodes_by_factor: multiply the node count by this factor for all
+                strain jobs
+            increase_walltime_by_factor: multiply the walltime by this factor for all
+                strain jobs
         """
         if not self.from_relax:
             msg = (
@@ -258,8 +279,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
                 self.setup_calc()
 
     def check_calc(self) -> bool:
-        """
-        Checks result of bulk modulus calculation
+        """Checks result of bulk modulus calculation
 
         Returns:
             bulkmod_sucessful: if True, bulkmod calculation completed successfully
@@ -315,12 +335,17 @@ class BulkmodCalculationManager(BaseCalculationManager):
 
     @property
     def is_done(self) -> bool:
+        """True if all strain calculations completed successfully (computed lazily)."""
         if getattr(self, "_is_done", None) is None:
             self._is_done = self.check_calc()
         return self._is_done
 
     @property
     def results(self) -> None | str | dict:
+        """Bulk modulus results dict, or None/"STOPPED" if not finished.
+
+        Runs BulkmodAnalyzer on first access after is_done is True.
+        """
         if not self.is_done:
             if self.stopped:
                 return "STOPPED"
@@ -349,6 +374,7 @@ class BulkmodCalculationManager(BaseCalculationManager):
                 os.remove(jobid_path)
 
     def _from_scratch(self) -> None:
+        """Cancel all strain jobs, delete the calculation directory, and reset runs."""
         self._cancel_previous_job()
         shutil.rmtree(self.calc_dir)
         self._vasp_runs = None
