@@ -179,15 +179,15 @@ def test_calc_config_bool_flag_defaults(config_dir):
         assert cfg.lvtot is False, f"lvtot not False for mode {mode!r}"
 
 
-def test_calc_config_ediff_str_preserved(config_dir):
+def test_calc_config_ediff_formatting(config_dir):
     """
-    A string ediff value is not silently coerced to float by pydantic
+    A string ediff value is coerced to float by pydantic
     """
     configs = load_calc_configs(config_dir)
     base_data = next(iter(configs.values())).model_dump()
     cfg = CalcConfig.model_validate({**base_data, "ediff": "1e-07"})
-    assert isinstance(cfg.ediff, str)
-    assert cfg.ediff == "1e-07"
+    assert isinstance(cfg.ediff, float)
+    assert cfg.ediff == 1e-07
 
 
 def test_calc_config_ediff_accepts_float(config_dir):

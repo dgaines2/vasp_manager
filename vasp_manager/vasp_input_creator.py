@@ -306,10 +306,11 @@ class VaspInputCreator:
         incar_path = self.calc_dir / "INCAR"
         calc_config = self.calc_config.model_dump()
         # Convert Python bools to VASP logical strings
-        calc_config = {
-            k: (".TRUE." if v else ".FALSE.") if isinstance(v, bool) else v
-            for k, v in calc_config.items()
-        }
+        for k, v in calc_config.items():
+            if isinstance(v, bool):
+                calc_config[k] = ".TRUE." if v else ".FALSE."
+            elif isinstance(v, float):
+                calc_config[k] = str(v) if abs(v) >= 0.01 else f"{v:.3E}"
 
         if calc_config["ispin"] not in [1, "auto"]:
             raise RuntimeError("ISPIN must be set to 1 or auto")
@@ -344,8 +345,6 @@ class VaspInputCreator:
                 cores_per_group,
             ]
         )
-        calc_config["amix"] = calc_config.get("amix", 0.4)
-        calc_config["bmix"] = calc_config.get("bmix", 1.0)
 
         needs_spin_polarization = self._check_needs_spin_polarization(composition_dict)
         use_spin_polarization = (
