@@ -6,9 +6,9 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Callable
+from concurrent.futures import ProcessPoolExecutor
 from functools import cached_property
 from importlib.metadata import version
-from multiprocessing import Pool
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -90,7 +90,7 @@ class VaspManager:
                 personal computer
             tail: number of last lines from stdout.txt to log in debugging
                 if job failed
-            use_multiprocessing: if True, use pool.map()
+            use_multiprocessing: if True, use ProcessPoolExecutor
             ncore: if ncore, use {ncore} processes for multiprocessing
                 if None, defaults to minimum(number of materials, 4)
             calculation_manager_kwargs: contains subdictionaries for each
@@ -450,9 +450,11 @@ class VaspManager:
 
     def _manage_calculations_wrapper(self) -> list[tuple]:
         if self.use_multiprocessing:
-            with Pool(self.ncore) as pool:
-                results = pool.map(
-                    self._manage_calculations, tqdm(self.material_names), 1
+            with ProcessPoolExecutor(max_workers=self.ncore) as executor:
+                results = list(
+                    executor.map(
+                        self._manage_calculations, tqdm(self.material_names), chunksize=1
+                    )
                 )
         else:
             results = []
