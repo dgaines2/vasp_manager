@@ -118,7 +118,7 @@ For each desired calculation mode, set the INCAR tags in this json.
 * `nsw` (`int`)
 * `ibrion` (`int`)
 * `isif` (`int`)
-* `lreal` (`bool`): [".FALSE.", ".TRUE."]
+* `lreal` (`bool`)
 * `potim` (`float`)
 * `ediffg` (`float`)
 * `iopt` (`int`)
@@ -130,9 +130,9 @@ For each desired calculation mode, set the INCAR tags in this json.
 * `sigma` (`float`)
 * `amix` (`float`)
 * `bmix` (`float`)
-* `lwave` (`bool`): [".FALSE.", ".TRUE."]
-* `lcharge` (`bool`): [".FALSE.", ".TRUE."]
-* `lvot` (`bool`): [".FALSE.", ".TRUE."]
+* `lwave` (`bool`)
+* `lcharge` (`bool`)
+* `lvot` (`bool`)
 * `kpar` (`int`)
 * `gga` (`str`)
 * `walltime` (`str`)
@@ -141,9 +141,7 @@ For each desired calculation mode, set the INCAR tags in this json.
 
     * In `json` files, the equivalent of python's `None` is `null`.
     * `VASP` (Fortran) expects `bool` data to be passed as `".FALSE."` or
-      `".TRUE."`.
-    * I prefer to write small floats (e.g. `"1e-03"`) as a string to prevent
-      them from being parsed as decimals (e.g. `0.001`).
+      `".TRUE."`; this is automatically converted for you.
     * `walltime` should be passed as `"hh:mm:ss"`. You should try to set this
       such that your job hits NSW before it runs out of time.  If your job
       times out, an archive will be made and the calculation will be

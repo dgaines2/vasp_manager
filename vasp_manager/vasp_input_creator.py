@@ -36,9 +36,7 @@ logger = logging.getLogger(__name__)
 
 
 class VaspInputCreator:
-    """
-    Handles VASP file creation
-    """
+    """Handles VASP file creation"""
 
     def __init__(
         self,
@@ -54,21 +52,20 @@ class VaspInputCreator:
         ncore_per_node_for_memory: int | None = None,
         use_spin: bool = True,
     ) -> None:
-        """
-        Args:
-            calc_dir: directory where VASP input files will be written
-            mode: calculation type (e.g. "rlx", "static", "elastic")
-            structure: pymatgen Structure to use for input generation
-            config_dir: directory containing calc_config.json and
-                computing_config.json
-            name: material name for logging and job naming
-            job_prefix: short prefix for SLURM job names (e.g. "r", "s", "b").
-                If None, derived from mode for backwards compatibility.
-            increase_nodes_by_factor: multiply node count by this factor
-            increase_walltime_by_factor: multiply walltime by this factor
-            poscar_significant_figures: significant figures for POSCAR coords
-            ncore_per_node_for_memory: cores per node reserved for memory
-            use_spin: pass False to suppress spin polarization
+        """Args:
+        calc_dir: directory where VASP input files will be written
+        mode: calculation type (e.g. "rlx", "static", "elastic")
+        structure: pymatgen Structure to use for input generation
+        config_dir: directory containing calc_config.json and
+            computing_config.json
+        name: material name for logging and job naming
+        job_prefix: short prefix for SLURM job names (e.g. "r", "s", "b").
+            If None, derived from mode for backwards compatibility.
+        increase_nodes_by_factor: multiply node count by this factor
+        increase_walltime_by_factor: multiply walltime by this factor
+        poscar_significant_figures: significant figures for POSCAR coords
+        ncore_per_node_for_memory: cores per node reserved for memory
+        use_spin: pass False to suppress spin polarization
         """
         self.calc_dir = Path(calc_dir)
         self.mode = mode
@@ -133,9 +130,7 @@ class VaspInputCreator:
         return q_mapper
 
     def make_poscar(self) -> None:
-        """
-        Create and write a POSCAR
-        """
+        """Create and write a POSCAR"""
         poscar = Poscar(self.structure)
         poscar_path = self.calc_dir / "POSCAR"
         poscar.write_file(
@@ -143,9 +138,7 @@ class VaspInputCreator:
         )
 
     def make_potcar(self) -> None:
-        """
-        Create and write a POTCAR
-        """
+        """Create and write a POTCAR"""
         potcar_path = self.calc_dir / "POTCAR"
         potcar_dir = self.computing_config.potcar_dir
 
@@ -189,8 +182,7 @@ class VaspInputCreator:
 
     @cached_property
     def n_procs_used(self) -> int:
-        """
-        Total number of actual processors to run VASP, which may be different
+        """Total number of actual processors to run VASP, which may be different
         than the total number of processors requested in SLURM
             Typically request all available processors on each node, and then
             (optionally) leave some empty for memory or ease of division
@@ -208,6 +200,15 @@ class VaspInputCreator:
         return d_f_block
 
     def _check_needs_spin_polarization(self, composition_dict: dict) -> bool:
+        """Check if the structure contains d- or f-block elements requiring spin
+        polarization.
+
+        Args:
+            composition_dict: element symbol -> count mapping from Structure.composition
+
+        Returns:
+            True if any d- or f-block element is present
+        """
         needs_spin_polarization = False
         for el_name in composition_dict:
             if (
@@ -218,6 +219,17 @@ class VaspInputCreator:
         return needs_spin_polarization
 
     def _get_auto_magmom(self, composition_dict: dict) -> str:
+        """Build a VASP MAGMOM tag string with initial moments assigned by element type.
+
+        d-block elements receive 5.0, f-block elements receive 7.0, all others
+        receive 0.0.
+
+        Args:
+            composition_dict: element symbol -> count mapping from Structure.composition
+
+        Returns:
+            MAGMOM tag string, e.g. "MAGMOM = 2*5.0 1*0.0"
+        """
         magmom_string = "MAGMOM ="
         for el_name in composition_dict:
             if el_name in self.d_f_block["d_block"]:
@@ -244,6 +256,19 @@ class VaspInputCreator:
         hubbards_type: str | None,
         composition_dict: dict,
     ) -> bool:
+        """Check if the structure requires DFT+U corrections.
+
+        DFT+U is applied only when the structure contains both oxygen and a
+        d/f-block element with a Hubbard U entry in hubbards.json.
+
+        Args:
+            hubbards_type: Hubbard parametrization scheme (e.g. "wang"), or None/False
+                to skip DFT+U
+            composition_dict: element symbol -> count mapping from Structure.composition
+
+        Returns:
+            True if DFT+U should be applied
+        """
         if not hubbards_type:
             return False
 
@@ -258,6 +283,15 @@ class VaspInputCreator:
         return needs_dftu
 
     def _get_ldau_string(self, hubbards_type: str, composition_dict: dict) -> str:
+        """Build the DFT+U block for the INCAR (LDAU, LDAUU, LDAUJ, LDAUL tags).
+
+        Args:
+            hubbards_type: Hubbard parametrization scheme (e.g. "wang")
+            composition_dict: element symbol -> count mapping from Structure.composition
+
+        Returns:
+            multi-line string containing LDAU = .TRUE., LDAUPRINT, LDAUU, LDAUJ, LDAUL
+        """
         u_string = "LDAUU ="
         j_string = "LDAUJ ="
         l_string = "LDAUL ="
@@ -282,6 +316,16 @@ class VaspInputCreator:
         return ldau_string
 
     def _get_lmaxmix(self, composition_dict: dict) -> int:
+        """Determine the LMAXMIX value based on element types present.
+
+        LMAXMIX = 6 for f-block elements, 4 for d-block, 2 otherwise.
+
+        Args:
+            composition_dict: element symbol -> count mapping from Structure.composition
+
+        Returns:
+            LMAXMIX value for the INCAR
+        """
         d_block_elements = self.d_f_block["d_block"]
         f_block_elements = self.d_f_block["f_block"]
         lmaxmix = 2
@@ -294,8 +338,7 @@ class VaspInputCreator:
         return lmaxmix
 
     def make_incar(self) -> None:
-        """
-        Create and write an INCAR
+        """Create and write an INCAR
 
         Current kpoints coming from the kspacing tag in the INCAR,
             but future versions should include ability to make kpoints from kppra
@@ -387,6 +430,11 @@ class VaspInputCreator:
             fw.write(incar)
 
     def make_kpoints(self) -> None:
+        """Create and write a Gamma-centered KPOINTS file.
+
+        K-point grid is derived from kspacing in calc_config and the reciprocal
+        lattice vectors of the structure.
+        """
         kpoints_path = self.calc_dir / "KPOINTS"
         kspacing = self.calc_config.kspacing
         reciprocal_lattice = self.structure.lattice.reciprocal_lattice
@@ -402,8 +450,7 @@ class VaspInputCreator:
 
     @staticmethod
     def parse_walltime(walltime: str) -> timedelta:
-        """
-        Convert HH:MM:SS to timedelta
+        """Convert HH:MM:SS to timedelta
         Enforces strict HH:MM:SS format
         Raises ValueError on invalid format.
         """
@@ -420,9 +467,7 @@ class VaspInputCreator:
 
     @staticmethod
     def format_walltime(walltime: timedelta) -> str:
-        """
-        Convert timedelta to HH:MM:SS
-        """
+        """Convert timedelta to HH:MM:SS"""
         total_seconds = int(walltime.total_seconds())
         hours = total_seconds // 3600
         remaining_seconds_after_hours = total_seconds % 3600
@@ -431,9 +476,7 @@ class VaspInputCreator:
         return f"{hours:02}:{minutes:02}:{seconds:02}"
 
     def make_vaspq(self) -> None:
-        """
-        Create and write vasp.q file
-        """
+        """Create and write vasp.q file"""
         vaspq_path = self.calc_dir / "vasp.q"
 
         if self.job_prefix is None:
@@ -499,8 +542,7 @@ class VaspInputCreator:
         vaspq_path.chmod(vaspq_path.stat().st_mode | stat.S_IEXEC)
 
     def make_archive(self) -> Path | None:
-        """
-        Archive current VASP files into an archive_N/ subdirectory.
+        """Archive current VASP files into an archive_N/ subdirectory.
 
         Returns:
             archive_path: path to the created archive directory, or None if
@@ -546,8 +588,7 @@ class VaspInputCreator:
                 return self.calc_dir / archive_name
 
     def create(self) -> None:
-        """
-        Make VASP input files
+        """Make VASP input files
 
         Note:
             Don't touch the order! make_incar and make_vaspq rely on the poscar and

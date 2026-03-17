@@ -1,5 +1,4 @@
-"""
-vasp_manager
+"""vasp_manager
 
 A python package to run and analyze VASP calculations
 """

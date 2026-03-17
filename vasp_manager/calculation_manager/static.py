@@ -20,9 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class StaticCalculationManager(BaseCalculationManager):
-    """
-    Runs static job workflow for a single material
-    """
+    """Runs static job workflow for a single material"""
 
     def __init__(
         self,
@@ -35,18 +33,17 @@ class StaticCalculationManager(BaseCalculationManager):
         from_relax: bool = True,
         tail: int = 5,
     ) -> None:
-        """
-        Args:
-            material_dir: path to a directory for a single material
-            to_rerun: if True, rerun failed calculations
-            to_submit: if True, submit calculations to job manager
-            primitive: if True, find primitive cell, else find conventional cell
-            ignore_personal_errors: if True, ignore job submission errors
-                if on personal computer
-            from_scratch: if True, remove the calculation's directory and
-                restart
-            from_relax: if True, use CONTCAR from relax
-            tail: number of last lines to log in debugging if job failed
+        """Args:
+        material_dir: path to a directory for a single material
+        to_rerun: if True, rerun failed calculations
+        to_submit: if True, submit calculations to job manager
+        primitive: if True, find primitive cell, else find conventional cell
+        ignore_personal_errors: if True, ignore job submission errors
+            if on personal computer
+        from_scratch: if True, remove the calculation's directory and
+            restart
+        from_relax: if True, use CONTCAR from relax
+        tail: number of last lines to log in debugging if job failed
         """
         self.from_relax = from_relax
         self.tail = tail
@@ -79,6 +76,14 @@ class StaticCalculationManager(BaseCalculationManager):
         return poscar_source_path
 
     def _check_use_spin(self) -> bool:
+        """Determine whether spin polarization should be used for the static calculation.
+
+        If from_relax is True, checks the relaxation stdout for magnetic moments.
+        Otherwise, defaults to True.
+
+        Returns:
+            True if spin polarization should be enabled
+        """
         if self.from_relax:
             rlx_stdout = self.material_dir / "rlx" / "stdout.txt"
             rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
@@ -92,10 +97,13 @@ class StaticCalculationManager(BaseCalculationManager):
         increase_nodes_by_factor: int = 1,
         increase_walltime_by_factor: int = 1,
     ) -> None:
-        """
-        Runs a static SCF calculation through VASP
+        """Set up and optionally submit a static SCF calculation.
 
-        By default, requires previous relaxation run
+        By default, requires a previous relaxation run to source the POSCAR from.
+
+        Args:
+            increase_nodes_by_factor: multiply the node count by this factor
+            increase_walltime_by_factor: multiply the walltime by this factor
         """
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
         self.vasp_input_creator.increase_walltime_by_factor = increase_walltime_by_factor
@@ -109,10 +117,9 @@ class StaticCalculationManager(BaseCalculationManager):
                 self.setup_calc()
 
     def check_calc(self) -> bool:
-        """
-        Checks result of static calculation
+        """Check result of static calculation.
 
-        Returns
+        Returns:
             static_successful: if True, static calculation completed successfully
         """
         if not self.job_complete:
@@ -171,12 +178,16 @@ class StaticCalculationManager(BaseCalculationManager):
 
     @property
     def is_done(self) -> bool:
+        """True if the static SCF converged successfully (computed lazily)."""
         if getattr(self, "_is_done", None) is None:
             self._is_done = self.check_calc()
         return self._is_done
 
     @property
     def results(self) -> None | str | dict:
+        """Static results dict with final energy and magmom, or None/"STOPPED" if not
+        finished.
+        """
         if not self.is_done:
             if self.stopped:
                 return "STOPPED"

@@ -18,9 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class RlxCoarseCalculationManager(BaseCalculationManager):
-    """
-    Runs coarse relaxation job workflow for a single material
-    """
+    """Runs coarse relaxation job workflow for a single material"""
 
     def __init__(
         self,
@@ -33,19 +31,18 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
         tail: int = 5,
         max_reruns: int = 3,
     ) -> None:
-        """
-        Args:
-            material_dir: path to a directory for a single material
-            to_rerun: if True, rerun failed calculations
-            to_submit: if True, submit calculations to job manager
-            primitive: if True, find primitive cell, else find conventional cell
-            ignore_personal_errors: if True, ignore job submission errors
-                if on personal computer
-            from_scratch: if True, remove the calculation's directory and
-                restart
-            tail: number of last lines to log in debugging if job failed
-            max_reruns: maximum number of times to rerun rlx-coarse before
-                continuing to rlx
+        """Args:
+        material_dir: path to a directory for a single material
+        to_rerun: if True, rerun failed calculations
+        to_submit: if True, submit calculations to job manager
+        primitive: if True, find primitive cell, else find conventional cell
+        ignore_personal_errors: if True, ignore job submission errors
+            if on personal computer
+        from_scratch: if True, remove the calculation's directory and
+            restart
+        tail: number of last lines to log in debugging if job failed
+        max_reruns: maximum number of times to rerun rlx-coarse before
+            continuing to rlx
         """
         self.tail = tail
         self.max_reruns = max_reruns
@@ -79,8 +76,12 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
         increase_walltime_by_factor: int = 1,
         make_archive: bool = False,
     ) -> None:
-        """
-        Sets up a coarse relaxation
+        """Set up and optionally submit a coarse relaxation.
+
+        Args:
+            increase_nodes_by_factor: multiply the node count by this factor
+            increase_walltime_by_factor: multiply the walltime by this factor
+            make_archive: if True, archive the current run before writing new input files
         """
         if make_archive:
             self.vasp_input_creator.make_archive()
@@ -98,8 +99,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
                 self.setup_calc()
 
     def check_calc(self) -> bool:
-        """
-        Checks if calculation has finished and reached required accuracy
+        """Checks if calculation has finished and reached required accuracy
 
         Returns:
             relaxation_successful (bool): if True, relaxation completed successfully
@@ -156,10 +156,10 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
                 nsw = self.vasp_input_creator.calc_config.nsw
                 completed_steps = len(pgrep(stdout_path, "F="))
                 if completed_steps >= nsw:
-                    # ran all NSW steps without converging — relaunch same params
+                    # ran all NSW steps without converging -- relaunch same params
                     self.setup_calc(make_archive=True)
                 else:
-                    # timed out before completing NSW — apply rerun strategy
+                    # timed out before completing NSW -- apply rerun strategy
                     self.setup_calc(**self._rerun_resource_kwargs(), make_archive=True)
             return False
 
@@ -169,12 +169,14 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
 
     @property
     def is_done(self) -> bool:
+        """True if the coarse relaxation reached required accuracy (computed lazily)."""
         if getattr(self, "_is_done", None) is None:
             self._is_done = self.check_calc()
         return self._is_done
 
     @property
     def results(self) -> str:
+        """Status string: "done", "not finished", or "STOPPED"."""
         if not self.is_done:
             if self.stopped:
                 self._results = "STOPPED"

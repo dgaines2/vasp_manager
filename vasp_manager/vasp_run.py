@@ -52,8 +52,7 @@ class VaspRun:
         self,
         extra_errors: list[str] | None = None,
     ) -> set[str]:
-        """
-        Find VASP errors in stdout and stderr
+        """Find VASP errors in stdout and stderr
 
         Args:
             extra_errors: names of other errors to include in search
@@ -83,8 +82,7 @@ class VaspRun:
         return errors_found
 
     def address_vasp_errors(self, errors: set[str]) -> bool:
-        """
-        Try to automatically fix known VASP errors by modifying VIC settings.
+        """Try to automatically fix known VASP errors by modifying VIC settings.
 
         Args:
             errors: set of errors found in stdout or stderr
