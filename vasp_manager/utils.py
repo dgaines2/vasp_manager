@@ -8,9 +8,10 @@ import json
 import logging
 import os
 from collections import deque
+from collections.abc import MutableMapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from pymatgen.core import Structure
@@ -33,7 +34,7 @@ def change_directory(new_dir: str | Path):
 class NumpyEncoder(json.JSONEncoder):
     """Special json encoder for numpy types"""
 
-    def default(self, obj):
+    def default(self, obj: Any) -> Any:
         if isinstance(obj, np.integer):
             return int(obj)
         elif isinstance(obj, np.floating):
@@ -56,7 +57,9 @@ class LoggerAdapter(logging.LoggerAdapter):
         self.prefix = prefix
         self.separator = separator
 
-    def process(self, msg, kwargs):
+    def process(
+        self, msg: str, kwargs: MutableMapping[str, Any]
+    ) -> tuple[str, MutableMapping[str, Any]]:
         return f"{self.prefix}{self.separator}{msg}", kwargs
 
 
