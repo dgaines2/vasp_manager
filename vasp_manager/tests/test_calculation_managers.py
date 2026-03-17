@@ -19,8 +19,6 @@ from vasp_manager.utils import pgrep
 
 INPUT_FILES = ["POSCAR", "POTCAR", "INCAR", "vasp.q"]
 
-# calcs_dir and base_calcs_dir fixtures are in conftest.py
-
 
 # ---------------------------------------------------------------------------
 # Do testing of the results first as they don't modify the directories
