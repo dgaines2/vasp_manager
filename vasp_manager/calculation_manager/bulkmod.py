@@ -269,6 +269,8 @@ class BulkmodCalculationManager(BaseCalculationManager):
             return False
 
         all_passed = True
+        _ = self.vasp_runs  # ensure _vasp_runs is populated
+        assert self._vasp_runs is not None
         for i, (strain_name, run) in enumerate(self.vasp_runs.items()):
             stdout_path = run.run_dir / "stdout.txt"
             if not stdout_path.exists():

@@ -34,6 +34,7 @@ dev = [
     "pytest",
     "mypy",
     "ruff",
+    "types-PyYAML",
 ]
 docs = [
     "blacken-docs>=1.16.0",
@@ -73,4 +74,4 @@ omit = ["*tests*"]
 
 [tool.mypy]
 ignore_missing_imports = true
-no_implicit_optional = false
+no_implicit_optional = true

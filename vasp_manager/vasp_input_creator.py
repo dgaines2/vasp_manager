@@ -325,7 +325,7 @@ class VaspInputCreator:
         potcar_path = self.calc_dir / "POTCAR"
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=UserWarning)
-            potcar = Potcar.from_file(potcar_path)
+            potcar = Potcar.from_file(str(potcar_path))
         n_electrons = 0
         for potcar_single in potcar:
             n_electrons += (

@@ -29,7 +29,7 @@ class JobManager:
         exe_name: str = "vasp.q",
         jobid_name: str = "jobid",
         config_dir: SourceDirectory | None = None,
-        manager_name: str = None,
+        manager_name: str | None = None,
         ignore_personal_errors: bool = True,
     ) -> None:
         """

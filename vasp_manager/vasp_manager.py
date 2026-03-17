@@ -5,12 +5,12 @@ from __future__ import annotations
 
 import json
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from concurrent.futures import ProcessPoolExecutor
 from functools import cached_property
 from importlib.metadata import version
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 from tqdm import tqdm
@@ -138,16 +138,21 @@ class VaspManager:
         for calc_type in values:
             if calc_type not in supported_calc_types:
                 raise ValueError(f"Calculation type {calc_type} not supported")
-        for calc_type, required_dependencies in REQUIRED_CALC_DEPENDENCIES.items():
-            if calc_type in values:
+        for (
+            required_calc_type,
+            required_dependencies,
+        ) in REQUIRED_CALC_DEPENDENCIES.items():
+            if required_calc_type in values:
                 for required_dependency in required_dependencies:
                     if required_dependency not in values:
                         raise ValueError(
-                            f"Cannot use '{calc_type}' without '{required_dependency}'"
-                            " in calculation_types"
+                            f"Cannot use '{required_calc_type}' without"
+                            f" '{required_dependency}' in calculation_types"
                         )
         active_dependencies = VaspManager._build_active_dependencies(values)
-        self._calculation_types = VaspManager._toposort(active_dependencies)
+        self._calculation_types = cast(
+            "list[CalculationType]", VaspManager._toposort(active_dependencies)
+        )
 
     @property
     def ncore(self) -> int:
@@ -251,7 +256,7 @@ class VaspManager:
 
     @staticmethod
     def _build_active_dependencies(
-        calc_types: list[str],
+        calc_types: Sequence[str],
     ) -> dict[str, list[str]]:
         """
         Build a dependency graph restricted to the requested calculation types.
