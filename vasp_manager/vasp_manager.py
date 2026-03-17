@@ -412,10 +412,7 @@ class VaspManager:
         """
         material_results: dict[str, Any] = {}
         active_dependencies = self._build_active_dependencies(self.calculation_types)
-        managers_by_mode = {
-            calc_manager.mode: calc_manager
-            for calc_manager in self.calculation_managers[material_name]
-        }
+        done_modes: set[str] = set()
 
         for calc_manager in self.calculation_managers[material_name]:
             mode = calc_manager.mode
@@ -426,6 +423,7 @@ class VaspManager:
                 )
                 if calc_is_done and not calc_manager.from_scratch:
                     logger.info(f"{material_name} -- {mode.upper()} Successful")
+                    done_modes.add(mode)
                     continue
 
             if calc_manager.stopped:
@@ -434,9 +432,7 @@ class VaspManager:
                 continue
 
             dependencies_satisfied = all(
-                managers_by_mode[dependency].is_done
-                for dependency in active_dependencies.get(mode, [])
-                if dependency in managers_by_mode
+                dep in done_modes for dep in active_dependencies.get(mode, [])
             )
             if not dependencies_satisfied:
                 continue
@@ -446,6 +442,8 @@ class VaspManager:
                 calc_manager.setup_calc()
 
             material_results[mode] = calc_manager.results
+            if calc_manager.is_done:
+                done_modes.add(mode)
         return (material_name, material_results)
 
     def _manage_calculations_wrapper(self) -> list[tuple]:

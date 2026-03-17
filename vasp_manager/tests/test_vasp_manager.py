@@ -124,6 +124,62 @@ def test_vmg_in_order(tmp_path):
         assert summary["n_total"] == summary[calculation_type]["n_finished"]
 
 
+def test_vmg_first_run_no_completed_data(tmp_path):
+    """Request all calc types when only POSCARs exist (no completed data).
+
+    This simulates the very first run on a cluster: rlx-coarse gets set up
+    and submitted, but downstream calcs (rlx, static, bulkmod, elastic)
+    must be skipped without crashing — even though their dependency
+    managers can't load structure files yet.
+    """
+    original_calculations_dir = (
+        importlib_resources.files("vasp_manager") / "tests" / "calculations"
+    )
+    temp_calculations_dir = tmp_path / "calculations"
+    # Copy only the top-level POSCARs — no completed calc directories
+    shutil.copytree(
+        original_calculations_dir,
+        temp_calculations_dir,
+        dirs_exist_ok=True,
+        symlinks=True,
+        ignore=shutil.ignore_patterns(
+            "rlx*",
+            "static",
+            "bulkmod",
+            "elastic",
+            "material_hit_errors",
+            "material_needs_archive",
+            "material_needs_rerun",
+        ),
+    )
+
+    calculation_types = [
+        "rlx-coarse",
+        "rlx",
+        "static",
+        "bulkmod",
+        "elastic",
+    ]
+    material_dirs = [
+        p for p in sorted(list(temp_calculations_dir.glob("*"))) if p.is_dir()
+    ]
+
+    vmg = VaspManager(
+        calculation_types=calculation_types,
+        material_dirs=material_dirs,
+        use_multiprocessing=False,
+        to_rerun=True,
+        to_submit=True,
+    )
+    results = vmg.run_calculations()
+    for material in results:
+        # rlx-coarse was set up but not finished (no actual VASP ran)
+        assert results[material]["rlx-coarse"] == "not finished"
+        # All downstream calcs should be absent — they were correctly skipped
+        for calc_type in ["rlx", "static", "bulkmod", "elastic"]:
+            assert calc_type not in results[material]
+
+
 def test_vmg_with_skipping(tmp_path):
     original_calculations_dir = (
         importlib_resources.files("vasp_manager") / "tests" / "calculations"
