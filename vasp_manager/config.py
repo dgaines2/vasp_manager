@@ -24,47 +24,47 @@ class CalcConfig(BaseModel):
 
     Known fields are typed; any additional keys (custom INCAR tags) are
     accepted via extra='allow' and included in model_dump().
-
-    Fields accepting float | str (ediff, ediffg, symprec, sigma) allow
-    Fortran-compatible scientific notation strings (e.g. "1e-07") to be
-    passed through as-is rather than being reformatted by Python.
     """
 
     model_config = ConfigDict(extra="allow")
 
     # INCAR fields
     prec: str
-    ispin: str | int  # "auto" | 1 | 2
+    ispin: str | int  # "auto" | 1
     kspacing: float
-    symprec: float | str
+    symprec: float
     nsw: int
     ibrion: int
     isif: int
-    lreal: str
+    lreal: bool
     potim: float
-    ediffg: float | str
+    ediffg: float
     iopt: int
     nelm: int
     encut: int
-    ediff: float | str
+    ediff: float
     algo: str
     ismear: int
-    sigma: float | str
+    sigma: float
     kpar: int
     gga: str
+
+    # Optional fields
+    amix: float = 0.4
+    bmix: float = 1.0
 
     # Write flags — Python bools; converted to ".TRUE."/".FALSE." at INCAR write time
     lcharge: bool = False
     lwave: bool = False
     lvtot: bool = False
 
-    # Meta fields (not INCAR tags)
-    hubbards: str | bool | None
-    walltime: str
-
     # Optional elastic-only fields
     write_kpoints: bool = False
     nfree: int | None = None
+
+    # Meta fields (not INCAR tags)
+    hubbards: str | bool | None  # "wang" | False | None
+    walltime: str  # hh:mm:ss
 
 
 @lru_cache(maxsize=None)

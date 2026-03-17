@@ -8,7 +8,8 @@ initializing a [`VaspManager`][vasp_manager.VaspManager] object.
 * `rlx`: tighter relaxation (often force-based)
 * `static`: high accuracy static SCF calculation
 * `bulkmod`: bulk modulus calculation using an Equation of State (EOS) fit to an
-energy-volume curve
+energy-volume curve. Each strain point is submitted as an independent static
+calculation, allowing individual strains to be monitored and rerun separately.
 * `elastic`: Determination of elastic constants using the strain/deformation
 method built into `VASP`
 

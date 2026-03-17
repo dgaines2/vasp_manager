@@ -136,16 +136,14 @@ def test_hit_errors_and_restart(calcs_dir):
     """
     material_dir = calcs_dir / "material_hit_errors"
     rlx_coarse_dir = material_dir / "rlx-coarse"
-    stdout_path = rlx_coarse_dir / "stdout.txt"
-    stderr_path = rlx_coarse_dir / "stderr.txt"
     assert rlx_coarse_dir.exists()
     rlx_coarse_manager = RlxCoarseCalculationManager(
         material_dir=material_dir,
         to_rerun=False,
         to_submit=False,
     )
-    errors = rlx_coarse_manager._check_vasp_errors(stdout_path, stderr_path)
-    all_errors_addressed = rlx_coarse_manager._address_vasp_errors(errors)
+    errors = rlx_coarse_manager.vasp_run.check_vasp_errors()
+    all_errors_addressed = rlx_coarse_manager.vasp_run.address_vasp_errors(errors)
     for error in ["Sub-Space-Matrix", "Inconsistent Bravais", "oom-kill"]:
         assert error in errors
     assert all_errors_addressed
@@ -163,16 +161,14 @@ def test_hit_errors_and_stop(calcs_dir):
     """
     material_dir = calcs_dir / "material_hit_errors"
     rlx_dir = material_dir / "rlx"
-    stdout_path = rlx_dir / "stdout.txt"
-    stderr_path = rlx_dir / "stderr.txt"
     assert rlx_dir.exists()
     rlx_manager = RlxCalculationManager(
         material_dir=material_dir,
         to_rerun=False,
         to_submit=False,
     )
-    errors = rlx_manager._check_vasp_errors(stdout_path, stderr_path)
-    all_errors_addressed = rlx_manager._address_vasp_errors(errors)
+    errors = rlx_manager.vasp_run.check_vasp_errors()
+    all_errors_addressed = rlx_manager.vasp_run.address_vasp_errors(errors)
     for error in [
         "num prob",
         "BRMIX",
@@ -280,7 +276,7 @@ def test_parse_magmom(calcs_dir):
             to_rerun=True,
             to_submit=False,
         )
-        assert rlx_manager._parse_magmom_per_atom() == expected_magmom_pa
+        assert rlx_manager.vasp_run.parse_magmom_per_atom() == expected_magmom_pa
 
 
 # ---------------------------------------------------------------------------
@@ -415,18 +411,14 @@ def test_bulkmod_rerun(calcs_dir):
     assert bulkmod_manager.results is None
 
     bulkmod_dir_contents = list(bulkmod_dir.glob("*"))
-    bulkmod_dir_files = [f for f in bulkmod_dir_contents if f.is_file()]
     strain_dirs = [d for d in bulkmod_dir_contents if d.is_dir()]
-    assert len(bulkmod_dir_files) == 4
-    for file in bulkmod_dir_files:
-        assert file.name in INPUT_FILES
+    # Each strain is an independent static calculation with its own full input set
     assert len(strain_dirs) == len(bulkmod_manager.strains)
     for strain_dir in strain_dirs:
         strain_dir_files = list(strain_dir.glob("*"))
-        # no vasp.q
-        assert len(strain_dir_files) == 3
-        for file in strain_dir_files:
-            assert file.name in INPUT_FILES
+        strain_file_names = [f.name for f in strain_dir_files if f.is_file()]
+        for f_name in INPUT_FILES:
+            assert f_name in strain_file_names
 
 
 def test_elastic_rerun(calcs_dir):

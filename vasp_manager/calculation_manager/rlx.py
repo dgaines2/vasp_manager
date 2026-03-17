@@ -12,7 +12,6 @@ import numpy as np
 
 from vasp_manager.calculation_manager.base import BaseCalculationManager
 from vasp_manager.utils import LoggerAdapter, get_pmg_structure_from_poscar, pgrep, ptail
-from vasp_manager.vasp_input_creator import VaspInputCreator
 
 if TYPE_CHECKING:
     from vasp_manager.types import CalculationType, WorkingDirectory
@@ -76,6 +75,10 @@ class RlxCalculationManager(BaseCalculationManager):
     def mode(self) -> CalculationType:
         return "rlx"
 
+    @property
+    def job_prefix(self) -> str:
+        return "r"
+
     @cached_property
     def poscar_source_path(self) -> Path:
         if self.from_coarse_relax:
@@ -83,16 +86,6 @@ class RlxCalculationManager(BaseCalculationManager):
         else:
             poscar_source_path = self.material_dir / "POSCAR"
         return poscar_source_path
-
-    @cached_property
-    def vasp_input_creator(self) -> VaspInputCreator:
-        return VaspInputCreator(
-            self.calc_dir,
-            mode=self.mode,
-            poscar_source_path=self.poscar_source_path,
-            primitive=self.primitive,
-            name=self.material_name,
-        )
 
     def setup_calc(
         self,
@@ -104,14 +97,14 @@ class RlxCalculationManager(BaseCalculationManager):
         """
         Sets up a fine relaxation
         """
+        if make_archive:
+            self.vasp_input_creator.make_archive()
+            self._invalidate_vasp_runs()
+
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
         self.vasp_input_creator.increase_walltime_by_factor = increase_walltime_by_factor
         self.vasp_input_creator.use_spin = use_spin
-
-        if make_archive:
-            self.vasp_input_creator.make_archive_and_repopulate()
-        else:
-            self.vasp_input_creator.create()
+        self.vasp_input_creator.create()
 
         if self.to_submit:
             job_submitted = self.submit_job()
@@ -140,9 +133,9 @@ class RlxCalculationManager(BaseCalculationManager):
                 self.setup_calc()
             return False
 
-        vasp_errors = self._check_vasp_errors()
+        vasp_errors = self.vasp_run.check_vasp_errors()
         if len(vasp_errors) > 0:
-            all_errors_addressed = self._address_vasp_errors(vasp_errors)
+            all_errors_addressed = self.vasp_run.address_vasp_errors(vasp_errors)
             if all_errors_addressed:
                 if self.to_rerun:
                     self.logger.info(f"Rerunning {self.calc_dir}")
@@ -158,7 +151,7 @@ class RlxCalculationManager(BaseCalculationManager):
                 self.stop()
             return False
 
-        previous_magmom_per_atom = self._parse_magmom_per_atom()
+        previous_magmom_per_atom = self.vasp_run.parse_magmom_per_atom()
         if previous_magmom_per_atom is None:
             use_spin = False
         else:
@@ -241,7 +234,7 @@ class RlxCalculationManager(BaseCalculationManager):
         if np.abs(volume_diff) >= 0.05:
             self.logger.warning(f"NEED TO RE-RELAX: dV = {volume_diff:.4f}")
             volume_converged = False
-            previous_magmom_per_atom = self._parse_magmom_per_atom()
+            previous_magmom_per_atom = self.vasp_run.parse_magmom_per_atom()
             if previous_magmom_per_atom is None:
                 use_spin = False
             else:
