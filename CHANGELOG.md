@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Add typed pydantic config models (`CalcConfig`, `ComputingConfig`) with cached loaders
 - Add `VaspRun` class that owns run-level concerns (error checking, magmom parsing)
+- Add configurable job resource parameters (`atoms_per_node`, `rerun_increase`, `rerun_increase_factor`) to `ComputingConfig`
+- Add smart rerun diagnosis: relaxations distinguish "completed all NSW without converging" (relaunch same params) from "timed out" (apply rerun strategy)
 
 ### Changed
 
@@ -25,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Job naming (`pad_string`) extracted from `VaspInputCreator` into each `CalculationManager` via `job_prefix`
 - Move `job_prefix` abstract property to `BaseCalculationManager` for SLURM job naming
 - Bulkmod strains are now independent jobs, each with their own `VaspRun`, `VaspInputCreator`, and `JobManager`
+- Bulkmod handles per-strain failures individually instead of restarting from scratch
 
 ### Removed
 

@@ -153,8 +153,14 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             self.logger.debug(tail_output)
             if self.to_rerun:
                 self.logger.info(f"Rerunning {self.calc_dir}")
-                # increase nodes as its likely the calculation failed
-                self.setup_calc(increase_walltime_by_factor=2, make_archive=True)
+                nsw = self.vasp_input_creator.calc_config.nsw
+                completed_steps = len(pgrep(stdout_path, "F="))
+                if completed_steps >= nsw:
+                    # ran all NSW steps without converging — relaunch same params
+                    self.setup_calc(make_archive=True)
+                else:
+                    # timed out before completing NSW — apply rerun strategy
+                    self.setup_calc(**self._rerun_resource_kwargs(), make_archive=True)
             return False
 
         self.logger.info(f"{self.mode.upper()} Calculation: reached required accuracy")

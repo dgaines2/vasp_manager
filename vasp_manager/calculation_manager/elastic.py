@@ -163,9 +163,8 @@ class ElasticCalculationManager(BaseCalculationManager):
             self.logger.info(f"{self.mode.upper()} Calculation: FAILED")
             if self.to_rerun:
                 self.logger.info(f"Rerunning {self.calc_dir}")
-                # increase walltime as its likely the calculation failed
                 self._from_scratch()
-                self.setup_calc(increase_walltime_by_factor=2)
+                self.setup_calc(**self._rerun_resource_kwargs())
             return False
 
         self.logger.info(f"{self.mode.upper()} Calculation: Success")

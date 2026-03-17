@@ -397,7 +397,7 @@ def test_static_rerun(calcs_dir):
 
 def test_bulkmod_rerun(calcs_dir):
     """
-    Assert bulkmod reruns from scratch if failed
+    Assert bulkmod reruns only the failed strain, not all strains
     """
     material_dir = calcs_dir / "material_needs_rerun"
     bulkmod_dir = material_dir / "bulkmod"
@@ -410,15 +410,12 @@ def test_bulkmod_rerun(calcs_dir):
     assert not bulkmod_manager.is_done
     assert bulkmod_manager.results is None
 
-    bulkmod_dir_contents = list(bulkmod_dir.glob("*"))
-    strain_dirs = [d for d in bulkmod_dir_contents if d.is_dir()]
-    # Each strain is an independent static calculation with its own full input set
-    assert len(strain_dirs) == len(bulkmod_manager.strains)
-    for strain_dir in strain_dirs:
-        strain_dir_files = list(strain_dir.glob("*"))
-        strain_file_names = [f.name for f in strain_dir_files if f.is_file()]
-        for f_name in INPUT_FILES:
-            assert f_name in strain_file_names
+    # The failed strain (strain_-1) should have been cleaned and recreated
+    failed_strain_dir = bulkmod_dir / "strain_-1"
+    assert failed_strain_dir.exists()
+    failed_files = [f.name for f in failed_strain_dir.glob("*") if f.is_file()]
+    for f_name in INPUT_FILES:
+        assert f_name in failed_files
 
 
 def test_elastic_rerun(calcs_dir):
