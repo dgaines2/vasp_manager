@@ -1,0 +1,1 @@
+../../NaCl/static/vasp.q

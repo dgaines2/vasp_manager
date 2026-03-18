@@ -1,0 +1,51 @@
+ running  128 mpi-ranks, with    1 threads/rank, on    1 nodes
+ distrk:  each k-point on   32 cores,    4 groups
+ distr:  one band on   16 cores,    2 groups
+ vasp.6.4.3 19Mar24 (build Jun  3 2025 16:21:13) complex                         
+ POSCAR found type information on POSCAR NaCl
+ POSCAR found :  2 types and       2 ions
+ Reading from existing POTCAR
+ scaLAPACK will be used
+ Reading from existing POTCAR
+ LDA part: xc-table for (Slater+PW92), standard interpolation
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ INCAR ok, starting setup
+ POSCAR ok, starting setup
+ FFT: planning ... GRIDC
+ FFT: planning ... GRID_SOFT
+ FFT: planning ... GRID
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1     0.122300926026E+03    0.12230E+03   -0.52072E+03  5576   0.435E+02
+DAV:   2     0.219975248160E+01   -0.12010E+03   -0.10722E+03  5664   0.183E+02
+DAV:   3    -0.686962372098E+01   -0.90694E+01   -0.89529E+01  6760   0.396E+01
+DAV:   4    -0.698140418338E+01   -0.11178E+00   -0.11173E+00  6408   0.443E+00
+DAV:   5    -0.698216236418E+01   -0.75818E-03   -0.75817E-03  6632   0.380E-01    0.214E+00
+DAV:   6    -0.678309747795E+01    0.19906E+00   -0.14437E-01  6944   0.144E+00    0.152E+00
+DAV:   7    -0.677221852347E+01    0.10879E-01   -0.49077E-02  7568   0.751E-01    0.115E+00
+DAV:   8    -0.677821604824E+01   -0.59975E-02   -0.11092E-02  6248   0.414E-01    0.530E-01
+DAV:   9    -0.677782972986E+01    0.38632E-03   -0.48258E-04  6464   0.772E-02    0.214E-01
+DAV:  10    -0.677788636406E+01   -0.56634E-04   -0.91045E-05  6408   0.361E-02    0.167E-02
+DAV:  11    -0.677789292983E+01   -0.65658E-05   -0.61231E-06  6648   0.815E-03    0.127E-02
+DAV:  12    -0.677789301948E+01   -0.89649E-07   -0.38268E-07  6488   0.319E-03
+   1 F= -.67778930E+01 E0= -.67778930E+01  d E =-.677789E+01
+ summed vel is now    0.000000000000000         0.000000000000000      
+    0.000000000000000     
+quench:  g(F)=  0.722E-60 g(S)=  0.214E-05 dE (1.order)=-0.428E-05
+ reached required accuracy - stopping structural energy minimisation
+ PROFILE, used timers:     404

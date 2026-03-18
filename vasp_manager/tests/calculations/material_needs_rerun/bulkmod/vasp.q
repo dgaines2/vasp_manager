@@ -1,1 +1,0 @@
-../../material/bulkmod/vasp.q

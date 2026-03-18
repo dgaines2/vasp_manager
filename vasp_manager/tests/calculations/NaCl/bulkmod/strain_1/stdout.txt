@@ -1,0 +1,47 @@
+ running  128 mpi-ranks, with    1 threads/rank, on    1 nodes
+ distrk:  each k-point on   32 cores,    4 groups
+ distr:  one band on   16 cores,    2 groups
+ vasp.6.4.3 19Mar24 (build Jun  3 2025 16:21:13) complex                         
+ POSCAR found type information on POSCAR NaCl
+ POSCAR found :  2 types and       2 ions
+ Reading from existing POTCAR
+ scaLAPACK will be used
+ Reading from existing POTCAR
+ LDA part: xc-table for (Slater+PW92), standard interpolation
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ INCAR ok, starting setup
+ POSCAR ok, starting setup
+ FFT: planning ... GRIDC
+ FFT: planning ... GRID_SOFT
+ FFT: planning ... GRID
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1     0.123013295151E+03    0.12301E+03   -0.52000E+03  5536   0.430E+02
+DAV:   2     0.243200235745E+01   -0.12058E+03   -0.10687E+03  5664   0.181E+02
+DAV:   3    -0.686566233445E+01   -0.92977E+01   -0.91721E+01  6752   0.398E+01
+DAV:   4    -0.698400006604E+01   -0.11834E+00   -0.11828E+00  6424   0.452E+00
+DAV:   5    -0.698485491699E+01   -0.85485E-03   -0.85484E-03  6616   0.400E-01    0.214E+00
+DAV:   6    -0.678240152233E+01    0.20245E+00   -0.14880E-01  6968   0.144E+00    0.152E+00
+DAV:   7    -0.677140485564E+01    0.10997E-01   -0.49397E-02  7480   0.748E-01    0.115E+00
+DAV:   8    -0.677752030198E+01   -0.61154E-02   -0.11280E-02  6240   0.415E-01    0.525E-01
+DAV:   9    -0.677713265008E+01    0.38765E-03   -0.46925E-04  6392   0.754E-02    0.219E-01
+DAV:  10    -0.677718927947E+01   -0.56629E-04   -0.97119E-05  6408   0.371E-02    0.147E-02
+DAV:  11    -0.677719582660E+01   -0.65471E-05   -0.62849E-06  6656   0.824E-03    0.131E-02
+DAV:  12    -0.677719592331E+01   -0.96706E-07   -0.41391E-07  6424   0.326E-03
+   1 F= -.67771959E+01 E0= -.67771959E+01  d E =0.000000E+00
+ PROFILE, used timers:     404
