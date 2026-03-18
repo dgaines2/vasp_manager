@@ -72,6 +72,7 @@ if __name__ == "__main__":
         material_dirs=material_dirs,
         to_rerun=True,
         to_submit=True,
+        magmom_per_atom_cutoff=0.10,
     )
     results = vmg.run_calculations()
     print(vmg.summary())

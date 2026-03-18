@@ -3,13 +3,13 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import subprocess
 from functools import cached_property
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from vasp_manager.config import ComputingConfig, load_computing_config
 from vasp_manager.utils import LoggerAdapter, change_directory
 
 if TYPE_CHECKING:
@@ -19,9 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 class JobManager:
-    """
-    Handles job submission and status monitoring
-    """
+    """Handles job submission and status monitoring"""
 
     def __init__(
         self,
@@ -29,19 +27,18 @@ class JobManager:
         exe_name: str = "vasp.q",
         jobid_name: str = "jobid",
         config_dir: SourceDirectory | None = None,
-        manager_name: str = None,
+        manager_name: str | None = None,
         ignore_personal_errors: bool = True,
     ) -> None:
-        """
-        Args:
-            calc_dir: base directory of job
-            exe_name: filename for slurm job submission
-            jobid_name: filename for storing slurm jobid
-            config_dir: path to directory containing configuration files. If
-                None, use the parent directory of calc_dir
-            manager_name: name for logging purposes
-            ignore_personal_errors: if True, ignore job submission errors
-                if on personal computer
+        """Args:
+        calc_dir: base directory of job
+        exe_name: filename for slurm job submission
+        jobid_name: filename for storing slurm jobid
+        config_dir: path to directory containing configuration files. If
+            None, use the parent directory of calc_dir
+        manager_name: name for logging purposes
+        ignore_personal_errors: if True, ignore job submission errors
+            if on personal computer
         """
         self.calc_dir = Path(calc_dir)
         self.config_dir = Path(config_dir) if config_dir else self.calc_dir.parents[1]
@@ -53,24 +50,17 @@ class JobManager:
         self._job_complete: bool
         self.logger = LoggerAdapter(logging.getLogger(__name__), self.manager_name)
 
-    @property
-    def computing_config_dict(self) -> dict:
-        fname = "computing_config.json"
-        fpath = self.config_dir / fname
-        if fpath.exists():
-            with open(fpath) as fr:
-                computing_config = json.load(fr)
-        else:
-            raise Exception(f"No {fname} found in {self.config_dir.absolute()}")
-        return computing_config
+    @cached_property
+    def computing_config(self) -> ComputingConfig:
+        return load_computing_config(self.config_dir)
 
     @cached_property
     def computer(self) -> str:
-        return self.computing_config_dict["computer"]
+        return self.computing_config.computer
 
     @cached_property
     def user_id(self) -> str:
-        return self.computing_config_dict[self.computer]["user_id"]
+        return self.computing_config.user_id
 
     @cached_property
     def mode(self) -> str:
@@ -78,6 +68,7 @@ class JobManager:
 
     @property
     def job_exists(self) -> bool:
+        """True if a non-empty jobid file exists (also sets self.jobid)."""
         jobid_path = self.calc_dir / self.jobid_name
         if not jobid_path.exists():
             return False
@@ -91,6 +82,11 @@ class JobManager:
 
     @property
     def jobid(self) -> int:
+        """SLURM job ID for this calculation.
+
+        Raises:
+            Exception: if no jobid file exists in calc_dir
+        """
         if not self.job_exists:
             raise Exception(f"jobid has not been set in {self.calc_dir}")
         return self._jobid
@@ -104,8 +100,7 @@ class JobManager:
         self._jobid = jobid_int
 
     def submit_job(self) -> bool:
-        """
-        Submits job, making sure to not make duplicate jobs
+        """Submits job, making sure to not make duplicate jobs
 
         Returns:
             job_submitted_successfully
@@ -146,6 +141,7 @@ class JobManager:
 
     @property
     def job_complete(self) -> bool:
+        """True if the job has finished (no longer in the SLURM queue)."""
         if getattr(self, "_job_complete", None) is None and self.job_exists:
             self._job_complete = self._check_job_complete()
         else:

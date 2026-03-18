@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 
 from vasp_manager.calculation_manager.base import BaseCalculationManager
 from vasp_manager.utils import LoggerAdapter, pgrep, ptail
-from vasp_manager.vasp_input_creator import VaspInputCreator
 
 if TYPE_CHECKING:
     from vasp_manager.types import CalculationType, WorkingDirectory
@@ -19,9 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 class RlxCoarseCalculationManager(BaseCalculationManager):
-    """
-    Runs coarse relaxation job workflow for a single material
-    """
+    """Runs coarse relaxation job workflow for a single material"""
 
     def __init__(
         self,
@@ -34,19 +31,18 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
         tail: int = 5,
         max_reruns: int = 3,
     ) -> None:
-        """
-        Args:
-            material_dir: path to a directory for a single material
-            to_rerun: if True, rerun failed calculations
-            to_submit: if True, submit calculations to job manager
-            primitive: if True, find primitive cell, else find conventional cell
-            ignore_personal_errors: if True, ignore job submission errors
-                if on personal computer
-            from_scratch: if True, remove the calculation's directory and
-                restart
-            tail: number of last lines to log in debugging if job failed
-            max_reruns: maximum number of times to rerun rlx-coarse before
-                continuing to rlx
+        """Args:
+        material_dir: path to a directory for a single material
+        to_rerun: if True, rerun failed calculations
+        to_submit: if True, submit calculations to job manager
+        primitive: if True, find primitive cell, else find conventional cell
+        ignore_personal_errors: if True, ignore job submission errors
+            if on personal computer
+        from_scratch: if True, remove the calculation's directory and
+            restart
+        tail: number of last lines to log in debugging if job failed
+        max_reruns: maximum number of times to rerun rlx-coarse before
+            continuing to rlx
         """
         self.tail = tail
         self.max_reruns = max_reruns
@@ -66,19 +62,13 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
     def mode(self) -> CalculationType:
         return "rlx-coarse"
 
+    @property
+    def job_prefix(self) -> str:
+        return "rc"
+
     @cached_property
     def poscar_source_path(self) -> Path:
         return self.material_dir / "POSCAR"
-
-    @cached_property
-    def vasp_input_creator(self) -> VaspInputCreator:
-        return VaspInputCreator(
-            self.calc_dir,
-            mode=self.mode,
-            poscar_source_path=self.poscar_source_path,
-            primitive=self.primitive,
-            name=self.material_name,
-        )
 
     def setup_calc(
         self,
@@ -86,16 +76,20 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
         increase_walltime_by_factor: int = 1,
         make_archive: bool = False,
     ) -> None:
+        """Set up and optionally submit a coarse relaxation.
+
+        Args:
+            increase_nodes_by_factor: multiply the node count by this factor
+            increase_walltime_by_factor: multiply the walltime by this factor
+            make_archive: if True, archive the current run before writing new input files
         """
-        Sets up a coarse relaxation
-        """
+        if make_archive:
+            self.vasp_input_creator.make_archive()
+            self._invalidate_vasp_runs()
+
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
         self.vasp_input_creator.increase_walltime_by_factor = increase_walltime_by_factor
-
-        if make_archive:
-            self.vasp_input_creator.make_archive_and_repopulate()
-        else:
-            self.vasp_input_creator.create()
+        self.vasp_input_creator.create()
 
         if self.to_submit:
             job_submitted = self.submit_job()
@@ -105,8 +99,7 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
                 self.setup_calc()
 
     def check_calc(self) -> bool:
-        """
-        Checks if calculation has finished and reached required accuracy
+        """Checks if calculation has finished and reached required accuracy
 
         Returns:
             relaxation_successful (bool): if True, relaxation completed successfully
@@ -126,9 +119,9 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
                 self.setup_calc()
             return False
 
-        vasp_errors = self._check_vasp_errors()
+        vasp_errors = self.vasp_run.check_vasp_errors()
         if len(vasp_errors) > 0:
-            all_errors_addressed = self._address_vasp_errors(vasp_errors)
+            all_errors_addressed = self.vasp_run.address_vasp_errors(vasp_errors)
             if all_errors_addressed:
                 if self.to_rerun:
                     self.logger.info(f"Rerunning {self.calc_dir}")
@@ -160,8 +153,14 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
             self.logger.debug(tail_output)
             if self.to_rerun:
                 self.logger.info(f"Rerunning {self.calc_dir}")
-                # increase nodes as its likely the calculation failed
-                self.setup_calc(increase_walltime_by_factor=2, make_archive=True)
+                nsw = self.vasp_input_creator.calc_config.nsw
+                completed_steps = len(pgrep(stdout_path, "F="))
+                if completed_steps >= nsw:
+                    # ran all NSW steps without converging -- relaunch same params
+                    self.setup_calc(make_archive=True)
+                else:
+                    # timed out before completing NSW -- apply rerun strategy
+                    self.setup_calc(**self._rerun_resource_kwargs(), make_archive=True)
             return False
 
         self.logger.info(f"{self.mode.upper()} Calculation: reached required accuracy")
@@ -170,12 +169,14 @@ class RlxCoarseCalculationManager(BaseCalculationManager):
 
     @property
     def is_done(self) -> bool:
+        """True if the coarse relaxation reached required accuracy (computed lazily)."""
         if getattr(self, "_is_done", None) is None:
             self._is_done = self.check_calc()
         return self._is_done
 
     @property
     def results(self) -> str:
+        """Status string: "done", "not finished", or "STOPPED"."""
         if not self.is_done:
             if self.stopped:
                 self._results = "STOPPED"

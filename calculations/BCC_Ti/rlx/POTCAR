@@ -1,0 +1,16 @@
+PAW_PBE Ti_sv 26Sep2005                
+   12.0000000000000     
+ parameters from PSCTR are:
+   VRHFIN =Ti: 3p4s3d
+   LEXCH  = PE
+   EATOM  =  1588.0892 eV,  116.7213 Ry
+
+   TITEL  = PAW_PBE Ti_sv 26Sep2005
+   POMASS =   47.880; ZVAL   =   12.000    mass and valenz
+   RCORE  =    2.300    outmost cutoff radius
+
+ END of PSCTR-controll parameters
+ local part
+   0.0000000   0.0000000
+ END of local part
+ End of Dataset

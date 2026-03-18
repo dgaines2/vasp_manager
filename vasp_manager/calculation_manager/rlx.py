@@ -12,7 +12,6 @@ import numpy as np
 
 from vasp_manager.calculation_manager.base import BaseCalculationManager
 from vasp_manager.utils import LoggerAdapter, get_pmg_structure_from_poscar, pgrep, ptail
-from vasp_manager.vasp_input_creator import VaspInputCreator
 
 if TYPE_CHECKING:
     from vasp_manager.types import CalculationType, WorkingDirectory
@@ -21,9 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class RlxCalculationManager(BaseCalculationManager):
-    """
-    Runs relaxation job workflow for a single material
-    """
+    """Runs relaxation job workflow for a single material"""
 
     def __init__(
         self,
@@ -38,23 +35,22 @@ class RlxCalculationManager(BaseCalculationManager):
         max_reruns: int = 3,
         magmom_per_atom_cutoff: float = 0.0,
     ):
-        """
-        Args:
-            material_dir: path to a directory for a single material
-            to_rerun: if True, rerun failed calculations
-            to_submit: if True, submit calculations to job manager
-            primitive: if True, find primitive cell, else find conventional cell
-            ignore_personal_errors: if True, ignore job submission errors
-                if on personal computer
-            from_scratch: if True, remove the calculation's directory and
-                restart
-            from_coarse_relax: if True, use CONTCAR from coarse relax
-            tail: number of last lines to log in debugging if job failed
-            max_reruns: maximum number of times to rerun rlx before refusing to
-                continue
-            magmom_per_atom_cutoff: calculations that result in
-                magmom_per_atom less than this parameter will be automatically
-                rerun without spin-polarization
+        """Args:
+        material_dir: path to a directory for a single material
+        to_rerun: if True, rerun failed calculations
+        to_submit: if True, submit calculations to job manager
+        primitive: if True, find primitive cell, else find conventional cell
+        ignore_personal_errors: if True, ignore job submission errors
+            if on personal computer
+        from_scratch: if True, remove the calculation's directory and
+            restart
+        from_coarse_relax: if True, use CONTCAR from coarse relax
+        tail: number of last lines to log in debugging if job failed
+        max_reruns: maximum number of times to rerun rlx before refusing to
+            continue
+        magmom_per_atom_cutoff: calculations that result in
+            magmom_per_atom less than this parameter will be automatically
+            rerun without spin-polarization
         """
         self.from_coarse_relax = from_coarse_relax
         self.tail = tail
@@ -76,6 +72,10 @@ class RlxCalculationManager(BaseCalculationManager):
     def mode(self) -> CalculationType:
         return "rlx"
 
+    @property
+    def job_prefix(self) -> str:
+        return "r"
+
     @cached_property
     def poscar_source_path(self) -> Path:
         if self.from_coarse_relax:
@@ -84,16 +84,6 @@ class RlxCalculationManager(BaseCalculationManager):
             poscar_source_path = self.material_dir / "POSCAR"
         return poscar_source_path
 
-    @cached_property
-    def vasp_input_creator(self) -> VaspInputCreator:
-        return VaspInputCreator(
-            self.calc_dir,
-            mode=self.mode,
-            poscar_source_path=self.poscar_source_path,
-            primitive=self.primitive,
-            name=self.material_name,
-        )
-
     def setup_calc(
         self,
         increase_nodes_by_factor: int = 1,
@@ -101,17 +91,22 @@ class RlxCalculationManager(BaseCalculationManager):
         make_archive: bool = False,
         use_spin: bool = True,
     ) -> None:
+        """Set up and optionally submit a fine relaxation.
+
+        Args:
+            increase_nodes_by_factor: multiply the node count by this factor
+            increase_walltime_by_factor: multiply the walltime by this factor
+            make_archive: if True, archive the current run before writing new input files
+            use_spin: if False, suppress spin polarization in the INCAR
         """
-        Sets up a fine relaxation
-        """
+        if make_archive:
+            self.vasp_input_creator.make_archive()
+            self._invalidate_vasp_runs()
+
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
         self.vasp_input_creator.increase_walltime_by_factor = increase_walltime_by_factor
         self.vasp_input_creator.use_spin = use_spin
-
-        if make_archive:
-            self.vasp_input_creator.make_archive_and_repopulate()
-        else:
-            self.vasp_input_creator.create()
+        self.vasp_input_creator.create()
 
         if self.to_submit:
             job_submitted = self.submit_job()
@@ -119,8 +114,7 @@ class RlxCalculationManager(BaseCalculationManager):
                 self.setup_calc()
 
     def check_calc(self) -> bool:
-        """
-        Checks if calculation has finished and reached required accuracy
+        """Checks if calculation has finished and reached required accuracy
 
         Returns:
             relaxation_successful: if True, relaxation completed successfully
@@ -140,9 +134,9 @@ class RlxCalculationManager(BaseCalculationManager):
                 self.setup_calc()
             return False
 
-        vasp_errors = self._check_vasp_errors()
+        vasp_errors = self.vasp_run.check_vasp_errors()
         if len(vasp_errors) > 0:
-            all_errors_addressed = self._address_vasp_errors(vasp_errors)
+            all_errors_addressed = self.vasp_run.address_vasp_errors(vasp_errors)
             if all_errors_addressed:
                 if self.to_rerun:
                     self.logger.info(f"Rerunning {self.calc_dir}")
@@ -158,7 +152,7 @@ class RlxCalculationManager(BaseCalculationManager):
                 self.stop()
             return False
 
-        previous_magmom_per_atom = self._parse_magmom_per_atom()
+        previous_magmom_per_atom = self.vasp_run.parse_magmom_per_atom()
         if previous_magmom_per_atom is None:
             use_spin = False
         else:
@@ -182,10 +176,18 @@ class RlxCalculationManager(BaseCalculationManager):
             self.logger.debug(tail_output)
             if self.to_rerun:
                 self.logger.info(f"Rerunning {self.calc_dir}")
-                # increase nodes as its likely the calculation failed
-                self.setup_calc(
-                    increase_walltime_by_factor=2, make_archive=True, use_spin=use_spin
-                )
+                nsw = self.vasp_input_creator.calc_config.nsw
+                completed_steps = len(pgrep(stdout_path, "F="))
+                if completed_steps >= nsw:
+                    # ran all NSW steps without converging -- relaunch same params
+                    self.setup_calc(make_archive=True, use_spin=use_spin)
+                else:
+                    # timed out before completing NSW -- apply rerun strategy
+                    self.setup_calc(
+                        **self._rerun_resource_kwargs(),
+                        make_archive=True,
+                        use_spin=use_spin,
+                    )
             return False
 
         # in the case that the calculation finishes but results in a spin value lower
@@ -201,8 +203,7 @@ class RlxCalculationManager(BaseCalculationManager):
         return True
 
     def check_volume_difference(self) -> bool:
-        """
-        Checks relaxation runs for volume difference
+        """Checks relaxation runs for volume difference
 
         if abs(volume difference) is >= 5%, reruns relaxation
         only checks for mode='rlx' as that's the structure for further calculation
@@ -241,7 +242,7 @@ class RlxCalculationManager(BaseCalculationManager):
         if np.abs(volume_diff) >= 0.05:
             self.logger.warning(f"NEED TO RE-RELAX: dV = {volume_diff:.4f}")
             volume_converged = False
-            previous_magmom_per_atom = self._parse_magmom_per_atom()
+            previous_magmom_per_atom = self.vasp_run.parse_magmom_per_atom()
             if previous_magmom_per_atom is None:
                 use_spin = False
             else:
@@ -263,6 +264,7 @@ class RlxCalculationManager(BaseCalculationManager):
 
     @property
     def is_done(self) -> bool:
+        """True if the relaxation converged and volume is within 5% (computed lazily)."""
         if getattr(self, "_is_done", None) is None:
             self._is_done = False
             calc_done = self.check_calc()
@@ -274,6 +276,9 @@ class RlxCalculationManager(BaseCalculationManager):
 
     @property
     def results(self) -> None | str | dict:
+        """Relaxation results dict with spacegroup and volume change, or None/"STOPPED"
+        if not finished.
+        """
         if not self.is_done:
             if self.stopped:
                 return "STOPPED"

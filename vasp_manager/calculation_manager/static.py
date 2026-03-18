@@ -12,7 +12,6 @@ from pymatgen.core import Structure
 
 from vasp_manager.calculation_manager.base import BaseCalculationManager
 from vasp_manager.utils import LoggerAdapter, pgrep, ptail
-from vasp_manager.vasp_input_creator import VaspInputCreator
 
 if TYPE_CHECKING:
     from vasp_manager.types import CalculationType, WorkingDirectory
@@ -21,9 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class StaticCalculationManager(BaseCalculationManager):
-    """
-    Runs static job workflow for a single material
-    """
+    """Runs static job workflow for a single material"""
 
     def __init__(
         self,
@@ -36,18 +33,17 @@ class StaticCalculationManager(BaseCalculationManager):
         from_relax: bool = True,
         tail: int = 5,
     ) -> None:
-        """
-        Args:
-            material_dir: path to a directory for a single material
-            to_rerun: if True, rerun failed calculations
-            to_submit: if True, submit calculations to job manager
-            primitive: if True, find primitive cell, else find conventional cell
-            ignore_personal_errors: if True, ignore job submission errors
-                if on personal computer
-            from_scratch: if True, remove the calculation's directory and
-                restart
-            from_relax: if True, use CONTCAR from relax
-            tail: number of last lines to log in debugging if job failed
+        """Args:
+        material_dir: path to a directory for a single material
+        to_rerun: if True, rerun failed calculations
+        to_submit: if True, submit calculations to job manager
+        primitive: if True, find primitive cell, else find conventional cell
+        ignore_personal_errors: if True, ignore job submission errors
+            if on personal computer
+        from_scratch: if True, remove the calculation's directory and
+            restart
+        from_relax: if True, use CONTCAR from relax
+        tail: number of last lines to log in debugging if job failed
         """
         self.from_relax = from_relax
         self.tail = tail
@@ -67,6 +63,10 @@ class StaticCalculationManager(BaseCalculationManager):
     def mode(self) -> CalculationType:
         return "static"
 
+    @property
+    def job_prefix(self) -> str:
+        return "s"
+
     @cached_property
     def poscar_source_path(self) -> Path:
         if self.from_relax:
@@ -75,17 +75,15 @@ class StaticCalculationManager(BaseCalculationManager):
             poscar_source_path = self.material_dir / "POSCAR"
         return poscar_source_path
 
-    @cached_property
-    def vasp_input_creator(self) -> VaspInputCreator:
-        return VaspInputCreator(
-            self.calc_dir,
-            mode=self.mode,
-            poscar_source_path=self.poscar_source_path,
-            primitive=self.primitive,
-            name=self.material_name,
-        )
-
     def _check_use_spin(self) -> bool:
+        """Determine whether spin polarization should be used for the static calculation.
+
+        If from_relax is True, checks the relaxation stdout for magnetic moments.
+        Otherwise, defaults to True.
+
+        Returns:
+            True if spin polarization should be enabled
+        """
         if self.from_relax:
             rlx_stdout = self.material_dir / "rlx" / "stdout.txt"
             rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
@@ -99,10 +97,13 @@ class StaticCalculationManager(BaseCalculationManager):
         increase_nodes_by_factor: int = 1,
         increase_walltime_by_factor: int = 1,
     ) -> None:
-        """
-        Runs a static SCF calculation through VASP
+        """Set up and optionally submit a static SCF calculation.
 
-        By default, requires previous relaxation run
+        By default, requires a previous relaxation run to source the POSCAR from.
+
+        Args:
+            increase_nodes_by_factor: multiply the node count by this factor
+            increase_walltime_by_factor: multiply the walltime by this factor
         """
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
         self.vasp_input_creator.increase_walltime_by_factor = increase_walltime_by_factor
@@ -116,10 +117,9 @@ class StaticCalculationManager(BaseCalculationManager):
                 self.setup_calc()
 
     def check_calc(self) -> bool:
-        """
-        Checks result of static calculation
+        """Check result of static calculation.
 
-        Returns
+        Returns:
             static_successful: if True, static calculation completed successfully
         """
         if not self.job_complete:
@@ -135,9 +135,9 @@ class StaticCalculationManager(BaseCalculationManager):
                 self.setup_calc()
             return False
 
-        vasp_errors = self._check_vasp_errors(extra_errors=["NELM"])
+        vasp_errors = self.vasp_run.check_vasp_errors(extra_errors=["NELM"])
         if len(vasp_errors) > 0:
-            all_errors_addressed = self._address_vasp_errors(vasp_errors)
+            all_errors_addressed = self.vasp_run.address_vasp_errors(vasp_errors)
             if all_errors_addressed:
                 if self.to_rerun:
                     self.logger.info(f"Rerunning {self.calc_dir}")
@@ -162,14 +162,13 @@ class StaticCalculationManager(BaseCalculationManager):
             if self.to_rerun:
                 self.logger.info(f"Rerunning {self.calc_dir}")
                 self._from_scratch()
-                # increase nodes as its likely the calculation failed
-                self.setup_calc(increase_walltime_by_factor=2)
+                self.setup_calc(**self._rerun_resource_kwargs())
             return False
 
         self._results = {}
         final_energy = float(grep_output[0].split()[2])
         num_atoms = len(Structure.from_file(self.calc_dir / "POSCAR"))
-        magmom_per_atom = self._parse_magmom_per_atom()
+        magmom_per_atom = self.vasp_run.parse_magmom_per_atom()
         self._results["final_energy"] = final_energy
         self._results["final_energy_pa"] = final_energy / num_atoms
         self._results["magmom_pa"] = magmom_per_atom
@@ -179,12 +178,16 @@ class StaticCalculationManager(BaseCalculationManager):
 
     @property
     def is_done(self) -> bool:
+        """True if the static SCF converged successfully (computed lazily)."""
         if getattr(self, "_is_done", None) is None:
             self._is_done = self.check_calc()
         return self._is_done
 
     @property
     def results(self) -> None | str | dict:
+        """Static results dict with final energy and magmom, or None/"STOPPED" if not
+        finished.
+        """
         if not self.is_done:
             if self.stopped:
                 return "STOPPED"

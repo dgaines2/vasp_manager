@@ -19,15 +19,18 @@ logger = logging.getLogger(__name__)
 
 
 class BulkmodAnalyzer:
+    """Fits a Birch-Murnaghan EOS to a completed bulkmod calculation to extract the
+    bulk modulus.
+    """
+
     def __init__(
         self,
         calc_dir: WorkingDirectory,
         rounding_precision: int = 3,
     ) -> None:
-        """
-        Args:
-            calc_dir: path to bulkmod calculation directory
-            rounding_precision: precision to round calculated quantities
+        """Args:
+        calc_dir: path to bulkmod calculation directory
+        rounding_precision: precision to round calculated quantities
         """
         self.calc_dir = Path(calc_dir)
         self.rounding_precision = rounding_precision
@@ -58,8 +61,19 @@ class BulkmodAnalyzer:
 
     @staticmethod
     def analyze_bulkmod(calc_dir: Path, rounding_precision: int) -> dict:
-        """
-        Fit an EOS to calculate the bulk modulus from a finished bulkmod calculation
+        """Fit a Birch-Murnaghan EOS to extract the bulk modulus from a finished
+        bulkmod calculation.
+
+        Args:
+            calc_dir: path to the bulkmod calculation directory containing strain_*
+                subdirectories, each with a POSCAR and vasprun.xml
+            rounding_precision: decimal places to round the bulk modulus
+
+        Returns:
+            dict with key "B" mapping to the bulk modulus in GPa
+
+        Raises:
+            Exception: if a strain directory has no vasprun.xml
         """
         strain_dirs = [path for path in calc_dir.glob("strain*") if path.is_dir()]
         strain_dirs = sorted(strain_dirs, key=lambda d: int(d.name.split("_")[-1]))
@@ -93,6 +107,7 @@ class BulkmodAnalyzer:
 
     @property
     def results(self) -> dict:
+        """Bulk modulus results dict (computed lazily on first access)."""
         if getattr(self, "_results", None) is None:
             self._results = self.analyze_bulkmod(self.calc_dir, self.rounding_precision)
         return self._results

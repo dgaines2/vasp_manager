@@ -5,11 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
 ## [Unreleased]
+
+### Added
+
+- Add typed pydantic config models (`CalcConfig`, `ComputingConfig`) with cached loaders
+- Add `VaspRun` class that owns run-level concerns (error checking, magmom parsing)
+- Add configurable job resource parameters (`atoms_per_node`, `rerun_increase`, `rerun_increase_factor`) to `ComputingConfig`
+- Add smart rerun diagnosis: relaxations distinguish "completed all NSW without converging" (relaunch same params) from "timed out" (apply rerun strategy)
 
 ### Changed
 
 - Add `develop` branch to CI pull request trigger
+- Replace hardcoded calculation ordering with a dependency graph (`CALC_DEPENDENCIES` + topological sort)
+- `VaspInputCreator` and `JobManager` now use shared cached config loaders instead of reading JSON on each instantiation
+- Migrate from black/flake8/isort to ruff
+- Update comprehensive test suite: `test_vasp_input_creator.py`, `test_job_manager.py`, `test_config.py`, and additional analyzer failure mode tests
+- `VaspInputCreator` now accepts a pymatgen `Structure` directly instead of a `poscar_source_path`
+- `BaseCalculationManager` generalized with `vasp_runs` dict to support both single-run and multi-run managers
+- Job naming (`pad_string`) extracted from `VaspInputCreator` into each `CalculationManager` via `job_prefix`
+- Move `job_prefix` abstract property to `BaseCalculationManager` for SLURM job naming
+- Bulkmod strains are now independent jobs, each with their own `VaspRun`, `VaspInputCreator`, and `JobManager`
+- Bulkmod handles per-strain failures individually instead of restarting from scratch
+- Update example calculations from VASP 6.3.2 (CuO, NaCl) to VASP 6.4.3 (NaCl, Fe, NiO, BCC\_Ti)
+- `make_potcar_anonymous` now produces minimal pymatgen-parseable POTCARs instead of bare TITEL-line stubs
+- Update test fixtures to 4 materials covering spin-polarization, DFT+U, re-relaxation, and elastic instability
+- Migrate CI workflows (tests, publish, mkdocs) from pip to uv
+
+### Removed
+
+- Remove bulkmod-specific SLURM templates (`vasp-bulkmod.yml`, `vasp-bulkmod-quest.yml`, `vasp-bulkmod-bridges2.yml`); bulkmod strains now reuse static templates
+- Remove `bulkmod` entry from `calc_config.json`; bulkmod now uses the `static` calc config
 
 
 ## [1.4.2] - 2025-11-13

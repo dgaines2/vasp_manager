@@ -18,14 +18,17 @@ if TYPE_CHECKING:
 
 
 class ElasticAnalyzer:
+    """Computes elastic and acoustic properties (B, G, sound velocities) from a
+    6x6 stiffness tensor in Voigt notation using Voigt, Reuss, and VRH averaging.
+    """
+
     def __init__(
         self,
         cij: NDArray,
         structure: Structure,
         rounding_precision: int = 3,
     ) -> None:
-        """
-        Args:
+        """Args:
             cij: stiffness tensor in Voigt notation in units of GPa
             structure: the associated pymatgen structure
             rounding_precision: precision to round calculated quantities
@@ -49,11 +52,11 @@ class ElasticAnalyzer:
         values = np.asarray(values)
         if values.shape != (6, 6):
             raise ValueError(
-                "cij must be a 6x6 array," f"found shape={values.shape} instead"
+                f"cij must be a 6x6 array,found shape={values.shape} instead"
             )
         if values.dtype != float:
             raise TypeError(
-                "cij must be a 6x6 array of floats," f" found type={values.dtype} instead"
+                f"cij must be a 6x6 array of floats, found type={values.dtype} instead"
             )
         self._cij = values
 
@@ -72,6 +75,7 @@ class ElasticAnalyzer:
 
     @property
     def density(self) -> float:
+        """Density of the structure in g/cm^3."""
         return self.structure.density
 
     @property
@@ -89,8 +93,7 @@ class ElasticAnalyzer:
 
     @staticmethod
     def change_elastic_constants_from_vasp(vasp_elastic_tensor: NDArray) -> NDArray:
-        """
-        Args:
+        """Args:
             vasp_elastic_tensor: elastic tensor from VASP OUTCAR
 
         Returns:
@@ -127,8 +130,7 @@ class ElasticAnalyzer:
 
     @staticmethod
     def get_compliance_tensor(cij: NDArray) -> NDArray:
-        """
-        Args:
+        """Args:
             cij: stiffness tensor
 
         Returns:
@@ -139,8 +141,7 @@ class ElasticAnalyzer:
 
     @staticmethod
     def get_VRH_average(mod1: Floating, mod2: Floating) -> Floating:
-        """
-        Args:
+        """Args:
             mod1: B or G Voigt
             mod2: B or G Reuss
 
@@ -151,8 +152,7 @@ class ElasticAnalyzer:
 
     @staticmethod
     def get_B_Reuss(sij: NDArray) -> float:
-        """
-        Args:
+        """Args:
             sij: compliance tensor
 
         Returns:
@@ -165,8 +165,7 @@ class ElasticAnalyzer:
 
     @staticmethod
     def get_B_Voigt(cij: NDArray) -> float:
-        """
-        Args:
+        """Args:
             cij: stiffness tensor
 
         Returns:
@@ -179,8 +178,7 @@ class ElasticAnalyzer:
 
     @staticmethod
     def get_G_Reuss(sij: NDArray) -> float:
-        """
-        Args:
+        """Args:
             sij: compliance tensor
 
         Returns:
@@ -195,8 +193,7 @@ class ElasticAnalyzer:
 
     @staticmethod
     def get_G_Voigt(cij: NDArray) -> float:
-        """
-        Args:
+        """Args:
             cij: stiffness tensor
 
         Returns:
@@ -215,9 +212,13 @@ class ElasticAnalyzer:
         shearmod: Floating,
         density: Floating,
     ) -> Floating:
-        """
+        """Args:
+            bulkmod: bulk modulus in GPa
+            shearmod: shear modulus in GPa
+            density: density in g/cm^3
+
         Returns:
-            vl: longitudinal speed of sound
+            vl: longitudinal speed of sound in km/s
         """
         vl = np.sqrt((bulkmod + 4 / 3 * shearmod) / density)
         return vl
@@ -227,9 +228,12 @@ class ElasticAnalyzer:
         shearmod: Floating,
         density: Floating,
     ) -> Floating:
-        """
+        """Args:
+            shearmod: shear modulus in GPa
+            density: density in g/cm^3
+
         Returns:
-            vl: transverse speed of sound
+            vt: transverse speed of sound in km/s
         """
         vt = np.sqrt(shearmod / density)
         return vt
@@ -240,9 +244,13 @@ class ElasticAnalyzer:
         shearmod: Floating,
         density: Floating,
     ) -> Floating:
-        """
+        """Args:
+            bulkmod: bulk modulus in GPa
+            shearmod: shear modulus in GPa
+            density: density in g/cm^3
+
         Returns:
-            vs: speed of sound
+            vs: average (Debye) speed of sound in km/s
         """
         vl = np.sqrt((bulkmod + 4 / 3 * shearmod) / density)
         vt = np.sqrt(shearmod / density)
@@ -251,9 +259,8 @@ class ElasticAnalyzer:
 
     @staticmethod
     def check_elastically_unstable(cij: NDArray) -> bool:
-        """
-        Returns:
-            True if compound is elastically unstable
+        """Returns:
+        True if compound is elastically unstable
         """
         eigenvalues, eigenvectors = np.linalg.eig(cij)
         born_critera_satisfied = np.all(eigenvalues > 0)
@@ -314,15 +321,15 @@ class ElasticAnalyzer:
         )
 
     def _analyze_elastic(self, properties: list | None = None) -> dict:
-        """
-        Grabs important quantities from the elastic calculation results
+        """Collect elastic and acoustic properties into a results dict.
 
         Args:
-            properties (list): names of properties to calculate
+            properties: names of properties to include. If None, all available
+                properties are included (B_Reuss, B_Voigt, B_VRH, G_Reuss,
+                G_Voigt, G_VRH, unstable, elastic_tensor, vl, vt, vs)
 
         Returns:
-            elastic_dict (dict): dict of extracted info from
-                elastic constants
+            dict mapping property names to their computed values
         """
         properties_map = {
             "B_Reuss": "b_reuss",
@@ -347,6 +354,7 @@ class ElasticAnalyzer:
 
     @property
     def results(self) -> dict:
+        """Elastic results dict (computed lazily on first access)."""
         if getattr(self, "_results", None) is None:
             self._results = self._analyze_elastic()
         return self._results
@@ -357,15 +365,23 @@ class ElasticAnalyzer:
         calc_dir: WorkingDirectory,
         **kwargs,
     ) -> ElasticAnalyzer:
-        """
-        Method to construct ElasticAnalyzer from a calculation directory.
-        The directory should contain a POSCAR and an OUTCAR with elastic constants
+        """Construct an ElasticAnalyzer from a calculation directory.
+
+        The directory must contain a POSCAR and an OUTCAR with a full elastic tensor.
+        Elastic constants are scraped from the OUTCAR and cached to
+        elastic_constants.txt on the first call.
 
         Args:
-            calc_dir:
+            calc_dir: path to the elastic calculation directory
+            **kwargs: additional keyword arguments forwarded to ElasticAnalyzer.__init__
 
         Returns:
-            Instance of ElasticAnalyzer
+            ElasticAnalyzer instance constructed from the directory
+
+        Raises:
+            ValueError: if calc_dir does not exist
+            FileNotFoundError: if no OUTCAR is found in calc_dir
+            RuntimeError: if the elastic tensor cannot be parsed from the OUTCAR
         """
         calc_dir = Path(calc_dir)
         if not calc_dir.exists():

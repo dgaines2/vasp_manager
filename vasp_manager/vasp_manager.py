@@ -5,12 +5,12 @@ from __future__ import annotations
 
 import json
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
+from concurrent.futures import ProcessPoolExecutor
 from functools import cached_property
 from importlib.metadata import version
-from multiprocessing import Pool
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
 from tqdm import tqdm
@@ -34,6 +34,18 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+CALC_DEPENDENCIES: dict[str, list[str]] = {
+    "rlx-coarse": [],
+    "rlx": ["rlx-coarse"],
+    "static": ["rlx"],
+    "bulkmod": ["rlx"],
+    "elastic": ["rlx"],
+}
+
+REQUIRED_CALC_DEPENDENCIES: dict[str, list[str]] = {
+    "elastic": ["rlx"],
+}
+
 ASCII_LOGO = r"""
  __      __             __  __
  \ \    / /            |  \/  |
@@ -43,15 +55,12 @@ ASCII_LOGO = r"""
      \/ \__,_|___/ .__/|_|  |_|\__,_|_| |_|\__,_|\__, |\___|_|
                  | |                              __/ |
                  |_|                             |___/ v{}
-""".format(
-    version("vasp_manager")
-)
+""".format(version("vasp_manager"))
 
 
 class VaspManager:
-    """
-    Handles set up and execution of each CalculationManager
-        (rlx-coarse, rlx, static, bulkmod, elastic)
+    """Handles set up and execution of each CalculationManager
+    (rlx-coarse, rlx, static, bulkmod, elastic)
     """
 
     def __init__(
@@ -69,31 +78,30 @@ class VaspManager:
         magmom_per_atom_cutoff: float = 0.0,
         sort_by: Callable[[str], str] = str,
     ) -> None:
-        """
-        Args:
-            calculation_types: list of calculation types
-            material_dirs: list of material directory paths or name of
-                calculations directory
-            to_rerun: if True, rerun failed calculations
-            to_submit: if True, submit calculations
-            ignore_personal_errors: if True, ignore job submission errors if on
-                personal computer
-            tail: number of last lines from stdout.txt to log in debugging
-                if job failed
-            use_multiprocessing: if True, use pool.map()
-            ncore: if ncore, use {ncore} processes for multiprocessing
-                if None, defaults to minimum(number of materials, 4)
-            calculation_manager_kwargs: contains subdictionaries for each
-                calculation type. Each subdictorary can be filled with extra kwargs
-                to pass to its associated CalculationManager during instantiation
-            max_reruns: the maximum number of times a rlx-coarse or rlx
-                calculation can run before refusing to continue
-                Note: other modes don't make archives, so they are not affected
-                by this
-            magmom_per_atom_cutoff: calculations that result in
-                magmom_per_atom less than this parameter will be automatically
-                rerun without spin-polarization
-            sort_by: function to sort the keys of the result dictionary
+        """Args:
+        calculation_types: list of calculation types
+        material_dirs: list of material directory paths or name of
+            calculations directory
+        to_rerun: if True, rerun failed calculations
+        to_submit: if True, submit calculations
+        ignore_personal_errors: if True, ignore job submission errors if on
+            personal computer
+        tail: number of last lines from stdout.txt to log in debugging
+            if job failed
+        use_multiprocessing: if True, use ProcessPoolExecutor
+        ncore: if ncore, use {ncore} processes for multiprocessing
+            if None, defaults to minimum(number of materials, 4)
+        calculation_manager_kwargs: contains subdictionaries for each
+            calculation type. Each subdictorary can be filled with extra kwargs
+            to pass to its associated CalculationManager during instantiation
+        max_reruns: the maximum number of times a rlx-coarse or rlx
+            calculation can run before refusing to continue
+            Note: other modes don't make archives, so they are not affected
+            by this
+        magmom_per_atom_cutoff: calculations that result in
+            magmom_per_atom less than this parameter will be automatically
+            rerun without spin-polarization
+        sort_by: function to sort the keys of the result dictionary
         """
         print(ASCII_LOGO)
         self.sort_by = sort_by
@@ -124,20 +132,25 @@ class VaspManager:
     def calculation_types(self, values: list[CalculationType]) -> None:
         if not isinstance(values, list):
             raise TypeError("calculation_types must be a list")
-        proper_order: list[CalculationType] = [
-            "rlx-coarse",
-            "rlx",
-            "static",
-            "bulkmod",
-            "elastic",
-        ]
+        supported_calc_types = set(CALC_DEPENDENCIES)
         for calc_type in values:
-            if calc_type not in proper_order:
+            if calc_type not in supported_calc_types:
                 raise ValueError(f"Calculation type {calc_type} not supported")
-        sorted_values: list[CalculationType] = [
-            calc_type for calc_type in proper_order if calc_type in values
-        ]
-        self._calculation_types = sorted_values
+        for (
+            required_calc_type,
+            required_dependencies,
+        ) in REQUIRED_CALC_DEPENDENCIES.items():
+            if required_calc_type in values:
+                for required_dependency in required_dependencies:
+                    if required_dependency not in values:
+                        raise ValueError(
+                            f"Cannot use '{required_calc_type}' without"
+                            f" '{required_dependency}' in calculation_types"
+                        )
+        active_dependencies = VaspManager._build_active_dependencies(values)
+        self._calculation_types = cast(
+            "list[CalculationType]", VaspManager._toposort(active_dependencies)
+        )
 
     @property
     def ncore(self) -> int:
@@ -185,8 +198,7 @@ class VaspManager:
 
     @material_dirs.setter
     def material_dirs(self, values: Filepaths | WorkingDirectory) -> None:
-        """
-        Sets paths for all materials
+        """Sets paths for all materials
 
         Args:
             values: list of material directory
@@ -239,13 +251,63 @@ class VaspManager:
         else:
             self._results = {mat_name: {} for mat_name in self.material_names}
 
+    @staticmethod
+    def _build_active_dependencies(
+        calc_types: Sequence[str],
+    ) -> dict[str, list[str]]:
+        """Build a dependency graph restricted to the requested calculation types.
+
+        An edge is only included when both the dependent calc type and its
+        dependency are present in calc_types, reflecting that dependencies are
+        optional unless explicitly requested.
+        """
+        return {
+            calc_type: [
+                dependency
+                for dependency in CALC_DEPENDENCIES.get(calc_type, [])
+                if dependency in calc_types
+            ]
+            for calc_type in calc_types
+        }
+
+    @staticmethod
+    def _toposort(dependencies: dict[str, list[str]]) -> list[str]:
+        """Return nodes in dependency order using Kahn's algorithm.
+
+        Args:
+            dependencies: adjacency list mapping each node to its list of
+                prerequisite nodes
+
+        Returns:
+            list of node names in topological order
+
+        Raises:
+            ValueError: if a cycle is detected in the dependency graph
+        """
+        in_degree: dict[str, int] = {node: 0 for node in dependencies}
+        for node, parents in dependencies.items():
+            for parent in parents:
+                in_degree[node] += 1
+        queue = [node for node, degree in in_degree.items() if degree == 0]
+        result: list[str] = []
+        while queue:
+            node = queue.pop(0)
+            result.append(node)
+            for candidate, parents in dependencies.items():
+                if node in parents:
+                    in_degree[candidate] -= 1
+                    if in_degree[candidate] == 0:
+                        queue.append(candidate)
+        if len(result) != len(dependencies):
+            raise ValueError("Cycle detected in calculation dependency graph")
+        return result
+
     def _check_calc_by_result(
         self,
         material_name: str,
         calc_type: str,
     ) -> tuple[bool, bool]:
-        """
-        Checks if job has been completed and analyzed
+        """Checks if job has been completed and analyzed
 
         Args:
             material_name: name of material to check
@@ -267,9 +329,8 @@ class VaspManager:
         return (is_done, is_stopped)
 
     def _get_calculation_managers(self, material_dir: Path) -> list[CalculationManager]:
-        """
-        Gets calculation managers for a single material
-        """
+        """Gets calculation managers for a single material"""
+        active_dependencies = self._build_active_dependencies(self.calculation_types)
         calc_managers: list[CalculationManager] = []
         for calc_type in self.calculation_types:
             manager: CalculationManager
@@ -285,7 +346,7 @@ class VaspManager:
                         **self.calculation_manager_kwargs[calc_type],
                     )
                 case "rlx":
-                    from_coarse_relax = "rlx-coarse" in self.calculation_types
+                    from_coarse_relax = "rlx-coarse" in active_dependencies.get("rlx", [])
                     manager = RlxCalculationManager(
                         material_dir=material_dir,
                         to_rerun=self.to_rerun,
@@ -298,7 +359,7 @@ class VaspManager:
                         **self.calculation_manager_kwargs[calc_type],
                     )
                 case "static":
-                    from_relax = "rlx" in self.calculation_types
+                    from_relax = "rlx" in active_dependencies.get("static", [])
                     manager = StaticCalculationManager(
                         material_dir=material_dir,
                         to_rerun=self.to_rerun,
@@ -309,7 +370,7 @@ class VaspManager:
                         **self.calculation_manager_kwargs[calc_type],
                     )
                 case "bulkmod":
-                    from_relax = "rlx" in self.calculation_types
+                    from_relax = "rlx" in active_dependencies.get("bulkmod", [])
                     manager = BulkmodCalculationManager(
                         material_dir=material_dir,
                         to_rerun=self.to_rerun,
@@ -319,12 +380,6 @@ class VaspManager:
                         **self.calculation_manager_kwargs[calc_type],
                     )
                 case "elastic":
-                    if "rlx" not in self.calculation_types:
-                        msg = (
-                            "Cannot perform elastic calculation without mode='rlx'"
-                            " first"
-                        )
-                        raise Exception(msg)
                     manager = ElasticCalculationManager(
                         material_dir=material_dir,
                         to_rerun=self.to_rerun,
@@ -340,77 +395,70 @@ class VaspManager:
         return calc_managers
 
     def _get_all_calculation_managers(self) -> dict[str, list[CalculationManager]]:
-        """
-        Gets calculation managers for all materials
-        """
+        """Gets calculation managers for all materials"""
         calc_managers = {}
         for material_name, material_dir in zip(self.material_names, self.material_dirs):
             calc_managers[material_name] = self._get_calculation_managers(material_dir)
         return calc_managers
 
     def _manage_calculations(self, material_name: str) -> tuple[str, None | str | dict]:
-        """
-        Runs vasp job workflow for a single material
-        """
+        """Runs vasp job workflow for a single material"""
         material_results: dict[str, Any] = {}
+        active_dependencies = self._build_active_dependencies(self.calculation_types)
+        done_modes: set[str] = set()
+
         for calc_manager in self.calculation_managers[material_name]:
-            if calc_manager.mode in self.results[material_name].keys():
+            mode = calc_manager.mode
+
+            if mode in self.results[material_name].keys():
                 calc_is_done, calc_is_stopped = self._check_calc_by_result(
-                    material_name, calc_manager.mode
+                    material_name, mode
                 )
                 if calc_is_done and not calc_manager.from_scratch:
-                    logger.info(
-                        f"{material_name} -- {calc_manager.mode.upper()} Successful"
-                    )
+                    logger.info(f"{material_name} -- {mode.upper()} Successful")
+                    done_modes.add(mode)
                     continue
 
             if calc_manager.stopped:
-                logger.info(f"{material_name} -- {calc_manager.mode.upper()} STOPPED")
-                material_results[calc_manager.mode] = "STOPPED"
-                break
+                logger.info(f"{material_name} -- {mode.upper()} STOPPED")
+                material_results[mode] = "STOPPED"
+                continue
+
+            dependencies_satisfied = all(
+                dep in done_modes for dep in active_dependencies.get(mode, [])
+            )
+            if not dependencies_satisfied:
+                continue
 
             if not calc_manager.job_exists:
-                logger.info(f"{material_name} -- Setting up {calc_manager.mode.upper()}")
+                logger.info(f"{material_name} -- Setting up {mode.upper()}")
                 calc_manager.setup_calc()
-                match calc_manager.mode:
-                    case "rlx-coarse" | "rlx":
-                        break
-                    case _:
-                        pass
 
-            if not calc_manager.is_done:
-                match calc_manager.mode:
-                    case "rlx-coarse" | "rlx" | "elastic":
-                        # don't check further modes as they rely on rlx-coarse
-                        # or rlx to be done
-                        # break if elastic not done to avoid analysis
-                        break
-                    case _:
-                        # go ahead and check the other modes as they are
-                        # independent of each other
-                        pass
-
-            material_results[calc_manager.mode] = calc_manager.results
+            material_results[mode] = calc_manager.results
+            if calc_manager.is_done:
+                done_modes.add(mode)
         return (material_name, material_results)
 
     def _manage_calculations_wrapper(self) -> list[tuple]:
         if self.use_multiprocessing:
-            with Pool(self.ncore) as pool:
-                results = pool.map(
-                    self._manage_calculations, tqdm(self.material_names), 1
+            with ProcessPoolExecutor(max_workers=self.ncore) as executor:
+                results = list(
+                    executor.map(
+                        self._manage_calculations, tqdm(self.material_names), chunksize=1
+                    )
                 )
         else:
             results = []
             for i, material_name in enumerate(self.material_names):
-                print(f"{i+1}/{len(self.material_names)} -- {material_name}", flush=True)
+                print(
+                    f"{i + 1}/{len(self.material_names)} -- {material_name}", flush=True
+                )
                 results.append(self._manage_calculations(material_name))
                 print()
         return results
 
     def run_calculations(self) -> dict:
-        """
-        Runs vasp job workflow for all materials
-        """
+        """Runs vasp job workflow for all materials"""
         results = self._manage_calculations_wrapper()
         for material_name, material_result in results:
             self.results[material_name].update(material_result)
@@ -428,8 +476,7 @@ class VaspManager:
         print_unfinished: bool = False,
         print_stopped: bool = True,
     ) -> str | dict:
-        """
-        Create a string summary of all calculations
+        """Create a string summary of all calculations
 
         Args:
             as_string: if True, return string summary. Else, return dict summary
@@ -437,6 +484,9 @@ class VaspManager:
                 materials for each calculation type in the summary
             print_stopped: if True, include a list of stopped materials for
                 each calculation type in the summary
+
+        Returns:
+            summary string if as_string is True, else summary dict
         """
         if not self.results_path.exists():
             raise ValueError(f"Can't find results in {self.results_path}")

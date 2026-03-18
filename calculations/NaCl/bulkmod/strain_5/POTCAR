@@ -1,1 +1,32 @@
-../POTCAR
+PAW_PBE Na_pv 19Sep2006                
+   7.00000000000000     
+ parameters from PSCTR are:
+   VRHFIN =Na: p6s1
+   LEXCH  = PE
+   EATOM  =   766.0439 eV,   56.3026 Ry
+
+   TITEL  = PAW_PBE Na_pv 19Sep2006
+   POMASS =   22.990; ZVAL   =    7.000    mass and valenz
+   RCORE  =    2.200    outmost cutoff radius
+
+ END of PSCTR-controll parameters
+ local part
+   0.0000000   0.0000000
+ END of local part
+ End of Dataset
+PAW_PBE Cl 06Sep2000                   
+   7.00000000000000     
+ parameters from PSCTR are:
+   VRHFIN =Cl: s2p5
+   LEXCH  = PE
+   EATOM  =   409.7259 eV,   30.1140 Ry
+
+   TITEL  = PAW_PBE Cl 06Sep2000
+   POMASS =   35.453; ZVAL   =    7.000    mass and valenz
+   RCORE  =    1.900    outmost cutoff radius
+
+ END of PSCTR-controll parameters
+ local part
+   0.0000000   0.0000000
+ END of local part
+ End of Dataset

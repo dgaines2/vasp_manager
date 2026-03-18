@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING
 from vasp_manager.analyzer import ElasticAnalyzer
 from vasp_manager.calculation_manager.base import BaseCalculationManager
 from vasp_manager.utils import LoggerAdapter, NumpyEncoder, pgrep, ptail
-from vasp_manager.vasp_input_creator import VaspInputCreator
 
 if TYPE_CHECKING:
     from vasp_manager.types import CalculationType, WorkingDirectory
@@ -21,9 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 class ElasticCalculationManager(BaseCalculationManager):
-    """
-    Runs elastic deformation job workflow for a single material
-    """
+    """Runs elastic deformation job workflow for a single material"""
 
     def __init__(
         self,
@@ -35,8 +32,7 @@ class ElasticCalculationManager(BaseCalculationManager):
         from_scratch: bool = False,
         tail: int = 5,
     ):
-        """
-        Args:
+        """Args:
             material_dir: path to a directory for a single material
             to_rerun: if True, rerun failed calculations
             to_submit: if True, submit calculations to job manager
@@ -68,21 +64,22 @@ class ElasticCalculationManager(BaseCalculationManager):
     def mode(self) -> CalculationType:
         return "elastic"
 
+    @property
+    def job_prefix(self) -> str:
+        return "e"
+
     @cached_property
     def poscar_source_path(self) -> Path:
         return self.material_dir / "rlx" / "CONTCAR"
 
-    @cached_property
-    def vasp_input_creator(self) -> VaspInputCreator:
-        return VaspInputCreator(
-            self.calc_dir,
-            mode=self.mode,
-            poscar_source_path=self.poscar_source_path,
-            primitive=self.primitive,
-            name=self.material_name,
-        )
-
     def _check_use_spin(self) -> bool:
+        """Determine whether spin polarization should be used for the elastic calculation.
+
+        Checks the relaxation stdout for magnetic moments.
+
+        Returns:
+            True if the relaxation produced non-zero magnetic moments
+        """
         rlx_stdout = self.material_dir / "rlx" / "stdout.txt"
         rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
         use_spin = len(rlx_mags) != 0
@@ -93,11 +90,14 @@ class ElasticCalculationManager(BaseCalculationManager):
         increase_nodes_by_factor: int = 1,
         increase_walltime_by_factor: int = 1,
     ) -> None:
-        """
-        Runs elastic constants routine through VASP
+        """Set up and optionally submit an elastic constants calculation.
 
-        By default, requires relaxation (as the elastic constants routine needs
-            the cell to be nearly at equilibrium)
+        Requires a previous relaxation, as the elastic constants routine needs the
+        cell to be nearly at equilibrium.
+
+        Args:
+            increase_nodes_by_factor: multiply the node count by this factor
+            increase_walltime_by_factor: multiply the walltime by this factor
         """
         self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
         self.vasp_input_creator.increase_walltime_by_factor = increase_walltime_by_factor
@@ -111,8 +111,7 @@ class ElasticCalculationManager(BaseCalculationManager):
                 self.setup_calc()
 
     def check_calc(self) -> bool:
-        """
-        Checks result of elastic calculation
+        """Checks result of elastic calculation
 
         Returns:
             elastic_successful: if True, elastic calculation completed
@@ -131,9 +130,9 @@ class ElasticCalculationManager(BaseCalculationManager):
                 self.setup_calc()
             return False
 
-        vasp_errors = self._check_vasp_errors(extra_errors=["NELM"])
+        vasp_errors = self.vasp_run.check_vasp_errors(extra_errors=["NELM"])
         if len(vasp_errors) > 0:
-            all_errors_addressed = self._address_vasp_errors(vasp_errors)
+            all_errors_addressed = self.vasp_run.address_vasp_errors(vasp_errors)
             if all_errors_addressed:
                 if self.to_rerun:
                     self.logger.info(f"Rerunning {self.calc_dir}")
@@ -170,9 +169,8 @@ class ElasticCalculationManager(BaseCalculationManager):
             self.logger.info(f"{self.mode.upper()} Calculation: FAILED")
             if self.to_rerun:
                 self.logger.info(f"Rerunning {self.calc_dir}")
-                # increase walltime as its likely the calculation failed
                 self._from_scratch()
-                self.setup_calc(increase_walltime_by_factor=2)
+                self.setup_calc(**self._rerun_resource_kwargs())
             return False
 
         self.logger.info(f"{self.mode.upper()} Calculation: Success")
@@ -180,12 +178,14 @@ class ElasticCalculationManager(BaseCalculationManager):
 
     @property
     def is_done(self) -> bool:
+        """True if all elastic deformations completed successfully (computed lazily)."""
         if getattr(self, "_is_done", None) is None:
             self._is_done = self.check_calc()
         return self._is_done
 
     @property
     def results(self) -> None | str | dict:
+        """Elastic results dict from ElasticAnalyzer, or None/"STOPPED" if not done."""
         if not self.is_done:
             if self.stopped:
                 return "STOPPED"
@@ -199,8 +199,10 @@ class ElasticCalculationManager(BaseCalculationManager):
         return self._results
 
     def _analyze_elastic(self) -> dict:
-        """
-        Gets results from elastic calculation
+        """Run ElasticAnalyzer on the completed calculation directory.
+
+        Returns:
+            dict of elastic and acoustic properties from ElasticAnalyzer.results
         """
         ea = ElasticAnalyzer.from_calc_dir(self.calc_dir)
         if ea.results.get("elastically_unstable"):

@@ -21,9 +21,10 @@ def test_vmg_in_order(tmp_path):
             "static",
             "bulkmod",
             "elastic",
-            "material_hit_errors",
-            "material_needs_archive",
-            "material_needs_rerun",
+            "NaCl_hit_errors",
+            "NaCl_needs_archive",
+            "NaCl_needs_rerun",
+            "BCC_Ti_needs_archive",
         ),
     )
 
@@ -89,15 +90,15 @@ def test_vmg_in_order(tmp_path):
             summary = vmg.summary(as_string=True, print_unfinished=True)
             correct_summary = dedent(
                 """\
-            Total Materials = 2
+            Total Materials = 4
             ------------------------------
-            RLX-COARSE  2/2 completed
-            RLX         2/2 completed
-            STATIC      2/2 completed
-            BULKMOD     2/2 completed
-            ELASTIC     0/2 completed
-                        2 not completed
-            Unfinished ELASTIC: ['material', 'material_spinu']
+            RLX-COARSE  4/4 completed
+            RLX         4/4 completed
+            STATIC      4/4 completed
+            BULKMOD     4/4 completed
+            ELASTIC     0/4 completed
+                        4 not completed
+            Unfinished ELASTIC: ['BCC_Ti', 'Fe', 'NaCl', 'NiO']
             """
             )
             assert summary == correct_summary
@@ -124,6 +125,62 @@ def test_vmg_in_order(tmp_path):
         assert summary["n_total"] == summary[calculation_type]["n_finished"]
 
 
+def test_vmg_first_run_no_completed_data(tmp_path):
+    """Request all calc types when only POSCARs exist (no completed data).
+
+    This simulates the very first run on a cluster: rlx-coarse gets set up
+    and submitted, but downstream calcs (rlx, static, bulkmod, elastic)
+    must be skipped without crashing -- even though their dependency
+    managers can't load structure files yet.
+    """
+    original_calculations_dir = (
+        importlib_resources.files("vasp_manager") / "tests" / "calculations"
+    )
+    temp_calculations_dir = tmp_path / "calculations"
+    shutil.copytree(
+        original_calculations_dir,
+        temp_calculations_dir,
+        dirs_exist_ok=True,
+        symlinks=True,
+        ignore=shutil.ignore_patterns(
+            "rlx*",
+            "static",
+            "bulkmod",
+            "elastic",
+            "NaCl_hit_errors",
+            "NaCl_needs_archive",
+            "NaCl_needs_rerun",
+            "BCC_Ti_needs_archive",
+        ),
+    )
+
+    calculation_types = [
+        "rlx-coarse",
+        "rlx",
+        "static",
+        "bulkmod",
+        "elastic",
+    ]
+    material_dirs = [
+        p for p in sorted(list(temp_calculations_dir.glob("*"))) if p.is_dir()
+    ]
+
+    vmg = VaspManager(
+        calculation_types=calculation_types,
+        material_dirs=material_dirs,
+        use_multiprocessing=False,
+        to_rerun=True,
+        to_submit=True,
+    )
+    results = vmg.run_calculations()
+    for material in results:
+        # rlx-coarse was set up but not finished (no actual VASP ran)
+        assert results[material]["rlx-coarse"] == "not finished"
+        # All downstream calcs should be absent -- they were correctly skipped
+        for calc_type in ["rlx", "static", "bulkmod", "elastic"]:
+            assert calc_type not in results[material]
+
+
 def test_vmg_with_skipping(tmp_path):
     original_calculations_dir = (
         importlib_resources.files("vasp_manager") / "tests" / "calculations"
@@ -138,9 +195,10 @@ def test_vmg_with_skipping(tmp_path):
         ignore=shutil.ignore_patterns(
             "static",
             "bulkmod",
-            "material_hit_errors",
-            "material_needs_archive",
-            "material_needs_rerun",
+            "NaCl_hit_errors",
+            "NaCl_needs_archive",
+            "NaCl_needs_rerun",
+            "BCC_Ti_needs_archive",
         ),
     )
 

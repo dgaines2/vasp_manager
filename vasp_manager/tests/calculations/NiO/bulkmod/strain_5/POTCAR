@@ -1,0 +1,32 @@
+PAW_PBE Ni 02Aug2007                   
+   10.0000000000000     
+ parameters from PSCTR are:
+   VRHFIN =Ni:
+   LEXCH  = PE
+   EATOM  =  1077.6739 eV,   79.2068 Ry
+
+   TITEL  = PAW_PBE Ni 02Aug2007
+   POMASS =   58.690; ZVAL   =   10.000    mass and valenz
+   RCORE  =    2.300    outmost cutoff radius
+
+ END of PSCTR-controll parameters
+ local part
+   0.0000000   0.0000000
+ END of local part
+ End of Dataset
+PAW_PBE O 08Apr2002                    
+   6.00000000000000     
+ parameters from PSCTR are:
+   VRHFIN =O: s2p4
+   LEXCH  = PE
+   EATOM  =   432.3788 eV,   31.7789 Ry
+
+   TITEL  = PAW_PBE O 08Apr2002
+   POMASS =   16.000; ZVAL   =    6.000    mass and valenz
+   RCORE  =    1.520    outmost cutoff radius
+
+ END of PSCTR-controll parameters
+ local part
+   0.0000000   0.0000000
+ END of local part
+ End of Dataset

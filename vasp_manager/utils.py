@@ -7,10 +7,12 @@ import gzip
 import json
 import logging
 import os
+import re
 from collections import deque
+from collections.abc import MutableMapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from pymatgen.core import Structure
@@ -33,7 +35,7 @@ def change_directory(new_dir: str | Path):
 class NumpyEncoder(json.JSONEncoder):
     """Special json encoder for numpy types"""
 
-    def default(self, obj):
+    def default(self, obj: Any) -> Any:
         if isinstance(obj, np.integer):
             return int(obj)
         elif isinstance(obj, np.floating):
@@ -56,7 +58,9 @@ class LoggerAdapter(logging.LoggerAdapter):
         self.prefix = prefix
         self.separator = separator
 
-    def process(self, msg, kwargs):
+    def process(
+        self, msg: str, kwargs: MutableMapping[str, Any]
+    ) -> tuple[str, MutableMapping[str, Any]]:
         return f"{self.prefix}{self.separator}{msg}", kwargs
 
 
@@ -69,8 +73,7 @@ def get_pmg_structure_from_poscar(
     international_monoclinic: bool = False,
     return_spacegroup: bool = False,
 ) -> Structure | tuple[Structure, int]:
-    """
-    Args:
+    """Args:
         poscar_path: path to POSCAR file
         to_process: if True, get standard reduced structure
         primitive: if True, get primitive structure, else get
@@ -105,8 +108,7 @@ def get_pmg_structure_from_poscar(
 
 
 def pcat(file_names: Filepath | list[Filepath]) -> str:
-    """
-    Custom python-only replacement for cat
+    """Custom python-only replacement for cat
 
     Args:
         file_names: names of files to cat together
@@ -132,8 +134,7 @@ def pgrep(
     after: int | None = None,
     as_string: bool = False,
 ) -> str | list[str]:
-    """
-    Custom python-only replacement for grep
+    """Custom python-only replacement for grep
 
     Args:
         file_name: path of file
@@ -171,8 +172,7 @@ def phead(
     n_head: int = 1,
     as_string: bool = False,
 ) -> str | list[str]:
-    """
-    Custom python-only replacement for head
+    """Custom python-only replacement for head
 
     Args:
         file_name: path of file
@@ -198,8 +198,7 @@ def ptail(
     n_tail: int = 1,
     as_string: bool = False,
 ) -> str | list[str]:
-    """
-    Custom python-only replacement for grep
+    """Custom python-only replacement for grep
 
     Args:
         file_name: path of file
@@ -223,23 +222,63 @@ def make_potcar_anonymous(
     input_file_name: Filepath,
     output_file_name: Filepath | None = None,
 ) -> None:
-    """
-    Replace full POTCAR with only single POTCAR names
+    """Replace a full POTCAR with a minimal version parseable by pymatgen.
+
+    Extracts the header, ZVAL line, and PSCTR block (VRHFIN, LEXCH, EATOM,
+    TITEL, POMASS/ZVAL, RCORE) for each element, producing a file that
+    pymatgen's ``Potcar.from_file`` can parse while stripping proprietary data.
 
     Args:
         input_file_name: path of POTCAR file
         output_file_name: path to write anonymized POTCAR. If None, write to
-            the location of input_f_name
+            the location of input_file_name
     """
     if output_file_name is None:
         output_file_name = input_file_name
 
     with open(input_file_name, "rt") as fr:
-        full_potcar_text = [line.strip() for line in fr.readlines()]
-    trimmed_potcar_lines = []
-    for line in full_potcar_text:
-        if "TITEL" in line:
-            trimmed_potcar_lines.append(line.split("=")[1].strip())
-    trimmed_potcar_string = "\n".join([line for line in trimmed_potcar_lines])
+        full_text = fr.read()
+
+    # Split on "End of Dataset" to get individual element blocks
+    raw_blocks = re.split(r"End of Dataset", full_text)
+
+    minimal_blocks: list[str] = []
+    for block in raw_blocks:
+        block = block.strip()
+        if not block:
+            continue
+
+        lines = block.splitlines()
+        # Collect key lines from the PSCTR section
+        header = lines[0]  # e.g. " PAW_PBE Na_pv 19Sep2006"
+        zval_line = lines[1]  # e.g. "   7.00000000000000"
+
+        keep_keys = ("VRHFIN", "LEXCH", "EATOM", "TITEL", "POMASS", "RCORE")
+        psctr_lines: list[str] = []
+        in_psctr = False
+        for line in lines[2:]:
+            if "parameters from PSCTR" in line:
+                in_psctr = True
+                continue
+            if "END of PSCTR-controll" in line:
+                break
+            if in_psctr:
+                stripped = line.strip()
+                if stripped and any(stripped.startswith(k) for k in keep_keys):
+                    psctr_lines.append(line.rstrip())
+                elif not stripped:
+                    psctr_lines.append("")
+
+        minimal = f"{header}\n{zval_line}\n parameters from PSCTR are:\n"
+        minimal += "\n".join(psctr_lines) + "\n"
+        minimal += (
+            " END of PSCTR-controll parameters\n"
+            " local part\n"
+            "   0.0000000   0.0000000\n"
+            " END of local part\n"
+            " End of Dataset\n"
+        )
+        minimal_blocks.append(minimal)
+
     with open(output_file_name, "w+") as fw:
-        fw.write(trimmed_potcar_string)
+        fw.write("".join(minimal_blocks))

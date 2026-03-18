@@ -14,19 +14,9 @@ repos:
         args: [--unsafe]
       - id: check-merge-conflict
 
-  - repo: https://github.com/psf/black
-    rev: 22.3.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.14
     hooks:
-      - id: black
-
-  - repo: https://github.com/john-hen/Flake8-pyproject
-    rev: 1.1.0
-    hooks:
-      - id: Flake8-pyproject
-        name: flake8
-        exclude: ^vasp_manager/tests
-
-  - repo: https://github.com/timothycrosley/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format

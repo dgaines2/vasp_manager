@@ -15,8 +15,10 @@ from numpy.typing import NDArray
 
 from vasp_manager.analyzer.bulkmod_analyzer import BulkmodAnalyzer
 from vasp_manager.calculation_manager.base import BaseCalculationManager
-from vasp_manager.utils import LoggerAdapter, change_directory, pgrep
+from vasp_manager.job_manager import JobManager
+from vasp_manager.utils import LoggerAdapter, pgrep
 from vasp_manager.vasp_input_creator import VaspInputCreator
+from vasp_manager.vasp_run import VaspRun
 
 if TYPE_CHECKING:
     from vasp_manager.types import CalculationType, WorkingDirectory
@@ -25,8 +27,10 @@ logger = logging.getLogger(__name__)
 
 
 class BulkmodCalculationManager(BaseCalculationManager):
-    """
-    Runs bulk modulus job workflow for a single material
+    """Runs bulk modulus job workflow for a single material.
+
+    Each strain is an independent static calculation with its own
+    VaspInputCreator, JobManager, and SLURM job.
     """
 
     def __init__(
@@ -41,21 +45,20 @@ class BulkmodCalculationManager(BaseCalculationManager):
         tail: int = 5,
         strains: None | NDArray = None,
     ):
-        """
-        Args:
-            material_dir: path to a directory for a single material
-            to_rerun: if True, rerun failed calculations
-            to_submit: if True, submit calculations to job manager
-            primitive: if True, find primitive cell, else find conventional cell
-            ignore_personal_errors: if True, ignore job submission errors
-                if on personal computer
-            from_scratch: if True, remove the calculation's directory and
-                restart
-            from_relax: if True, use CONTCAR from relax
-            tail: number of last lines to log in debugging if job failed
-            strains: fractional strain along each axis for each deformation
-                if None, use np.linspace(start=0.925, stop=1.075, number=11)**(1/3)
-                len(strains) must be odd and strains must be centered around 0
+        """Args:
+        material_dir: path to a directory for a single material
+        to_rerun: if True, rerun failed calculations
+        to_submit: if True, submit calculations to job manager
+        primitive: if True, find primitive cell, else find conventional cell
+        ignore_personal_errors: if True, ignore job submission errors
+            if on personal computer
+        from_scratch: if True, remove the calculation's directory and
+            restart
+        from_relax: if True, use CONTCAR from relax
+        tail: number of last lines to log in debugging if job failed
+        strains: fractional strain along each axis for each deformation
+            if None, use np.linspace(start=0.925, stop=1.075, number=11)**(1/3)
+            len(strains) must be odd and strains must be centered around 0
         """
         self.from_relax = from_relax
         self.strains = (
@@ -74,11 +77,16 @@ class BulkmodCalculationManager(BaseCalculationManager):
         )
         self._is_done: bool
         self._results: None | str | dict
+        self._vasp_runs: dict[str, VaspRun] | None = None
         self.logger = LoggerAdapter(logging.getLogger(__name__), self.material_name)
 
     @cached_property
     def mode(self) -> CalculationType:
         return "bulkmod"
+
+    @property
+    def job_prefix(self) -> str:
+        return "b"
 
     @cached_property
     def poscar_source_path(self) -> Path:
@@ -87,16 +95,6 @@ class BulkmodCalculationManager(BaseCalculationManager):
         else:
             poscar_source_path = self.material_dir / "POSCAR"
         return poscar_source_path
-
-    @cached_property
-    def vasp_input_creator(self) -> VaspInputCreator:
-        return VaspInputCreator(
-            self.calc_dir,
-            mode=self.mode,
-            poscar_source_path=self.poscar_source_path,
-            primitive=self.primitive,
-            name=self.material_name,
-        )
 
     @property
     def strains(self) -> NDArray:
@@ -110,7 +108,60 @@ class BulkmodCalculationManager(BaseCalculationManager):
             raise ValueError(f"Strains not centered around 1.0: middle is {middle}")
         self._strains = values
 
+    @property
+    def strain_names(self) -> list[str]:
+        middle = int(len(self.strains) / 2)
+        return [f"strain_{i - middle}" for i in range(len(self.strains))]
+
+    @property
+    def vasp_runs(self) -> dict[str, VaspRun]:
+        """One VaspRun per strain directory."""
+        if self._vasp_runs is None:
+            self._vasp_runs = self._build_vasp_runs()
+        return self._vasp_runs
+
+    def _build_vasp_runs(self) -> dict[str, VaspRun]:
+        """Build VaspRun dict from existing strain directories."""
+        runs = {}
+        base_structure = self._load_structure()
+        for i, strain in enumerate(self.strains):
+            strain_name = self.strain_names[i]
+            strain_dir = self.calc_dir / strain_name
+            if not strain_dir.exists():
+                continue
+            strained = base_structure.copy()
+            strained.scale_lattice(base_structure.volume * strain**3)
+            vic = VaspInputCreator(
+                calc_dir=strain_dir,
+                mode="static",
+                structure=strained,
+                config_dir=self.config_dir,
+                name=f"{self.material_name}_s{strain_name.split('_')[1]}",
+                job_prefix=self.job_prefix,
+            )
+            jm = JobManager(
+                calc_dir=strain_dir,
+                manager_name=f"{self.material_name} BULKMOD {strain_name}",
+                config_dir=self.config_dir,
+                ignore_personal_errors=self._ignore_personal_errors,
+            )
+            runs[strain_name] = VaspRun(
+                run_dir=strain_dir,
+                structure=strained,
+                vasp_input_creator=vic,
+                job_manager=jm,
+            )
+        return runs
+
     def _check_use_spin(self) -> bool:
+        """Determine whether spin polarization should be used for strain calculations.
+
+        If from_relax is True, checks the relaxation stdout for magnetic moments.
+        Otherwise, defaults to True.
+
+        Returns:
+            True if spin polarization should be enabled
+        """
         if self.from_relax:
             rlx_stdout = self.material_dir / "rlx" / "stdout.txt"
             rlx_mags = pgrep(rlx_stdout, "mag=", stop_after_first_match=True)
@@ -119,13 +170,86 @@ class BulkmodCalculationManager(BaseCalculationManager):
             use_spin = True
         return use_spin
 
+    def _setup_strain(
+        self,
+        strain_index: int,
+        increase_nodes_by_factor: int = 1,
+        increase_walltime_by_factor: int = 1,
+    ) -> VaspRun:
+        """Create input files for a single strain and return its VaspRun.
+
+        Args:
+            strain_index: index into self.strains and self.strain_names
+            increase_nodes_by_factor: multiply the node count by this factor
+            increase_walltime_by_factor: multiply the walltime by this factor
+
+        Returns:
+            VaspRun for the newly created strain directory
+        """
+        strain = self.strains[strain_index]
+        strain_name = self.strain_names[strain_index]
+        strain_dir = self.calc_dir / strain_name
+        self.logger.info(strain_dir)
+
+        if not strain_dir.exists():
+            strain_dir.mkdir()
+
+        base_structure = self._load_structure()
+        use_spin = self._check_use_spin()
+        strained = base_structure.copy()
+        strained.scale_lattice(base_structure.volume * strain**3)
+
+        vic = VaspInputCreator(
+            calc_dir=strain_dir,
+            mode="static",
+            structure=strained,
+            config_dir=self.config_dir,
+            name=f"{self.material_name}_s{strain_name.split('_')[1]}",
+            job_prefix=self.job_prefix,
+            increase_nodes_by_factor=increase_nodes_by_factor,
+            increase_walltime_by_factor=increase_walltime_by_factor,
+            use_spin=use_spin,
+        )
+        vic.create()
+
+        jm = JobManager(
+            calc_dir=strain_dir,
+            manager_name=f"{self.material_name} BULKMOD {strain_name}",
+            config_dir=self.config_dir,
+            ignore_personal_errors=self._ignore_personal_errors,
+        )
+
+        return VaspRun(
+            run_dir=strain_dir,
+            structure=strained,
+            vasp_input_creator=vic,
+            job_manager=jm,
+        )
+
+    def _clean_strain(self, strain_name: str) -> None:
+        """Remove a single strain directory and cancel its job."""
+        strain_dir = self.calc_dir / strain_name
+        jobid_path = strain_dir / "jobid"
+        if jobid_path.exists():
+            with open(jobid_path) as fr:
+                jobid = fr.read().strip()
+            os.system(f"scancel {jobid}")
+        if strain_dir.exists():
+            shutil.rmtree(strain_dir)
+
     def setup_calc(
         self,
         increase_nodes_by_factor: int = 1,
         increase_walltime_by_factor: int = 1,
     ) -> None:
-        """
-        Sets up an EOS bulkmod calculation
+        """Set up and optionally submit an EOS bulkmod calculation with independent
+        strain jobs.
+
+        Args:
+            increase_nodes_by_factor: multiply the node count by this factor for all
+                strain jobs
+            increase_walltime_by_factor: multiply the walltime by this factor for all
+                strain jobs
         """
         if not self.from_relax:
             msg = (
@@ -134,21 +258,28 @@ class BulkmodCalculationManager(BaseCalculationManager):
             )
             self.logger.warning(msg)
 
-        self.vasp_input_creator.increase_nodes_by_factor = increase_nodes_by_factor
-        self.vasp_input_creator.increase_walltime_by_factor = increase_walltime_by_factor
-        self.vasp_input_creator.use_spin = self._check_use_spin()
-        self.vasp_input_creator.create()
-        self._make_bulkmod_strains()
+        if not self.calc_dir.exists():
+            self.calc_dir.mkdir()
+
+        self.logger.info("Making strain directories")
+        runs: dict[str, VaspRun] = {}
+        for i in range(len(self.strains)):
+            run = self._setup_strain(
+                i,
+                increase_nodes_by_factor=increase_nodes_by_factor,
+                increase_walltime_by_factor=increase_walltime_by_factor,
+            )
+            runs[self.strain_names[i]] = run
+
+        self._vasp_runs = runs
 
         if self.to_submit:
-            job_submitted = self.submit_job()
-            # job status returns True if sucessfully submitted, else False
-            if not job_submitted:
+            all_submitted = self.submit_job()
+            if not all_submitted:
                 self.setup_calc()
 
     def check_calc(self) -> bool:
-        """
-        Checks result of bulk modulus calculation
+        """Checks result of bulk modulus calculation
 
         Returns:
             bulkmod_sucessful: if True, bulkmod calculation completed successfully
@@ -157,26 +288,26 @@ class BulkmodCalculationManager(BaseCalculationManager):
             self.logger.info(f"{self.mode.upper()} job not finished")
             return False
 
-        for i, strain in enumerate(self.strains):
-            middle = int(len(self.strains) / 2)
-            strain_index = i - middle
-            strain_name = f"strain_{strain_index}"
-            strain_dir = self.calc_dir / strain_name
-            stdout_path = strain_dir / "stdout.txt"
-            stderr_path = strain_dir / "stderr.txt"
+        all_passed = True
+        _ = self.vasp_runs  # ensure _vasp_runs is populated
+        assert self._vasp_runs is not None
+        for i, (strain_name, run) in enumerate(self.vasp_runs.items()):
+            stdout_path = run.run_dir / "stdout.txt"
             if not stdout_path.exists():
-                return False
+                all_passed = False
+                continue
 
-            vasp_errors = self._check_vasp_errors(
-                stdout_path=stdout_path, stderr_path=stderr_path, extra_errors=["NELM"]
-            )
+            vasp_errors = run.check_vasp_errors(extra_errors=["NELM"])
             if len(vasp_errors) > 0:
-                all_errors_addressed = self._address_vasp_errors(vasp_errors)
+                all_errors_addressed = run.address_vasp_errors(vasp_errors)
                 if all_errors_addressed:
                     if self.to_rerun:
-                        self.logger.info(f"Rerunning {self.calc_dir}")
-                        self._from_scratch()
-                        self.setup_calc()
+                        self.logger.info(f"Rerunning {strain_name}")
+                        self._clean_strain(strain_name)
+                        new_run = self._setup_strain(i)
+                        self._vasp_runs[strain_name] = new_run
+                        if self.to_submit:
+                            new_run.job_manager.submit_job()
                 else:
                     msg = (
                         f"{self.mode.upper()} Calculation: "
@@ -186,26 +317,35 @@ class BulkmodCalculationManager(BaseCalculationManager):
                     )
                     self.logger.error(msg)
                     self.stop()
-                return False
+                all_passed = False
+                continue
 
             grep_output = pgrep(stdout_path, "1 F=", stop_after_first_match=True)
             if len(grep_output) == 0:
                 if self.to_rerun:
-                    self.logger.info(f"Rerunning {self.calc_dir}")
-                    # increase nodes as its likely the calculation failed
-                    self._from_scratch()
-                    self.setup_calc(increase_walltime_by_factor=2)
-                return False
-        return True
+                    self.logger.info(f"Rerunning {strain_name}")
+                    self._clean_strain(strain_name)
+                    new_run = self._setup_strain(i, **self._rerun_resource_kwargs())
+                    self._vasp_runs[strain_name] = new_run
+                    if self.to_submit:
+                        new_run.job_manager.submit_job()
+                all_passed = False
+                continue
+        return all_passed
 
     @property
     def is_done(self) -> bool:
+        """True if all strain calculations completed successfully (computed lazily)."""
         if getattr(self, "_is_done", None) is None:
             self._is_done = self.check_calc()
         return self._is_done
 
     @property
     def results(self) -> None | str | dict:
+        """Bulk modulus results dict, or None/"STOPPED" if not finished.
+
+        Runs BulkmodAnalyzer on first access after is_done is True.
+        """
         if not self.is_done:
             if self.stopped:
                 return "STOPPED"
@@ -221,35 +361,20 @@ class BulkmodCalculationManager(BaseCalculationManager):
             self._results = None
         return self._results
 
-    def _make_bulkmod_strains(self) -> None:
-        """
-        Creates a set of strain directories for fitting the E-V info
-        """
-        self.logger.info("Making strain directories")
-        for i, strain in enumerate(self.strains):
-            middle = int(len(self.strains) / 2)
-            strain_index = i - middle
-            strain_name = f"strain_{strain_index}"
+    def _cancel_previous_job(self) -> None:
+        """Cancel all strain jobs."""
+        for strain_name in self.strain_names:
             strain_dir = self.calc_dir / strain_name
-            self.logger.info(strain_dir)
+            jobid_path = strain_dir / "jobid"
+            if jobid_path.exists():
+                with open(jobid_path) as fr:
+                    jobid = fr.read().strip()
+                cancel_job_call = f"scancel {jobid}"
+                os.system(cancel_job_call)
+                os.remove(jobid_path)
 
-            if not strain_dir.exists():
-                strain_dir.mkdir()
-            orig_poscar_path = self.calc_dir / "POSCAR"
-            strain_poscar_path = strain_dir / "POSCAR"
-            shutil.copy(orig_poscar_path, strain_poscar_path)
-
-            # change second line to be {strain} rather than 1.0
-            with open(strain_poscar_path, "r") as fr:
-                strain_poscar = fr.read().splitlines()
-            strain_poscar[1] = f"{strain}"
-            self.logger.debug(f"{strain}")
-            with open(strain_poscar_path, "w+") as fw:
-                fw.write("\n".join(strain_poscar))
-
-            with change_directory(strain_dir):
-                for f in ["POTCAR", "INCAR"]:
-                    if Path(f).exists():
-                        os.remove(f)
-                    orig_path = Path("..") / f
-                    os.symlink(orig_path, f, target_is_directory=False)
+    def _from_scratch(self) -> None:
+        """Cancel all strain jobs, delete the calculation directory, and reset runs."""
+        self._cancel_previous_job()
+        shutil.rmtree(self.calc_dir)
+        self._vasp_runs = None
