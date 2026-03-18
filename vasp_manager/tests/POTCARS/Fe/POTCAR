@@ -1,0 +1,16 @@
+PAW_PBE Fe 06Sep2000
+   8.00000000000000
+ parameters from PSCTR are:
+   VRHFIN =Fe:  d7 s1
+   LEXCH  = PE
+   EATOM  =   594.3153 eV,   43.6809 Ry
+
+   TITEL  = PAW_PBE Fe 06Sep2000
+   POMASS =   55.847; ZVAL   =    8.000    mass and valenz
+   RCORE  =    2.300    outmost cutoff radius
+
+ END of PSCTR-controll parameters
+ local part
+   0.0000000   0.0000000
+ END of local part
+ End of Dataset

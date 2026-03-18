@@ -31,27 +31,27 @@ def test_elastic_analyzer_stable(stable_material_dir):
     for property in results:
         assert property in SUPPORTED_ELASTIC_PROPERTIES
 
-    assert results["B_Reuss"] == 24.007
-    assert results["B_Voigt"] == 24.007
-    assert results["B_VRH"] == 24.007
-    assert results["G_Reuss"] == 14.286
-    assert results["G_Voigt"] == 14.734
-    assert results["G_VRH"] == 14.51
+    assert results["B_Reuss"] == 23.652
+    assert results["B_Voigt"] == 23.652
+    assert results["B_VRH"] == 23.652
+    assert results["G_Reuss"] == 14.111
+    assert results["G_Voigt"] == 14.544
+    assert results["G_VRH"] == 14.328
     assert not results["unstable"]
     assert np.array_equal(
         results["elastic_tensor"],
         [
-            [47.9984, 12.0109, 12.0109, -0.0, 0.0, 0.0],
-            [12.0109, 47.9984, 12.0109, -0.0, 0.0, 0.0],
-            [12.0109, 12.0109, 47.9984, -0.0, -0.0, 0.0],
-            [-0.0, -0.0, -0.0, 12.5609, 0.0, -0.0],
-            [0.0, 0.0, -0.0, 0.0, 12.5609, -0.0],
-            [0.0, 0.0, 0.0, -0.0, -0.0, 12.5609],
+            [47.2927, 11.8319, 11.8319, 0.0, 0.0, 0.0],
+            [11.8319, 47.2927, 11.8319, 0.0, 0.0, 0.0],
+            [11.8319, 11.8319, 47.2927, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 12.4205, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 12.4205, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 12.4205],
         ],
     )
-    assert results["vl"] == 4.545
-    assert results["vt"] == 2.629
-    assert results["vs"] == 2.919
+    assert results["vl"] == 4.512
+    assert results["vt"] == 2.612
+    assert results["vs"] == 2.899
 
 
 def test_elastic_analyzer_unstable(unstable_material_dir):
@@ -65,27 +65,27 @@ def test_elastic_analyzer_unstable(unstable_material_dir):
     for property in results:
         assert property in SUPPORTED_ELASTIC_PROPERTIES
 
-    assert results["B_Reuss"] == 176.275
-    assert results["B_Voigt"] == 176.275
-    assert results["B_VRH"] == 176.275
-    assert results["G_Reuss"] == -199.401
-    assert results["G_Voigt"] == 25.595
-    assert results["G_VRH"] == -86.903
+    assert results["B_Reuss"] == 107.547
+    assert results["B_Voigt"] == 107.547
+    assert results["B_VRH"] == 107.547
+    assert results["G_Reuss"] == -11.712
+    assert results["G_Voigt"] == 26.147
+    assert results["G_VRH"] == 7.217
     assert results["unstable"]
     assert np.array_equal(
         results["elastic_tensor"],
         [
-            [140.5505, 194.1377, 194.1377, -0.0, -0.0, 0.0],
-            [194.1377, 140.5505, 194.1377, -0.0, -0.0, 0.0],
-            [194.1377, 194.1377, 140.5505, -0.0, 0.0, 0.0],
-            [-0.0, -0.0, -0.0, 60.5209, 0.0, 0.0],
-            [-0.0, -0.0, 0.0, 0.0, 60.5209, -0.0],
-            [0.0, 0.0, 0.0, -0.0, -0.0, 60.5209],
+            [102.1237, 110.2586, 110.2586, 0.0, 0.0, 0.0],
+            [110.2586, 102.1237, 110.2586, 0.0, 0.0, 0.0],
+            [110.2586, 110.2586, 102.1237, 0.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 46.29, 0.0, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 46.29, 0.0],
+            [0.0, 0.0, 0.0, 0.0, 0.0, 46.29],
         ],
     )
-    assert results["vl"] == 2.933
-    assert np.isnan(results["vt"])
-    assert np.isnan(results["vs"])
+    assert results["vl"] == 5.035
+    assert results["vt"] == 1.25
+    assert results["vs"] == 1.427
 
 
 # ---------------------------------------------------------------------------
@@ -102,7 +102,7 @@ def test_elastic_analyzer_missing_outcar_raises(tmp_path):
     import importlib_resources
 
     material_dir = (
-        importlib_resources.files("vasp_manager") / "tests" / "calculations" / "material"
+        importlib_resources.files("vasp_manager") / "tests" / "calculations" / "NaCl"
     )
     elastic_src = material_dir / "elastic"
     elastic_dir = tmp_path / "elastic"
@@ -128,7 +128,7 @@ def test_elastic_analyzer_missing_poscar_raises(tmp_path):
     import importlib_resources
 
     material_dir = (
-        importlib_resources.files("vasp_manager") / "tests" / "calculations" / "material"
+        importlib_resources.files("vasp_manager") / "tests" / "calculations" / "NaCl"
     )
     elastic_src = material_dir / "elastic"
     elastic_dir = tmp_path / "elastic"
@@ -161,7 +161,7 @@ def test_elastic_analyzer_truncated_outcar_raises(tmp_path):
     import importlib_resources
 
     material_dir = (
-        importlib_resources.files("vasp_manager") / "tests" / "calculations" / "material"
+        importlib_resources.files("vasp_manager") / "tests" / "calculations" / "NaCl"
     )
     elastic_src = material_dir / "elastic"
     elastic_dir = tmp_path / "elastic"

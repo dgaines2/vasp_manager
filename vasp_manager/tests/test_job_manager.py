@@ -72,7 +72,7 @@ def test_check_job_complete_personal_computer_returns_true(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# submit_job: no vasp.q file → returns False (signals need for resubmission)
+# submit_job: no vasp.q file -- returns False (signals need for resubmission)
 # ---------------------------------------------------------------------------
 
 
@@ -88,7 +88,7 @@ def test_submit_job_missing_vaspq_returns_false(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# submit_job: job already exists → returns True without sbatch
+# submit_job: job already exists -- returns True without sbatch
 # ---------------------------------------------------------------------------
 
 
@@ -105,7 +105,7 @@ def test_submit_job_already_exists_returns_true(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# submit_job: monkeypatched sbatch → tests jobid parsing
+# submit_job: monkeypatched sbatch -- tests jobid parsing
 # ---------------------------------------------------------------------------
 
 

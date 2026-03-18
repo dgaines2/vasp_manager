@@ -45,11 +45,11 @@ def test_numpy_encoder(tmp_path):
 def test_pmg_structure(tmp_path):
     # original unsymmetrized structure
     orig_poscar_path = importlib_resources.files("vasp_manager").joinpath(
-        str(Path("tests") / "calculations" / "material" / "POSCAR")
+        str(Path("tests") / "calculations" / "NaCl" / "POSCAR")
     )
     # symmetrized structure
     poscar_path = importlib_resources.files("vasp_manager").joinpath(
-        str(Path("tests") / "calculations" / "material" / "rlx-coarse" / "POSCAR")
+        str(Path("tests") / "calculations" / "NaCl" / "rlx-coarse" / "POSCAR")
     )
     orig_poscar_structure = Structure.from_file(orig_poscar_path)
     poscar_structure = Structure.from_file(poscar_path)
@@ -147,7 +147,24 @@ def test_make_potcar_anonymous(tmp_path):
     make_potcar_anonymous(new_potcar_path)
     with open(new_potcar_path) as fr:
         anon_potcar_text = fr.read()
-    assert anon_potcar_text == "PAW_PBE P 17Jan2003\nPAW_PBE Pb_d 06Sep2000"
+    # Should retain minimal PSCTR block parseable by pymatgen
+    assert "TITEL  = PAW_PBE Na_pv 19Sep2006" in anon_potcar_text
+    assert "TITEL  = PAW_PBE Cl 06Sep2000" in anon_potcar_text
+    assert "POMASS" in anon_potcar_text
+    assert "ZVAL" in anon_potcar_text
+    assert "End of Dataset" in anon_potcar_text
+    # Should strip non-essential lines
+    assert "LULTRA" not in anon_potcar_text
+    assert "PAW_AEPOT" not in anon_potcar_text
+    # Should be parseable by pymatgen
+    from pymatgen.io.vasp import Potcar
+
+    potcar = Potcar.from_file(str(new_potcar_path))
+    assert len(potcar) == 2
+    assert potcar[0].element == "Na"
+    assert potcar[0].nelectrons == 7.0
+    assert potcar[1].element == "Cl"
+    assert potcar[1].nelectrons == 7.0
 
 
 @pytest.mark.parametrize(

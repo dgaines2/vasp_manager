@@ -1,0 +1,1 @@
+../../NaCl/elastic/vasp.q

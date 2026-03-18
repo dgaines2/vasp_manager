@@ -7,6 +7,14 @@ import importlib_resources
 import pytest
 
 
+def pytest_configure(config):
+    """Suppress UnknownPotcarWarning from pymatgen for minimal test POTCARs."""
+    config.addinivalue_line(
+        "filterwarnings",
+        "ignore::pymatgen.io.vasp.inputs.UnknownPotcarWarning",
+    )
+
+
 @pytest.fixture(scope="session")
 def calcs_dir(tmp_path_factory):
     """
@@ -31,9 +39,9 @@ def stable_material_dir(tmp_path_factory):
     NaCl material directory with a complete, elastically stable calculation
     """
     material_dir = (
-        importlib_resources.files("vasp_manager") / "tests" / "calculations" / "material"
+        importlib_resources.files("vasp_manager") / "tests" / "calculations" / "NaCl"
     )
-    new_material_dir = tmp_path_factory.mktemp("material")
+    new_material_dir = tmp_path_factory.mktemp("NaCl")
     shutil.copytree(
         material_dir,
         new_material_dir,
@@ -47,15 +55,12 @@ def stable_material_dir(tmp_path_factory):
 @pytest.fixture(scope="session")
 def unstable_material_dir(tmp_path_factory):
     """
-    CuO material directory with a complete, elastically unstable calculation
+    BCC_Ti material directory with a complete, elastically unstable calculation
     """
     material_dir = (
-        importlib_resources.files("vasp_manager")
-        / "tests"
-        / "calculations"
-        / "material_spinu"
+        importlib_resources.files("vasp_manager") / "tests" / "calculations" / "BCC_Ti"
     )
-    new_material_dir = tmp_path_factory.mktemp("material_spinu")
+    new_material_dir = tmp_path_factory.mktemp("BCC_Ti")
     shutil.copytree(
         material_dir,
         new_material_dir,

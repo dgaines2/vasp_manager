@@ -1,0 +1,65 @@
+ running  128 mpi-ranks, with    1 threads/rank, on    1 nodes
+ distrk:  each k-point on   32 cores,    4 groups
+ distr:  one band on   16 cores,    2 groups
+ vasp.6.4.3 19Mar24 (build Jun  3 2025 16:21:13) complex                         
+ POSCAR found type information on POSCAR Ti
+ POSCAR found :  1 types and       1 ions
+ Reading from existing POTCAR
+ scaLAPACK will be used
+ Reading from existing POTCAR
+ LDA part: xc-table for (Slater+PW92), standard interpolation
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     The requested file  could not be found or opened for reading            |
+|     k-point information. Automatic k-point generation is used as a          |
+|     fallback, which may lead to unwanted results.                           |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ INCAR ok, starting setup
+ POSCAR ok, starting setup
+ FFT: planning ... GRIDC
+ FFT: planning ... GRID_SOFT
+ FFT: planning ... GRID
+ WAVECAR not read
+ entering main loop
+       N       E                     dE             d eps       ncg     rms          rms(c)
+DAV:   1     0.110473505327E+03    0.11047E+03   -0.43191E+03 14712   0.461E+02
+DAV:   2    -0.217678956049E+01   -0.11265E+03   -0.10435E+03 14856   0.160E+02
+DAV:   3    -0.851681690971E+01   -0.63400E+01   -0.62584E+01 17136   0.377E+01
+DAV:   4    -0.855624447683E+01   -0.39428E-01   -0.39419E-01 15624   0.304E+00
+DAV:   5    -0.855631499688E+01   -0.70520E-04   -0.70516E-04 16992   0.127E-01    0.902E+00
+DAV:   6    -0.767833881474E+01    0.87798E+00   -0.56295E-01 18768   0.772E+00    0.251E+00
+DAV:   7    -0.767494862874E+01    0.33902E-02   -0.39264E-02 15608   0.125E+00    0.136E+00
+DAV:   8    -0.768861016488E+01   -0.13662E-01   -0.39763E-02 14336   0.951E-01    0.110E-01
+DAV:   9    -0.768873525205E+01   -0.12509E-03   -0.93681E-04 16784   0.203E-01    0.739E-02
+DAV:  10    -0.768873937120E+01   -0.41192E-05   -0.22135E-04 14872   0.632E-02    0.996E-03
+DAV:  11    -0.768873684445E+01    0.25267E-05   -0.71400E-06 16704   0.180E-02    0.386E-03
+DAV:  12    -0.768873754627E+01   -0.70182E-06   -0.41291E-07 16968   0.334E-03    0.704E-04
+DAV:  13    -0.768873784926E+01   -0.30299E-06   -0.94354E-08 15568   0.974E-04    0.316E-04
+DAV:  14    -0.768873790257E+01   -0.53309E-07   -0.10776E-08 10848   0.471E-04
+   1 F= -.76887379E+01 E0= -.76887379E+01  d E =0.000000E+00
+ -----------------------------------------------------------------------------
+|                                                                             |
+|           W    W    AA    RRRRR   N    N  II  N    N   GGGG   !!!           |
+|           W    W   A  A   R    R  NN   N  II  NN   N  G    G  !!!           |
+|           W    W  A    A  R    R  N N  N  II  N N  N  G       !!!           |
+|           W WW W  AAAAAA  RRRRR   N  N N  II  N  N N  G  GGG   !            |
+|           WW  WW  A    A  R   R   N   NN  II  N   NN  G    G                |
+|           W    W  A    A  R    R  N    N  II  N    N   GGGG   !!!           |
+|                                                                             |
+|     Tetrahedron method does not include variations of the Fermi             |
+|     occupations, so forces and stress will be inaccurate. We suggest        |
+|     using a different smearing scheme ISMEAR = 1 or 2 for metals in         |
+|     relaxations.                                                            |
+|                                                                             |
+ -----------------------------------------------------------------------------
+
+ PROFILE, used timers:     421
