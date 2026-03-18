@@ -5,7 +5,7 @@ ISPIN = 1
 KSPACING = 0.2
 KGAMMA = .TRUE.
 ADDGRID = .TRUE.
-SYMPREC = 1e-08
+SYMPREC = 1.000E-05
 
 #= Ionic Relaxation Settings =#
 NSW = 60
@@ -13,17 +13,19 @@ IBRION = 2
 ISIF = 3
 LREAL = .FALSE.
 POTIM = 0.1
-EDIFFG = 1e-04
+EDIFFG = 1.000E-04
 IOPT = 0
 
 #= Electronic Relxation Settings =#
 NELM = 60
-NBANDS = 16
+NBANDS = 32
 ENCUT = 520
 NELMIN = 5
-EDIFF = 1e-05
+EDIFF = 1.000E-05
 ALGO = Normal
 LASPH = .TRUE.
+AMIX = 0.4
+BMIX = 1.0
 
 #= DFT+U =#
 

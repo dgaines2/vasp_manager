@@ -1,5 +1,5 @@
 {
-  "computer": "personal",
+  "computer": "perlmutter",
   "personal": {
     "user_id": "dwg4898",
     "potcar_dir": "vasp_manager/tests/POTCARS",
@@ -26,11 +26,11 @@
     "user_id": "dwg4898",
     "potcar_dir": "/global/homes/d/dwg4898/vasp_potentials/54/potpaw_pbe",
     "queuetype": "regular",
-    "allocation": "m1673",
+    "allocation": "m4545",
     "constraint": "cpu",
     "vasp_module": "vasp/6.4.3-cpu",
     "ncore": 16,
-    "ncore_per_node": 128
+    "ncore_per_node": 128,
     "atoms_per_node": 32,
     "rerun_increase": "nodes",
     "rerun_increase_factor": 2
@@ -42,7 +42,7 @@
     "allocation": "dmr160027p",
     "vasp_module": "",
     "ncore": 16,
-    "ncore_per_node": 128
+    "ncore_per_node": 128,
     "atoms_per_node": 32,
     "rerun_increase": "nodes",
     "rerun_increase_factor": 2
