@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update example calculations from VASP 6.3.2 (CuO, NaCl) to VASP 6.4.3 (NaCl, Fe, NiO, BCC\_Ti)
 - `make_potcar_anonymous` now produces minimal pymatgen-parseable POTCARs instead of bare TITEL-line stubs
 - Update test fixtures to 4 materials covering spin-polarization, DFT+U, re-relaxation, and elastic instability
+- Migrate CI workflows (tests, publish, mkdocs) from pip to uv
 
 ### Removed
 
