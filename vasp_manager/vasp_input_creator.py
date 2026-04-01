@@ -398,9 +398,8 @@ class VaspInputCreator:
 
         needs_dftu = self._check_needs_dftu(calc_config["hubbards"], composition_dict)
         use_dftu = needs_dftu and calc_config["hubbards"]
+        calc_config["lmaxmix"] = self._get_lmaxmix(composition_dict)
         if use_dftu:
-            lmaxmix = self._get_lmaxmix(composition_dict)
-            lmaxmix_line = f"LMAXMIX = {lmaxmix}"
             ldau_string = self._get_ldau_string(calc_config["hubbards"], composition_dict)
 
         # Add lines to the incar file
@@ -416,7 +415,6 @@ class VaspInputCreator:
                 incar_tmp.insert(i + 1, lorbit_line)
             # add extra flags for DFT+U
             if "DFT+U" in line and use_dftu:
-                incar_tmp.insert(i + 1, lmaxmix_line)
                 incar_tmp.insert(i + 1, ldau_string)
             # add extra flags for elastic mode
             if self.mode == "elastic":

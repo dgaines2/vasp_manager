@@ -320,7 +320,7 @@ def test_make_incar_contains_required_tags(nacl_vic):
     nacl_vic.make_incar()
     incar_path = nacl_vic.calc_dir / "INCAR"
     text = incar_path.read_text()
-    for tag in ["ENCUT", "ISPIN", "NSW", "IBRION", "KSPACING"]:
+    for tag in ["ENCUT", "ISPIN", "NSW", "IBRION", "KSPACING", "LMAXMIX"]:
         assert tag in text, f"Expected tag {tag} not found in INCAR"
 
 
@@ -350,3 +350,15 @@ def test_make_incar_spin_for_nio(nio_vic):
     assert ispin_value == 2
     text = incar_path.read_text()
     assert "MAGMOM" in text
+
+
+def test_make_incar_lmaxmix_always_present(nacl_vic, nio_vic):
+    """
+    LMAXMIX should appear in all INCARs regardless of DFT+U:
+    NaCl (s/p only) -> LMAXMIX = 2, NiO (d-block) -> LMAXMIX = 4
+    """
+    nacl_vic.make_incar()
+    assert "LMAXMIX = 2" in (nacl_vic.calc_dir / "INCAR").read_text()
+
+    nio_vic.make_incar()
+    assert "LMAXMIX = 4" in (nio_vic.calc_dir / "INCAR").read_text()
