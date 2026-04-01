@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+
+### Changed
+
+- `LMAXMIX` is now written to all INCARs (not only DFT+U calculations); value is determined by element type (2 for s/p, 4 for d-block, 6 for f-block)
+
 ## [2.0.0] 2026-03-17
 
 ### Added

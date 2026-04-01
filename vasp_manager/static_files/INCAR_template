@@ -26,6 +26,7 @@ ALGO = {algo}
 LASPH = .TRUE.
 AMIX = {amix}
 BMIX = {bmix}
+LMAXMIX = {lmaxmix}
 
 #= DFT+U =#
 
