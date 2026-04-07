@@ -419,15 +419,15 @@ class VaspManager:
                     done_modes.add(mode)
                     continue
 
-            if calc_manager.stopped:
-                logger.info(f"{material_name} -- {mode.upper()} STOPPED")
-                material_results[mode] = "STOPPED"
-                continue
-
             dependencies_satisfied = all(
                 dep in done_modes for dep in active_dependencies.get(mode, [])
             )
             if not dependencies_satisfied:
+                continue
+
+            if calc_manager.stopped:
+                logger.info(f"{material_name} -- {mode.upper()} STOPPED")
+                material_results[mode] = "STOPPED"
                 continue
 
             if not calc_manager.job_exists:
