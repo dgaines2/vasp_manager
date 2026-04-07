@@ -181,6 +181,61 @@ def test_vmg_first_run_no_completed_data(tmp_path):
             assert calc_type not in results[material]
 
 
+def test_vmg_stopped_does_not_cascade(tmp_path):
+    """STOPPED on rlx-coarse must not propagate to downstream calc types.
+
+    If a STOP file exists when rlx-coarse runs, downstream calcs (rlx, static,
+    bulkmod, elastic) should be absent from results entirely -- not marked as
+    STOPPED themselves.
+    """
+    original_calculations_dir = (
+        importlib_resources.files("vasp_manager") / "tests" / "calculations"
+    )
+    temp_calculations_dir = tmp_path / "calculations"
+    shutil.copytree(
+        original_calculations_dir,
+        temp_calculations_dir,
+        dirs_exist_ok=True,
+        symlinks=True,
+        ignore=shutil.ignore_patterns(
+            "rlx*",
+            "static",
+            "bulkmod",
+            "elastic",
+            "NaCl_hit_errors",
+            "NaCl_needs_archive",
+            "NaCl_needs_rerun",
+            "BCC_Ti_needs_archive",
+        ),
+    )
+
+    material_dirs = [
+        p for p in sorted(list(temp_calculations_dir.glob("*"))) if p.is_dir()
+    ]
+    stopped_material = material_dirs[0]
+    (stopped_material / "STOP").touch()
+
+    calculation_types = ["rlx-coarse", "rlx", "static", "bulkmod", "elastic"]
+    vmg = VaspManager(
+        calculation_types=calculation_types,
+        material_dirs=material_dirs,
+        use_multiprocessing=False,
+        to_rerun=True,
+        to_submit=True,
+    )
+    results = vmg.run_calculations()
+
+    for material in results:
+        if material == stopped_material.name:
+            assert results[material]["rlx-coarse"] == "STOPPED"
+            for calc_type in ["rlx", "static", "bulkmod", "elastic"]:
+                assert calc_type not in results[material]
+        else:
+            assert results[material]["rlx-coarse"] == "not finished"
+            for calc_type in ["rlx", "static", "bulkmod", "elastic"]:
+                assert calc_type not in results[material]
+
+
 def test_vmg_with_skipping(tmp_path):
     original_calculations_dir = (
         importlib_resources.files("vasp_manager") / "tests" / "calculations"

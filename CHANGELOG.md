@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `LMAXMIX` is now written to all INCARs (not only DFT+U calculations); value is determined by element type (2 for s/p, 4 for d-block, 6 for f-block)
 
+### Fixed
+
+- Fix `STOPPED` status cascading to downstream calc types — dependency check now runs before the stopped check, so calcs with unsatisfied deps are silently skipped instead of also writing `STOPPED`
+
+
 ## [2.0.0] 2026-03-17
 
 ### Added
