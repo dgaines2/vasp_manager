@@ -4,7 +4,10 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
+import tarfile
+import tempfile
 from abc import ABC, abstractmethod
 from functools import cached_property
 from pathlib import Path
@@ -131,15 +134,35 @@ class BaseCalculationManager(ABC):
     def _load_structure_for_rerun(self) -> Structure:
         """Load structure for a rerun, checking for archives first.
 
-        If archives exist in calc_dir, loads the CONTCAR from the latest
-        archive. Otherwise falls back to poscar_source_path.
+        Handles both plain archive_N/ directories and archive_N.tar.gz files.
+        If archives exist, loads CONTCAR from the latest archive.
+        Otherwise falls back to poscar_source_path.
         """
-        num_archives = len(list(self.calc_dir.glob("archive*")))
-        if num_archives > 0:
-            archive_name = f"archive_{num_archives - 1}"
-            contcar_path = self.calc_dir / archive_name / "CONTCAR"
-            return self._load_structure(contcar_path)
+        archives = sorted(
+            self.calc_dir.glob("archive_*"),
+            key=lambda p: int(re.search(r"archive_(\d+)", p.name).group(1)),
+        )
+        if archives:
+            latest = archives[-1]
+            if latest.is_dir():
+                return self._load_structure(latest / "CONTCAR")
+            archive_name = latest.stem.removesuffix(".tar")
+            return self._load_structure_from_tar(latest, archive_name)
         return self._load_structure()
+
+    def _load_structure_from_tar(self, archive_tar: Path, archive_name: str) -> Structure:
+        """Read CONTCAR from a .tar.gz archive without full extraction."""
+        contcar_member = f"{archive_name}/CONTCAR"
+        with tarfile.open(archive_tar, "r:gz") as tar:
+            f = tar.extractfile(contcar_member)
+            content = f.read()
+        with tempfile.NamedTemporaryFile(suffix="POSCAR", delete=False) as tmp:
+            tmp.write(content)
+            tmp_path = Path(tmp.name)
+        try:
+            return self._load_structure(tmp_path)
+        finally:
+            tmp_path.unlink(missing_ok=True)
 
     @cached_property
     def vasp_runs(self) -> dict[str, VaspRun]:

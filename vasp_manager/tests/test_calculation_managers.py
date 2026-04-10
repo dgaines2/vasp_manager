@@ -1,3 +1,7 @@
+import io
+import tarfile
+
+import importlib_resources
 from pymatgen.analysis.structure_matcher import StructureMatcher
 from pymatgen.core import Structure
 
@@ -412,6 +416,45 @@ def test_rlx_archive(calcs_dir):
     ispin_line = pgrep(incar_path, "ISPIN", as_string=True)
     ispin_setting = int(ispin_line.split("=")[1].strip())
     assert ispin_setting == 1
+
+
+def test_load_structure_from_tar_archive(tmp_path):
+    """
+    Assert _load_structure_for_rerun() reads CONTCAR from a .tar.gz archive
+    and returns a structure equivalent to the original POSCAR.
+    """
+    poscar_path = (
+        importlib_resources.files("vasp_manager")
+        / "tests"
+        / "calculations"
+        / "BCC_Ti"
+        / "POSCAR"
+    )
+    poscar_content = poscar_path.read_bytes()
+
+    material_dir = tmp_path / "BCC_Ti"
+    rlx_coarse_dir = material_dir / "rlx-coarse"
+    rlx_coarse_dir.mkdir(parents=True)
+    (material_dir / "POSCAR").write_bytes(poscar_content)
+
+    archive_tar = rlx_coarse_dir / "archive_0.tar.gz"
+    with tarfile.open(archive_tar, "w:gz") as tar:
+        info = tarfile.TarInfo(name="archive_0/CONTCAR")
+        info.size = len(poscar_content)
+        tar.addfile(info, io.BytesIO(poscar_content))
+
+    manager = RlxCoarseCalculationManager(
+        material_dir=material_dir,
+        to_rerun=False,
+        to_submit=False,
+    )
+    structure = manager._load_structure_for_rerun()
+
+    # Compare against _load_structure() on the same file — same pipeline, so
+    # the result must be identical (not just approximately equivalent).
+    poscar_on_disk = material_dir / "POSCAR"
+    expected = manager._load_structure(poscar_on_disk)
+    assert structure == expected
 
 
 def test_static_rerun(calcs_dir):
