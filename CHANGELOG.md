@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+
+## Changed
+
+- Handle extraction from compressed archive dirs for calculation restarts
+- Update zip_outputs and unzip_outputs to be python scripts
+
+
 ## [2.0.1] 2026-04-07
 
 ### Changed
