@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Handle extraction from compressed archive dirs for calculation restarts
 - Update zip_outputs and unzip_outputs to be python scripts
 
+## Fixed
+- Fix bulkmod strain rerun when missing stdout
+
 
 ## [2.0.1] 2026-04-07
 
