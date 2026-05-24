@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Callable, Sequence
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from functools import cached_property
 from importlib.metadata import version
 from pathlib import Path
@@ -442,11 +442,13 @@ class VaspManager:
     def _manage_calculations_wrapper(self) -> list[tuple]:
         if self.use_multiprocessing:
             with ProcessPoolExecutor(max_workers=self.ncore) as executor:
-                results = list(
-                    executor.map(
-                        self._manage_calculations, tqdm(self.material_names), chunksize=1
-                    )
-                )
+                futures = {
+                    executor.submit(self._manage_calculations, name): name
+                    for name in self.material_names
+                }
+                results = []
+                for future in tqdm(as_completed(futures), total=len(futures)):
+                    results.append(future.result())
         else:
             results = []
             for i, material_name in enumerate(self.material_names):

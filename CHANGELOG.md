@@ -8,13 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## Changed
+### Changed
 
 - Handle extraction from compressed archive dirs for calculation restarts
 - Update zip_outputs and unzip_outputs to be python scripts
 
-## Fixed
+### Fixed
+
 - Fix bulkmod strain rerun when missing stdout
+- Fix `tqdm` progress bar completing instantly in multiprocessing mode by switching to `executor.submit` + `as_completed`
 
 
 ## [2.0.1] 2026-04-07
