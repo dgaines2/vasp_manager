@@ -294,6 +294,13 @@ class BulkmodCalculationManager(BaseCalculationManager):
         for i, (strain_name, run) in enumerate(self.vasp_runs.items()):
             stdout_path = run.run_dir / "stdout.txt"
             if not stdout_path.exists():
+                if self.to_rerun:
+                    self.logger.info(f"Rerunning {strain_name} (missing stdout.txt)")
+                    self._clean_strain(strain_name)
+                    new_run = self._setup_strain(i)
+                    self._vasp_runs[strain_name] = new_run
+                    if self.to_submit:
+                        new_run.job_manager.submit_job()
                 all_passed = False
                 continue
 
