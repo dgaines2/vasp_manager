@@ -1,4 +1,4 @@
-exclude: '.git|.tox'
+exclude: '^(\.git|\.tox)/'
 default_stages: [pre-commit]
 
 repos:
