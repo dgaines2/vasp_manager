@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Drop support for Python 3.10 (EOL); minimum is now 3.11
+- Test against Python 3.11–3.14 in CI, with a weekly scheduled run
+
 ### Fixed
 
 - Fix pre-commit exclude pattern skipping `.github/` files
