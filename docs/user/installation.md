@@ -2,7 +2,7 @@
 
 ## Install python
 
-1. Install python version $\geq$ 3.10.
+1. Install python version $\geq$ 3.11.
     - Preferably, you should use some sort of environment manager like
       [Miniconda](https://www.anaconda.com/docs/getting-started/miniconda/install#linux-2)
       and create a new environment.

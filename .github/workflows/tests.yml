@@ -3,8 +3,12 @@ on:
   pull_request:
     branches: [main, develop]
   push:
+  # weekly run to catch breakage from new upstream releases between pushes
+  schedule:
+    - cron: '0 12 * * 1'
+  workflow_dispatch:
 jobs:
-  test:
+  lint:
     # prevent this action from running on forks
     if: github.repository == 'dgaines2/vasp_manager'
     runs-on: ubuntu-latest
@@ -13,16 +17,37 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
         with:
-          python-version: '3.10'
+          python-version: '3.11'
       - name: Install dependencies with uv
         run: uv sync --extra dev
       - uses: pre-commit/action@v3.0.1
+
+  test:
+    # prevent this action from running on forks
+    if: github.repository == 'dgaines2/vasp_manager'
+    runs-on: ubuntu-latest
+    strategy:
+      # report results for every version instead of cancelling on first failure
+      fail-fast: false
+      matrix:
+        python-version: ['3.11', '3.12', '3.13', '3.14']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies with uv
+        run: uv sync --extra dev
+      - name: Show resolved dependency versions
+        run: uv pip list
       - name: Coverage
         run: |
           uv run coverage run
           uv run coverage report -m
           uv run coverage xml
       - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.11'
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}

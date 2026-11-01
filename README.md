@@ -16,7 +16,7 @@
 [![Tests](https://github.com/dgaines2/vasp_manager/actions/workflows/tests.yml/badge.svg)](https://github.com/dgaines2/vasp_manager/actions/workflows/tests.yml)
 [![codecov](https://codecov.io/github/dgaines2/vasp_manager/graph/badge.svg?token=CQH3BRGYCR)](https://codecov.io/github/dgaines2/vasp_manager)
 [![PyPI Version](https://img.shields.io/pypi/v/vasp-manager)](https://pypi.org/project/vasp-manager)
-[![Requires Python 3.10+](https://img.shields.io/badge/python-3.10+-blue)](https://python.org/downloads)
+[![Requires Python 3.11+](https://img.shields.io/badge/python-3.11+-blue)](https://python.org/downloads)
 
 Automatically run `VASP` relaxation, static, bulk moduli, or elastic constant
 calculations
