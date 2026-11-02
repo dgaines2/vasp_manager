@@ -98,12 +98,9 @@ def test_elastic_analyzer_missing_outcar_raises(tmp_path):
     from_calc_dir raises FileNotFoundError when no OUTCAR* is present
     """
     import shutil
+    from importlib import resources
 
-    import importlib_resources
-
-    material_dir = (
-        importlib_resources.files("vasp_manager") / "tests" / "calculations" / "NaCl"
-    )
+    material_dir = resources.files("vasp_manager") / "tests" / "calculations" / "NaCl"
     elastic_src = material_dir / "elastic"
     elastic_dir = tmp_path / "elastic"
     shutil.copytree(
@@ -124,12 +121,9 @@ def test_elastic_analyzer_missing_poscar_raises(tmp_path):
     from_calc_dir raises an error when POSCAR is absent
     """
     import shutil
+    from importlib import resources
 
-    import importlib_resources
-
-    material_dir = (
-        importlib_resources.files("vasp_manager") / "tests" / "calculations" / "NaCl"
-    )
+    material_dir = resources.files("vasp_manager") / "tests" / "calculations" / "NaCl"
     elastic_src = material_dir / "elastic"
     elastic_dir = tmp_path / "elastic"
     shutil.copytree(
@@ -157,12 +151,9 @@ def test_elastic_analyzer_truncated_outcar_raises(tmp_path):
     from_calc_dir raises RuntimeError when OUTCAR contains no elastic data
     """
     import shutil
+    from importlib import resources
 
-    import importlib_resources
-
-    material_dir = (
-        importlib_resources.files("vasp_manager") / "tests" / "calculations" / "NaCl"
-    )
+    material_dir = resources.files("vasp_manager") / "tests" / "calculations" / "NaCl"
     elastic_src = material_dir / "elastic"
     elastic_dir = tmp_path / "elastic"
     shutil.copytree(

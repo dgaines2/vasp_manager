@@ -12,10 +12,10 @@ import stat
 import warnings
 from datetime import timedelta
 from functools import cached_property
+from importlib import resources
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import importlib_resources
 import numpy as np
 import yaml
 from pymatgen.core import Structure
@@ -105,7 +105,7 @@ class VaspInputCreator:
     @cached_property
     def incar_template(self) -> str:
         incar_template = (
-            importlib_resources.files("vasp_manager")
+            resources.files("vasp_manager")
             .joinpath(str(Path("static_files") / "INCAR_template"))
             .read_text()
         )
@@ -114,7 +114,7 @@ class VaspInputCreator:
     @cached_property
     def potcar_dict(self) -> dict:
         potcar_dict = json.loads(
-            importlib_resources.files("vasp_manager")
+            resources.files("vasp_manager")
             .joinpath(str(Path("static_files") / "pot_dict.json"))
             .read_text()
         )
@@ -123,7 +123,7 @@ class VaspInputCreator:
     @cached_property
     def q_mapper(self) -> dict:
         q_mapper = json.loads(
-            importlib_resources.files("vasp_manager")
+            resources.files("vasp_manager")
             .joinpath(str(Path("static_files") / "q_handles.json"))
             .read_text()
         )
@@ -193,7 +193,7 @@ class VaspInputCreator:
     @cached_property
     def d_f_block(self) -> dict:
         d_f_block = json.loads(
-            importlib_resources.files("vasp_manager")
+            resources.files("vasp_manager")
             .joinpath(str(Path("static_files") / "d_f_block.json"))
             .read_text()
         )
@@ -245,7 +245,7 @@ class VaspInputCreator:
     @cached_property
     def hubbards(self) -> dict:
         hubbards = json.loads(
-            importlib_resources.files("vasp_manager")
+            resources.files("vasp_manager")
             .joinpath(str(Path("static_files") / "hubbards.json"))
             .read_text()
         )
@@ -514,7 +514,7 @@ class VaspInputCreator:
 
         vaspq_settings_path = self.q_mapper[self.computer][mode]
         vaspq_settings = yaml.load(
-            importlib_resources.files("vasp_manager")
+            resources.files("vasp_manager")
             .joinpath(str(Path("static_files") / vaspq_settings_path))
             .read_text(),
             Loader=yaml.SafeLoader,
@@ -528,7 +528,7 @@ class VaspInputCreator:
                 )
             vaspq_settings.update(override_vaspq_settings)
         vaspq_tmp = (
-            importlib_resources.files("vasp_manager")
+            resources.files("vasp_manager")
             .joinpath(str(Path("static_files") / "vasp.q"))
             .read_text()
         )

@@ -2,8 +2,8 @@
 # Distributed under the terms of the MIT LICENSE
 
 import shutil
+from importlib import resources
 
-import importlib_resources
 import pytest
 
 
@@ -20,9 +20,7 @@ def calcs_dir(tmp_path_factory):
     """
     Complete calculations directory (all calc types finished)
     """
-    calculations_dir = (
-        importlib_resources.files("vasp_manager") / "tests" / "calculations"
-    )
+    calculations_dir = resources.files("vasp_manager") / "tests" / "calculations"
     new_calculations_dir = tmp_path_factory.mktemp("calculations")
     shutil.copytree(
         calculations_dir,
@@ -38,9 +36,7 @@ def stable_material_dir(tmp_path_factory):
     """
     NaCl material directory with a complete, elastically stable calculation
     """
-    material_dir = (
-        importlib_resources.files("vasp_manager") / "tests" / "calculations" / "NaCl"
-    )
+    material_dir = resources.files("vasp_manager") / "tests" / "calculations" / "NaCl"
     new_material_dir = tmp_path_factory.mktemp("NaCl")
     shutil.copytree(
         material_dir,
@@ -57,9 +53,7 @@ def unstable_material_dir(tmp_path_factory):
     """
     BCC_Ti material directory with a complete, elastically unstable calculation
     """
-    material_dir = (
-        importlib_resources.files("vasp_manager") / "tests" / "calculations" / "BCC_Ti"
-    )
+    material_dir = resources.files("vasp_manager") / "tests" / "calculations" / "BCC_Ti"
     new_material_dir = tmp_path_factory.mktemp("BCC_Ti")
     shutil.copytree(
         material_dir,

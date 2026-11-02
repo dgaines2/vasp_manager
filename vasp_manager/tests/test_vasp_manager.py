@@ -1,15 +1,12 @@
 import shutil
+from importlib import resources
 from textwrap import dedent
-
-import importlib_resources
 
 from vasp_manager import VaspManager
 
 
 def test_vmg_in_order(tmp_path):
-    original_calculations_dir = (
-        importlib_resources.files("vasp_manager") / "tests" / "calculations"
-    )
+    original_calculations_dir = resources.files("vasp_manager") / "tests" / "calculations"
     temp_calculations_dir = tmp_path / "calculations"
     shutil.copytree(
         original_calculations_dir,
@@ -133,9 +130,7 @@ def test_vmg_first_run_no_completed_data(tmp_path):
     must be skipped without crashing -- even though their dependency
     managers can't load structure files yet.
     """
-    original_calculations_dir = (
-        importlib_resources.files("vasp_manager") / "tests" / "calculations"
-    )
+    original_calculations_dir = resources.files("vasp_manager") / "tests" / "calculations"
     temp_calculations_dir = tmp_path / "calculations"
     shutil.copytree(
         original_calculations_dir,
@@ -188,9 +183,7 @@ def test_vmg_stopped_does_not_cascade(tmp_path):
     bulkmod, elastic) should be absent from results entirely -- not marked as
     STOPPED themselves.
     """
-    original_calculations_dir = (
-        importlib_resources.files("vasp_manager") / "tests" / "calculations"
-    )
+    original_calculations_dir = resources.files("vasp_manager") / "tests" / "calculations"
     temp_calculations_dir = tmp_path / "calculations"
     shutil.copytree(
         original_calculations_dir,
@@ -237,9 +230,7 @@ def test_vmg_stopped_does_not_cascade(tmp_path):
 
 
 def test_vmg_with_skipping(tmp_path):
-    original_calculations_dir = (
-        importlib_resources.files("vasp_manager") / "tests" / "calculations"
-    )
+    original_calculations_dir = resources.files("vasp_manager") / "tests" / "calculations"
     temp_calculations_dir = tmp_path / "calculations"
     # skip static and bulkmod when copying
     shutil.copytree(
