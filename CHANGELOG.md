@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Raise dependency floors: `pymatgen>=2024.8.9`, `numpy>=1.26.0`; declare `pyyaml>=6.0` and `tqdm>=4.60`
+- Replace `importlib_resources` with the standard library's `importlib.resources`
+- Test the lowest allowed dependency versions in CI
+
+### Fixed
+
+- Fix `ModuleNotFoundError: yaml` on fresh installs with recent pymatgen
+
+
 ## [2.1.0] 2026-11-01
 
 ### Changed
