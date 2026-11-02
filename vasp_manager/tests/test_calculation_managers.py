@@ -1,7 +1,7 @@
 import io
 import tarfile
+from importlib import resources
 
-import importlib_resources
 from pymatgen.analysis.structure_matcher import StructureMatcher
 from pymatgen.core import Structure
 
@@ -424,11 +424,7 @@ def test_load_structure_from_tar_archive(tmp_path):
     and returns a structure equivalent to the original POSCAR.
     """
     poscar_path = (
-        importlib_resources.files("vasp_manager")
-        / "tests"
-        / "calculations"
-        / "BCC_Ti"
-        / "POSCAR"
+        resources.files("vasp_manager") / "tests" / "calculations" / "BCC_Ti" / "POSCAR"
     )
     poscar_content = poscar_path.read_bytes()
 

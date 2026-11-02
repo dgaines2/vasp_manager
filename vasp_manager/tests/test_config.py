@@ -2,9 +2,9 @@
 # Distributed under the terms of the MIT LICENSE
 
 import json
+from importlib import resources
 from pathlib import Path
 
-import importlib_resources
 import pytest
 
 from vasp_manager.config import (
@@ -20,7 +20,7 @@ def config_dir():
     """
     Path to the shared test config directory (has calc_config.json, computing_config.json)
     """
-    return Path(importlib_resources.files("vasp_manager") / "tests" / "calculations")
+    return Path(resources.files("vasp_manager") / "tests" / "calculations")
 
 
 @pytest.fixture(autouse=True)

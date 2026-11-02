@@ -2,8 +2,8 @@
 # Distributed under the terms of the MIT LICENSE
 
 import shutil
+from importlib import resources
 
-import importlib_resources
 import pytest
 
 from vasp_manager.utils import get_pmg_structure_from_poscar
@@ -15,13 +15,7 @@ def nacl_poscar_path():
     """
     Path to NaCl POSCAR from test data
     """
-    return (
-        importlib_resources.files("vasp_manager")
-        / "tests"
-        / "calculations"
-        / "NaCl"
-        / "POSCAR"
-    )
+    return resources.files("vasp_manager") / "tests" / "calculations" / "NaCl" / "POSCAR"
 
 
 @pytest.fixture(scope="session")
@@ -29,13 +23,7 @@ def nio_poscar_path():
     """
     Path to NiO POSCAR from test data (has d-block elements)
     """
-    return (
-        importlib_resources.files("vasp_manager")
-        / "tests"
-        / "calculations"
-        / "NiO"
-        / "POSCAR"
-    )
+    return resources.files("vasp_manager") / "tests" / "calculations" / "NiO" / "POSCAR"
 
 
 @pytest.fixture(scope="session")
@@ -43,7 +31,7 @@ def config_dir():
     """
     Path to the shared test config directory (has calc_config.json, computing_config.json)
     """
-    return importlib_resources.files("vasp_manager") / "tests" / "calculations"
+    return resources.files("vasp_manager") / "tests" / "calculations"
 
 
 @pytest.fixture
@@ -55,7 +43,7 @@ def nacl_vic(tmp_path, nacl_poscar_path, config_dir):
     calc_dir.mkdir(parents=True)
     # copy POTCAR so make_incar can read it
     potcar_src = (
-        importlib_resources.files("vasp_manager")
+        resources.files("vasp_manager")
         / "tests"
         / "calculations"
         / "NaCl"
@@ -82,7 +70,7 @@ def nio_vic(tmp_path, nio_poscar_path, config_dir):
     calc_dir = tmp_path / "NiO" / "rlx"
     calc_dir.mkdir(parents=True)
     potcar_src = (
-        importlib_resources.files("vasp_manager")
+        resources.files("vasp_manager")
         / "tests"
         / "calculations"
         / "NiO"
