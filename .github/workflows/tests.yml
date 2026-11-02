@@ -52,3 +52,26 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage.xml
+
+  test-floor:
+    # test the lowest dependency versions allowed by pyproject.toml on the lowest Python
+    # prevent this action from running on forks
+    if: github.repository == 'dgaines2/vasp_manager'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: '3.11'
+      - name: Install the lowest allowed versions of direct dependencies
+        run: |
+          uv venv
+          uv pip install --resolution lowest-direct -e .
+          # pin those versions while adding the (unpinned) test tools
+          uv pip freeze --exclude-editable > floor-constraints.txt
+          uv pip install -c floor-constraints.txt pytest
+      - name: Show resolved dependency versions
+        run: uv pip list
+      - name: Test
+        run: .venv/bin/python -m pytest
