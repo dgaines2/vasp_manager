@@ -21,10 +21,18 @@ authors = [{name = "Dale Gaines II", email = "dalegainesii@gmail.com"}]
 maintainers = [{name = "Dale Gaines II", email = "dalegainesii@gmail.com"}]
 keywords = ["vasp", "dft", "high-throughput"]
 requires-python = ">=3.11.0"
+# floors are tested in CI (tests.yml: test-floor)
 dependencies = [
-    "pymatgen>=2022.5",
-    "importlib_resources",
+    # first releases that work with numpy 2 are 2024.8.8/9; lowest-direct resolves .9
+    "pymatgen>=2024.8.9",
+    # pymatgen requires >=1.25; 1.26.0 is the lowest that lowest-direct resolves exactly
+    "numpy>=1.26.0",
+    # first release with the v2 API
     "pydantic>=2.0",
+    # first release with py3.11 wheels; pymatgen no longer pulls it in
+    "pyyaml>=6.0",
+    # matches pymatgen's own floor
+    "tqdm>=4.60",
 ]
 
 [project.optional-dependencies]
@@ -37,12 +45,12 @@ dev = [
     "types-PyYAML",
 ]
 docs = [
-    "blacken-docs>=1.16.0",
-    "mkdocs-material>=9.5.16",
-    "mkdocstrings[python]>=0.22.0",
-    "mkdocs-gen-files>=0.5.0",
-    "mkdocs-literate-nav>=0.6.0",
-    "pillow>=10.0.0",
+    "mkdocs-material",
+    "mkdocstrings[python]",
+    "mkdocs-gen-files",
+    "mkdocs-literate-nav",
+    # mkdocstrings formats separate signatures with ruff (or black)
+    "ruff",
 ]
 
 [project.urls]

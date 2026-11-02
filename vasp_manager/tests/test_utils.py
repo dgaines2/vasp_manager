@@ -1,9 +1,9 @@
 import json
 import shutil
 from datetime import timedelta
+from importlib import resources
 from pathlib import Path
 
-import importlib_resources
 import numpy as np
 import pytest
 from pymatgen.analysis.structure_matcher import StructureMatcher
@@ -44,11 +44,11 @@ def test_numpy_encoder(tmp_path):
 
 def test_pmg_structure(tmp_path):
     # original unsymmetrized structure
-    orig_poscar_path = importlib_resources.files("vasp_manager").joinpath(
+    orig_poscar_path = resources.files("vasp_manager").joinpath(
         str(Path("tests") / "calculations" / "NaCl" / "POSCAR")
     )
     # symmetrized structure
-    poscar_path = importlib_resources.files("vasp_manager").joinpath(
+    poscar_path = resources.files("vasp_manager").joinpath(
         str(Path("tests") / "calculations" / "NaCl" / "rlx-coarse" / "POSCAR")
     )
     orig_poscar_structure = Structure.from_file(orig_poscar_path)
@@ -139,7 +139,7 @@ def test_ptail_as_string(tmp_path):
 
 
 def test_make_potcar_anonymous(tmp_path):
-    potcar_path = importlib_resources.files("vasp_manager").joinpath(
+    potcar_path = resources.files("vasp_manager").joinpath(
         str(Path("tests") / "POTCARS" / "POTCAR_example")
     )
     new_potcar_path = tmp_path / "POTCAR"
