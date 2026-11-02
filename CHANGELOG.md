@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Raise dependency floors: `pymatgen>=2024.8.9`, `numpy>=1.26.0`; declare `pyyaml>=6.0` and `tqdm>=4.60`
 - Replace `importlib_resources` with the standard library's `importlib.resources`
 - Test the lowest allowed dependency versions in CI
+- Drop version floors and unused packages from the `docs` extra
 
 ### Fixed
 

@@ -45,12 +45,12 @@ dev = [
     "types-PyYAML",
 ]
 docs = [
-    "blacken-docs>=1.16.0",
-    "mkdocs-material>=9.5.16",
-    "mkdocstrings[python]>=0.22.0",
-    "mkdocs-gen-files>=0.5.0",
-    "mkdocs-literate-nav>=0.6.0",
-    "pillow>=10.0.0",
+    "mkdocs-material",
+    "mkdocstrings[python]",
+    "mkdocs-gen-files",
+    "mkdocs-literate-nav",
+    # mkdocstrings formats separate signatures with ruff (or black)
+    "ruff",
 ]
 
 [project.urls]
