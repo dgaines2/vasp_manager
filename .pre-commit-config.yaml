@@ -20,3 +20,6 @@ repos:
       - id: ruff-check
         args: [--fix]
       - id: ruff-format
+
+ci:
+    autoupdate_branch: 'develop'
